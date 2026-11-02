@@ -32,7 +32,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,webp}'],
         // Las tipografías de Google se guardan la primera vez para poder usarlas sin internet.
         runtimeCaching: [
           {

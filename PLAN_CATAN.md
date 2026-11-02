@@ -496,8 +496,13 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 
 - [x] (v0.8.1) En el inicio, **mantener pulsado** (~0,5 s) esconde todo y deja ver solo el fondo; al soltar vuelve
   (y ese toque no pulsa ningún botón). `usePeek` en `Inicio.tsx`.
-- [ ] Parque y Mesa de noche (v0.8) **no convencen** (2026-11-02): el usuario los pedirá a Claude Design (más humanos, pulidos,
-  con detalle). Cuando lleguen: imagen fija vertical (WebP) en `public/fondos/` + capa animada ligera encima.
+- [x] (v0.9) Parque y Mesa de noche dibujados con código (v0.8) **no convencieron**. Sustituidos por imágenes que el usuario
+  generó con ChatGPT (Claude Design no genera ilustraciones): `public/fondos/parque.webp` (5 amigos jugando en el maletero del
+  Polo blanco, de lejos, sin caras reconocibles, atardecer con viento) y `mesa-noche.webp` (su foto redibujada, sin personas;
+  con grano fino para que el cielo oscuro no salga a escalones). 852×1846.
+  Capa animada en `PaintedScenes.tsx` (mismo tamaño que la imagen): parque = sol que palpita, pájaros, semillas al viento y
+  cielo de arriba oscurecido para leer el título; noche = lámpara que respira, polillas, luces del pueblo y estrella fugaz.
+  En CSS la imagen se agranda desde arriba (120 % / 117 %) para que la escena quede bajo el botón "Generar tablero".
 
 **6.6 Iconos propios en vez de emojis**
 - [x] Juego de iconos SVG propio (trazo fino y redondeado, color crema): recursos, modos, acciones, puertos. `lib/glyphs.ts`.

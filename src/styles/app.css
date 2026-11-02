@@ -5,6 +5,7 @@
   position: fixed;
   inset: 0;
   z-index: 0;
+  overflow: hidden;
   pointer-events: none;
 }
 
@@ -1822,11 +1823,11 @@
 
 /* ---------- Fondos pintados: Parque y Mesa de noche ---------- */
 .bg-parque {
-  background: linear-gradient(180deg, #141833 0%, #5b3b6c 45%, #e2775a 60%, #3a6130 70%, #18301c 100%);
+  background: linear-gradient(180deg, #3e3c8f 0%, #8a4f9a 30%, #f08a3a 52%, #6b6a2c 58%, #3f4a1e 100%);
 }
 
 .bg-mesa {
-  background: linear-gradient(180deg, #05070f 0%, #0a1020 60%, #0c0f16 100%);
+  background: linear-gradient(180deg, #04060c 0%, #070a12 100%);
 }
 
 .painted,
@@ -1835,6 +1836,19 @@
   inset: 0;
   width: 100%;
   height: 100%;
+}
+
+/* La escena de estos fondos cae a media altura, justo donde va el botón del inicio: se agranda la
+   imagen desde arriba para bajarla (por abajo solo se pierde hierba o suelo). Imagen y capa animada
+   comparten caja, así siguen encajadas. */
+.bg-parque .painted,
+.bg-parque .painted-live {
+  height: 120%;
+}
+
+.bg-mesa .painted,
+.bg-mesa .painted-live {
+  height: 117%;
 }
 
 .painted {
@@ -1846,8 +1860,8 @@
 
 .bird {
   fill: none;
-  stroke: #2a1f35;
-  stroke-width: 2;
+  stroke: #2a1a2e;
+  stroke-width: 1.6;
   stroke-linecap: round;
   animation: aletear 0.9s ease-in-out infinite alternate;
   transform-box: fill-box;
@@ -1855,12 +1869,12 @@
 }
 
 .birds {
-  animation: volar 70s linear infinite;
+  animation: volar 60s linear infinite;
 }
 
 @keyframes volar {
-  from { transform: translate(-80px, 820px); }
-  to { transform: translate(1160px, 700px); }
+  from { transform: translate(-60px, 760px); }
+  to { transform: translate(920px, 640px); }
 }
 
 @keyframes aletear {
@@ -1868,15 +1882,39 @@
   to { transform: scaleY(0.35); }
 }
 
+.sun-glow {
+  animation: sol 6s ease-in-out infinite alternate;
+}
+
+@keyframes sol {
+  from { opacity: 0.55; }
+  to { opacity: 1; }
+}
+
+/* Semillas que arrastra el viento (de izquierda a derecha, como el árbol y la hierba) */
+.seed {
+  fill: #fff4d6;
+  opacity: 0;
+  animation: viento 10s linear infinite;
+}
+
+@keyframes viento {
+  0% { transform: translate(-30px, 0); opacity: 0; }
+  10% { opacity: 0.85; }
+  35% { transform: translate(270px, -40px); }
+  65% { transform: translate(560px, 10px); }
+  90% { opacity: 0.7; }
+  100% { transform: translate(890px, -50px); opacity: 0; }
+}
+
 .lamp-breath {
-  fill: #dcefff;
   opacity: 0.06;
   animation: respirar 4s ease-in-out infinite alternate;
 }
 
 @keyframes respirar {
   from { opacity: 0.03; }
-  to { opacity: 0.1; }
+  to { opacity: 0.12; }
 }
 
 .moth path {
@@ -1892,23 +1930,23 @@
 .moth-2 { animation: polilla-2 11s ease-in-out infinite; }
 
 @keyframes polilla-0 {
-  0%, 100% { transform: translate(530px, 1180px); }
-  25% { transform: translate(600px, 1170px); }
-  50% { transform: translate(590px, 1236px); }
-  75% { transform: translate(520px, 1226px); }
+  0%, 100% { transform: translate(385px, 1010px); }
+  25% { transform: translate(445px, 1000px); }
+  50% { transform: translate(440px, 1058px); }
+  75% { transform: translate(378px, 1050px); }
 }
 
 @keyframes polilla-1 {
-  0%, 100% { transform: translate(610px, 1210px); }
-  30% { transform: translate(540px, 1250px); }
-  60% { transform: translate(500px, 1190px); }
-  80% { transform: translate(575px, 1160px); }
+  0%, 100% { transform: translate(450px, 1040px); }
+  30% { transform: translate(392px, 1072px); }
+  60% { transform: translate(360px, 1020px); }
+  80% { transform: translate(420px, 994px); }
 }
 
 @keyframes polilla-2 {
-  0%, 100% { transform: translate(470px, 1240px); }
-  40% { transform: translate(640px, 1200px); }
-  70% { transform: translate(580px, 1270px); }
+  0%, 100% { transform: translate(350px, 1060px); }
+  40% { transform: translate(470px, 1028px); }
+  70% { transform: translate(430px, 1086px); }
 }
 
 .town-light {
@@ -1920,8 +1958,21 @@
 @keyframes titilar {
   0%, 100% { opacity: 0; }
   45% { opacity: 0; }
-  55% { opacity: 0.55; }
+  55% { opacity: 0.5; }
   70% { opacity: 0.2; }
+}
+
+/* Una estrella fugaz de vez en cuando (cruza en el primer 6 % del ciclo y luego descansa) */
+.shooting-star {
+  opacity: 0;
+  animation: fugaz 16s ease-in 3s infinite;
+}
+
+@keyframes fugaz {
+  0% { transform: translateX(-160px); opacity: 0; }
+  2% { opacity: 1; }
+  6% { transform: translateX(260px); opacity: 0; }
+  100% { transform: translateX(260px); opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1932,12 +1983,15 @@
   .paddle,
   .birds,
   .bird,
+  .sun-glow,
   .lamp-breath,
   .moth,
   .moth path,
   .town-light { animation: none; }
-  .birds { transform: translate(560px, 760px); }
-  .moth { display: none; }
+  .birds { transform: translate(420px, 700px); }
+  .moth,
+  .seed,
+  .shooting-star { display: none; }
 }
 
 /* ---------- Rueda de modos ---------- */
