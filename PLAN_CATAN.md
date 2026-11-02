@@ -402,8 +402,9 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 ### Fase 5: Publicar (adelantada el 2026-11-02)
 - [x] PWA instalable y funcionando sin conexión (`vite-plugin-pwa` en `vite.config.ts`)
 - [x] Icono (`public/icon.svg` → `npm run iconos` genera los PNG). Pantalla de arranque: pendiente
-- [ ] Publicada: **https://alaepat.github.io/catano/** (repo `alaepat/catano`, se publica sola en cada push a `main`
-      con `.github/workflows/publicar.yml`; si un test falla, no se publica). Falta comprobar que carga
+- [x] Publicada: **https://alaepat.github.io/catano/** (repo `alaepat/catano`, se publica sola en cada push a `main`
+      con `.github/workflows/publicar.yml`; si un test falla, no se publica). Comprobado: carga, genera tableros y el modo sin conexión está activo
+- Para publicar un cambio: commit en `main` + `git push`. En 1-2 minutos está en la web; la app instalada se actualiza sola al abrirla
 - [ ] Probada instalada en el iPhone 17 del usuario ("Compartir → Añadir a pantalla de inicio" en Safari)
 - [ ] Chequeo final (sección 10.3)
 
