@@ -1821,6 +1821,127 @@
   50% { transform: rotate(-24deg); }
 }
 
+/* ---------- Logros ---------- */
+.logros-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+}
+
+.logros-summary > div {
+  flex: 1;
+}
+
+.logros-summary-icon {
+  color: var(--acento);
+  flex-shrink: 0;
+}
+
+.logros-count {
+  margin: 0 0 8px;
+  font-family: var(--fuente-titulo);
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.logros-count span {
+  font-family: var(--fuente-texto);
+  font-size: 0.95rem;
+  font-weight: 600;
+  opacity: 0.65;
+}
+
+.logro-bar {
+  height: 6px;
+  border-radius: var(--radio-pildora);
+  background: rgba(243, 233, 210, 0.12);
+  overflow: hidden;
+  flex: 1;
+}
+
+.logro-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--acento);
+}
+
+.logro-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.logro {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--radio-m);
+}
+
+.logro-icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px dashed rgba(243, 233, 210, 0.25);
+  color: rgba(243, 233, 210, 0.35);
+}
+
+.logro.done .logro-icon {
+  border: none;
+  color: var(--tinta);
+  background: radial-gradient(circle at 35% 30%, #f6d189, var(--acento) 60%, #b97a33);
+  box-shadow: 0 0 18px rgba(224, 164, 88, 0.35);
+}
+
+.logro-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.logro-text h2 {
+  margin: 2px 0 3px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.logro:not(.done) .logro-text h2 {
+  opacity: 0.75;
+}
+
+.logro-text p {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.35;
+  color: var(--crema-suave);
+  opacity: 0.75;
+}
+
+.logro-text .logro-date {
+  margin-top: 5px;
+  font-size: 0.78rem;
+  color: var(--acento);
+  opacity: 1;
+}
+
+.logro-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+
 /* ---------- Fondos pintados: Parque y Mesa de noche ---------- */
 .bg-parque {
   background: linear-gradient(180deg, #3e3c8f 0%, #8a4f9a 30%, #f08a3a 52%, #6b6a2c 58%, #3f4a1e 100%);

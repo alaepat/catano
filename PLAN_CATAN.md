@@ -523,6 +523,19 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 
 ### Fase 7+: Extras (ver Banco de ideas)
 
+**7.1 Logros** (v0.11, 2026-11-02)
+- [x] 13 logros: generar 1/10/50/200 tableros, los 9 modos, 10 en Caos, equilibrio ≥ 95 y < 50, de madrugada,
+  tocar los 6 terrenos, 5 fondos, 1 y 10 partidas con el marcador. `lib/logros.ts` (puro, con tests) + `logrosStore.ts`
+  (guardado aparte, 'catan-logros'). Aviso "Logro conseguido" en cualquier pantalla (`LogroToast`, vibra y, con sonido, acorde).
+  Pantalla `Logros` desde la medalla del inicio (junto a Ajustes). Lo anterior a esta versión no cuenta (empieza en 0).
+
+**7.2 Tocar un hexágono suena o vibra** (v0.11)
+- [x] Con sonido: un efecto por terreno (hacha en el bosque, "beee" en el pasto, viento en el trigo, ladrillos en las
+  colinas, pico en la montaña, viento seco en el desierto), sintetizados en `lib/sound.ts`. Sin sonido: vibración corta.
+- [x] `lib/haptics.ts`: Android usa `navigator.vibrate`; el iPhone no lo tiene, así que se pulsa un interruptor nativo
+  escondido (`<input type="checkbox" switch>`, iOS 18+), que da un toque de vibración. También lo usan la rueda de modos
+  y el "mantener pulsado" del inicio. Sin probar aún en el iPhone.
+
 ---
 
 ## 10. Chequeos
@@ -564,17 +577,17 @@ sin errores en la consola, ajustes que sobreviven a recargar. Pendiente: contras
 Claude: añade aquí ideas nuevas. El usuario elegirá cuáles entran.
 
 - 🏷️ **Nombre aleatorio para cada isla** ("Isla de las Ovejas Perdidas", "Archipiélago del Trigo Maldito"), combinando palabras de `nombres-isla.json`, que puede incluir bromas del grupo.
-- 🎲 **Dados virtuales 3D** con estadística de la partida ("el 7 ha salido 9 veces, sospechoso…").
+- ~~🎲 Dados virtuales~~ (descartado por el usuario, 2026-11-02)
 - 🏆 **Marcador** de puntos con aviso de victoria a los 10 puntos y confeti.
 - 👑 **Salón de la fama**: quién ha ganado más partidas del grupo.
 - 🎡 **Ruleta "¿Quién empieza?"** con los nombres del grupo.
 - 🧠 **Comentario gracioso del análisis**: "Este mapa es más justo que un juez" / "Alguien va a llorar por la arcilla".
-- 🐑 **Sonidos al tocar hexágonos**: un "beee" en el pasto, un hachazo en el bosque.
-- 🥚 **Easter eggs**: tocar el título 7 veces → aparece el ladrón y "roba" el botón un segundo.
-- 🎖️ **Logros**: "Generaste 50 mapas", "Mapa perfectamente equilibrado", "Caos total ×10".
-- 📅 **Eventos por fecha**: Navidad (nieve en el espacio), Halloween (ladrón con capa), cumpleaños del grupo.
-- 📋 **Chuleta de reglas**: costes de construcción, cartas de desarrollo, ladrón y montaje inicial.
-- ⏱️ **Temporizador de turno** opcional para el amigo lento (con broma incluida).
+- ✅ 🐑 **Sonidos al tocar hexágonos** (hecho, Fase 7.2; sin sonido, vibra)
+- ~~🥚 Easter eggs~~ (descartado)
+- ✅ 🎖️ **Logros** (hecho, Fase 7.1)
+- ~~📅 Eventos por fecha~~ (descartado)
+- ~~📋 Chuleta de reglas~~ (descartado)
+- ~~⏱️ Temporizador de turno~~ (descartado)
 - 🌍 Más adelante: **expansión 5-6 jugadores** (30 hexágonos) y Navegantes.
 
 ---
@@ -618,7 +631,8 @@ Claude: añade aquí ideas nuevas. El usuario elegirá cuáles entran.
 - [ ] ¿Nombres y colores de los amigos del grupo?
 - [ ] ¿Se usará sobre todo en móvil? ¿Android o iPhone?
 - [ ] ¿Queréis sonido y música? → hay efectos (apagados por defecto, en Ajustes). ¿Encenderlos por defecto? ¿Música?
-- [ ] Bromas del grupo para los nombres de isla (`src/data/nombres-isla.json`, lista `bromas`)
+- [x] Bromas del grupo → **canceladas** por el usuario (2026-11-02): la app es solo para generar el tablero.
+  El Dato curioso del día ahora son datos reales de Catan (`datos-curiosos.json`); `bromas` de islas queda vacío.
 - [ ] ¿Qué edición del Catan tenéis? (afecta a los puertos: marco fijo o fichas sueltas)
 - [ ] ¿Cuándo llegará el diseño de Claude Design y en qué formato? (El usuario preguntó qué es; explicado el 2026-11-02. ¿Lo usará o diseña Claude?)
 - [ ] Zoom: ¿tocar un hexágono para acercarse, pellizcar con dos dedos, o las dos cosas?
@@ -628,6 +642,5 @@ Claude: añade aquí ideas nuevas. El usuario elegirá cuáles entran.
 - [ ] Fotos personales como fondo: ¿OK con que estén en la web pública? (por ahora: ilustración inspirada, la foto no se sube)
 - [ ] Iconos: ¿iconos propios dibujados o sin iconos?
 - [ ] Navegantes: ¿qué escenarios primero? ¿Solo 3-4 jugadores?
-- [ ] Lista de bromas para el Dato curioso del día
 - [x] ¿Dónde publicarla? → GitHub Pages, https://alaepat.github.io/catano/ (repo público: todo lo que se suba se ve)
 - [x] ¿Móvil? → la usará una persona con un **iPhone 17** (402×874 puntos)

@@ -8,7 +8,7 @@ import { HexCard } from '../components/HexCard';
 import { Glyph } from '../components/icons';
 import { Marcador } from '../components/Marcador';
 import { BackIcon, IconButton, Toast } from '../components/ui';
-import { PRESET_INFO, analyzeBoard, type Resource } from '../game';
+import { PRESET_INFO, analyzeBoard, type Resource, type Terrain } from '../game';
 import { backgroundFor } from '../lib/background';
 import { loadBoard3D } from '../lib/board3d';
 import { comentario } from '../lib/comentario';
@@ -16,8 +16,10 @@ import { FEATURES } from '../lib/config';
 import { numberStyle } from '../lib/numberStyle';
 import { capture2D, composePhoto, shareImage } from '../lib/photo';
 import { revealDuration } from '../lib/reveal';
-import { unlockAudio } from '../lib/sound';
+import { haptic } from '../lib/haptics';
+import { playSound, unlockAudio, type SoundKind } from '../lib/sound';
 import { hasWebGL } from '../lib/webgl';
+import { useLogros } from '../logrosStore';
 import { ANIM_FACTOR, useApp } from '../store';
 
 const RESOURCE_LABEL: Record<Resource, string> = {
@@ -30,8 +32,20 @@ const RESOURCE_LABEL: Record<Resource, string> = {
 
 const Board3D = lazy(loadBoard3D);
 
+/** Sonido al tocar cada terreno (sin sonido, el móvil vibra un poco). */
+const TERRAIN_SOUND: Record<Terrain, SoundKind> = {
+  bosque: 'hacha',
+  pasto: 'beee',
+  cereal: 'espigas',
+  colinas: 'ladrillo',
+  montanas: 'pico',
+  desierto: 'viento',
+};
+
 export function Tablero() {
   const { generation, choice, settings, generate, updateSettings, toggleSaveCurrent, setFlying } = useApp();
+  const sound = settings.sound;
+  const trackLogro = useLogros((s) => s.track);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [failed3d, setFailed3d] = useState(false);
   const [toast, setToast] = useState<string[]>([]);
@@ -52,9 +66,20 @@ export function Tablero() {
   const reveal = () => setRevealedId(genId);
   const clearToast = useCallback(() => setToast([]), []);
   const focus = revealed && picked && picked.gen === genId ? picked.hex : null;
-  const pick = useCallback((hex: number | null) => setPicked(hex === null || genId === null ? null : { gen: genId, hex }), [genId]);
-
   const board = generation?.result.ok ? generation.result.board : null;
+  const pick = useCallback(
+    (hex: number | null) => {
+      setPicked(hex === null || genId === null ? null : { gen: genId, hex });
+      const terrain = hex === null ? undefined : board?.terrains[hex];
+      if (!terrain) return;
+      if (sound) {
+        unlockAudio();
+        playSound(TERRAIN_SOUND[terrain], Math.random());
+      } else haptic(12);
+      trackLogro({ type: 'tocar', terrain });
+    },
+    [genId, board, sound, trackLogro],
+  );
   const numbers = useMemo(
     () => numberStyle(settings.numberSize, settings.numberFont, settings.redNumbers),
     [settings.numberSize, settings.numberFont, settings.redNumbers],

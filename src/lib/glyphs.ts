@@ -36,6 +36,7 @@ export const GLYPHS = {
   camara: `M4 8.5A1.5 1.5 0 0 1 5.5 7h2L9 5h6l1.5 2h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5v-9Z ${circle(12, 13, 3)}`,
   lapiz: 'M4 20h4L19 9l-4-4L4 16v4Z M13.5 6.5l4 4',
   papelera: 'M4 7h16 M9 7V4.5h6V7 M6 7l1 13h10l1-13 M10 11v5 M14 11v5',
+  medalla: `M8 2.5 10.6 9.2 M16 2.5 13.4 9.2 M8 2.5h8 ${circle(12, 15, 5.8)} ${circle(12, 15, 2.6)}`,
 } as const;
 
 export type GlyphName = keyof typeof GLYPHS;

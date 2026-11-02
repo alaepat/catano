@@ -7,6 +7,7 @@ import {
   type Action, type Match, type Player, type PlayerColor, type Win,
 } from './lib/marcador';
 import { safeStorage } from './lib/storage';
+import { useLogros } from './logrosStore';
 
 const MAX_UNDO = 40;
 const MAX_WINS = 200;
@@ -81,6 +82,7 @@ export const useMarcador = create<MarcadorState>()(
             players: match.players.length,
           };
           set({ wins: [win, ...wins].slice(0, MAX_WINS) });
+          useLogros.getState().track({ type: 'partida' });
         }
         set({ match: null, past: [] });
       },

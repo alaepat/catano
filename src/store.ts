@@ -10,8 +10,9 @@ import { islandName } from './lib/islandName';
 import type { NumberFont, NumberSize } from './lib/numberStyle';
 import { MAX_SAVED, cleanName, isSavedBoard, newSavedId, type SavedBoard } from './lib/saved';
 import { safeStorage } from './lib/storage';
+import { useLogros } from './logrosStore';
 
-export type Screen = 'inicio' | 'personalizar' | 'tablero' | 'ajustes' | 'tableros';
+export type Screen = 'inicio' | 'personalizar' | 'tablero' | 'ajustes' | 'tableros' | 'logros';
 export type ModeChoice = PresetId | 'personalizado' | 'sorpresa';
 export type BackgroundId = 'espacio' | 'oceano' | 'playa' | 'canoa' | 'parque' | 'mesa' | 'flotante' | 'pergamino' | 'atardecer' | 'bosque' | 'minimal';
 const BACKGROUND_IDS: BackgroundId[] = ['espacio', 'oceano', 'playa', 'canoa', 'parque', 'mesa', 'flotante', 'pergamino', 'atardecer', 'bosque', 'minimal'];
@@ -143,9 +144,13 @@ export const useApp = create<State>()(
         const result = generateBoard(opts);
         const name = result.ok ? islandName(result.board, result.seed) : '';
         set({ generation: { mode, result, id: (generation?.id ?? 0) + 1, name } });
+        if (result.ok) useLogros.getState().track({ type: 'generar', mode, score: balanceScore(result.board), hour: new Date().getHours() });
       },
 
-      updateSettings: (patch) => set({ settings: { ...get().settings, ...patch } }),
+      updateSettings: (patch) => {
+        set({ settings: { ...get().settings, ...patch } });
+        if (patch.background) useLogros.getState().track({ type: 'fondo', id: patch.background });
+      },
 
       resetAll: () => {
         safeStorage.removeItem('catan-app');

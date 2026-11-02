@@ -3,6 +3,7 @@
 import { AnimatePresence, animate, motion, useMotionValue, useTransform, type MotionValue } from 'motion/react';
 import { useEffect, useMemo, useRef, type KeyboardEvent } from 'react';
 import { PRESETS, generateBoard, type Board, type GenOptions } from '../game';
+import { haptic } from '../lib/haptics';
 import { playSound, unlockAudio } from '../lib/sound';
 import type { ModeChoice } from '../store';
 import { BoardSvg } from './BoardSvg';
@@ -45,7 +46,7 @@ export function ModeWheel({ modes, choice, options, labels, sound, onSelect }: P
         current.current = idx;
         select(list[idx]);
         if (withSound) playSound('tock', 1 + (idx % 3) * 0.06);
-        navigator.vibrate?.(6);
+        haptic(6);
       }),
     [rotation, step],
   );

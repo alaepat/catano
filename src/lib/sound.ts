@@ -1,7 +1,10 @@
 // Efectos de sonido sintetizados con Web Audio (sin archivos: funciona sin internet y no pesa nada).
 // El iPhone solo deja sonar audio después de un toque: por eso se llama a unlockAudio() al pulsar botones.
 
-export type SoundKind = 'swell' | 'tock' | 'clink' | 'whoosh' | 'puff' | 'chord';
+export type SoundKind =
+  | 'swell' | 'tock' | 'clink' | 'whoosh' | 'puff' | 'chord'
+  // Al tocar un hexágono, uno por terreno
+  | 'beee' | 'hacha' | 'espigas' | 'ladrillo' | 'pico' | 'viento';
 
 export interface SoundEvent {
   /** Segundos desde ahora. */
@@ -77,6 +80,32 @@ function noiseBurst(c: AudioContext, out: AudioNode, t: number, dur: number, fil
   src.stop(t + dur + 0.05);
 }
 
+/** Balido: diente de sierra con vibrato, filtrado para que suene a garganta. */
+function bleat(c: AudioContext, out: AudioNode, t: number, p: number) {
+  const f0 = 360 + p * 90;
+  const o = c.createOscillator();
+  o.type = 'sawtooth';
+  o.frequency.setValueAtTime(f0, t);
+  o.frequency.linearRampToValueAtTime(f0 * 1.06, t + 0.12);
+  o.frequency.linearRampToValueAtTime(f0 * 0.9, t + 0.6);
+  const lfo = c.createOscillator();
+  lfo.frequency.value = 7;
+  const depth = c.createGain();
+  depth.gain.value = f0 * 0.07;
+  lfo.connect(depth);
+  depth.connect(o.frequency);
+  const bp = c.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.value = 1150;
+  bp.Q.value = 1.4;
+  o.connect(bp);
+  bp.connect(envelope(c, out, t, 0.2, 0.05, 0.6));
+  o.start(t);
+  lfo.start(t);
+  o.stop(t + 0.75);
+  lfo.stop(t + 0.75);
+}
+
 function play(c: AudioContext, out: AudioNode, t: number, e: SoundEvent) {
   const p = e.pitch ?? 0.5;
   switch (e.kind) {
@@ -102,6 +131,39 @@ function play(c: AudioContext, out: AudioNode, t: number, e: SoundEvent) {
       break;
     case 'chord': // acorde final
       [261.6, 329.6, 392, 523.3].forEach((f, i) => tone(c, out, t + i * 0.04, f, 'sine', 0.07, 0.05, 1.8));
+      break;
+    case 'beee': // pasto: una oveja
+      bleat(c, out, t, p);
+      break;
+    case 'hacha': // bosque: hachazo en un tronco
+      {
+        const o = tone(c, out, t, 150, 'triangle', 0.38, 0.003, 0.16);
+        o.frequency.exponentialRampToValueAtTime(70, t + 0.15);
+      }
+      noiseBurst(c, out, t, 0.09, 'bandpass', 2600, 700, 0.22, 0.002);
+      tone(c, out, t + 0.005, 320 + p * 60, 'square', 0.04, 0.002, 0.06);
+      break;
+    case 'espigas': // campo: el viento entre el trigo
+      noiseBurst(c, out, t, 0.7, 'bandpass', 2600, 4800, 0.07, 0.25);
+      noiseBurst(c, out, t + 0.15, 0.55, 'highpass', 3500, 6000, 0.035, 0.2);
+      break;
+    case 'ladrillo': // colinas: dos ladrillos que chocan
+      [0, 0.11].forEach((d, i) => {
+        tone(c, out, t + d, 430 - i * 50 + p * 40, 'triangle', 0.22, 0.002, 0.07);
+        noiseBurst(c, out, t + d, 0.05, 'bandpass', 1700, 1100, 0.14, 0.002);
+      });
+      break;
+    case 'pico': // montañas: el pico contra la roca
+      [0, 0.17].forEach((d, i) => {
+        const f = (2000 - i * 160) * (0.95 + p * 0.1);
+        const v = i ? 0.05 : 0.09;
+        tone(c, out, t + d, f, 'sine', v, 0.002, 0.32);
+        tone(c, out, t + d, f * 2.76, 'sine', v * 0.4, 0.002, 0.16);
+        noiseBurst(c, out, t + d, 0.03, 'highpass', 3000, 5000, v, 0.001);
+      });
+      break;
+    case 'viento': // desierto: viento seco
+      noiseBurst(c, out, t, 1, 'bandpass', 380, 900, 0.09, 0.4);
       break;
   }
 }

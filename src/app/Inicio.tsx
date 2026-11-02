@@ -5,6 +5,7 @@ import { Glyph } from '../components/icons';
 import { GearIcon, IconButton } from '../components/ui';
 import datos from '../data/datos-curiosos.json';
 import { datoDelDia } from '../lib/datoDelDia';
+import { haptic } from '../lib/haptics';
 import { APP_TITLE, FEATURES } from '../lib/config';
 import { useApp } from '../store';
 
@@ -59,7 +60,7 @@ function usePeek() {
         timer.current = window.setTimeout(() => {
           justPeeked.current = true;
           setPeek(true);
-          navigator.vibrate?.(8);
+          haptic(8);
         }, PEEK_MS);
       },
       onPointerMove: (e: PointerEvent) => {
@@ -119,6 +120,9 @@ export function Inicio() {
             {savedCount > 0 && <span className="pill-count">{savedCount}</span>}
           </button>
         )}
+        <IconButton label="Logros" onClick={() => goTo('logros')}>
+          <Glyph name="medalla" size={21} />
+        </IconButton>
         <IconButton label="Ajustes" onClick={() => goTo('ajustes')}>
           <GearIcon />
         </IconButton>

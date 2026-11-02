@@ -1,4 +1,4 @@
-// Comentario con gracia para el análisis del tablero (genérico: las bromas del grupo van en los datos curiosos).
+// Comentario con gracia para el análisis del tablero.
 import type { BoardAnalysis, Resource } from '../game';
 
 const ESCASO: Record<Resource, string> = {
