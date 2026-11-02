@@ -20,6 +20,8 @@
 5. **No inventes las bromas internas** del "Dato curioso del día". Deja ejemplos marcados con `TODO` para que el usuario los escriba.
 6. El usuario prefiere explicaciones sencillas y en español.
 7. Preguntale al usuario si quiere que escriba el codigo en VS Code y lo vea en directo como se esta escribiendo con un live server extension o algo asi.
+   → *Respondido (2026-11-02): sí. El proyecto se abre en VS Code y la app se ve con `npm run dev` (Vite recarga solo; no hace falta Live Server).*
+8. El usuario no maneja ramas de git: se trabaja en `main` y se hace un commit al terminar cada fase.
 
 ---
 
@@ -196,7 +198,8 @@ Lista de tableros guardados (miniatura, nombre de la isla, fecha). Abrir, renomb
 Las fichas oficiales llevan **letras A-R** en el reverso para el montaje variable oficial:
 `A5 B2 C6 D3 E8 F10 G9 H12 I11 J4 K8 L10 M9 N4 O5 P6 Q3 R11`.
 Se colocan **en orden alfabético, en espiral en sentido antihorario**, empezando por una esquina exterior
-y saltando el desierto. Ese orden evita por diseño que el 6 y el 8 queden juntos.
+y saltando el desierto. Ese orden evita por diseño que el 6 y el 8 queden juntos
+(comprobado en los tests: 0 de 114 combinaciones de desierto × esquina de inicio los juntan).
 
 **9 puertos** repartidos por la costa:
 - 4 puertos **genéricos 3:1**
@@ -245,14 +248,19 @@ Cada opción tiene un valor por defecto **según el preset**.
 - Números iguales juntos: `Permitir` · `Evitar`
 - 2 y 12 juntos: `Permitir` · `Evitar`
 - Reparto justo por recurso: `Off` · `On` (diferencia máxima de puntitos entre recursos)
-- Tope de puntitos por cruce: `Sin tope` · `12` · `11` · `10`
-- Sin "rojos" en la costa (opcional)
+- Tope de puntitos por cruce: `Sin tope` · `12` · `11` (el 10 se quitó: ver Registro de decisiones)
+- Sin "rojos" en la costa (opcional). **Incompatible con "6 y 8: Evitar"**: en las 7 casillas interiores
+  solo caben 3 rojos sin tocarse. En el menú, al activar una, desactivar o avisar de la otra.
 
 **⚓ Puertos**
 - Puertos: `Sí` · `No`
-- Posición: `Fija (oficial)` · `Aleatoria por la costa`
-- Tipos: `Barajados` · `Orden oficial`
+- Posición: `Fija (oficial)` · `Aleatoria por la costa` (nunca dos puertos en lados seguidos)
+- Tipos: siempre barajados (como al mezclar las piezas del marco)
 - Puerto 2:1 junto a su recurso: `Da igual` · `Evitar` · `Forzar`
+  ("junto" = el hexágono de tierra al que pertenece ese lado de costa produce ese recurso)
+
+*Reparto justo* = la diferencia de puntitos por hexágono entre el mejor y el peor recurso es ≤ 1,0
+(`FAIR_SPREAD` en `src/game/rules.ts`).
 
 **🦹 Ladrón**
 - Empieza en: `Desierto` (oficial) · `Fuera del tablero` (variante)
@@ -338,15 +346,16 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 
 ## 9. Fases (hoja de ruta)
 
-### Fase 1: Base y lógica del juego
-- [ ] Proyecto Vite + React + TS creado, con `CLAUDE.md`
-- [ ] `game/board.ts`: 19 hexágonos (coordenadas axiales), 54 cruces, 72 caminos, vecinos y posiciones de puertos
-- [ ] `game/rng.ts`: aleatorio con semilla
-- [ ] `game/generator.ts`: genera según opciones (espiral oficial y aleatorio con reglas)
-- [ ] `game/rules.ts`: cada regla como función que devuelve qué incumple
-- [ ] Puntuación de equilibrio del tablero (0-100)
-- [ ] Tests (ver sección 10)
-- [ ] Vista 2D sencilla en SVG para comprobar visualmente
+### Fase 1: Base y lógica del juego ✅ (2026-11-02)
+- [x] Proyecto Vite + React + TS creado, con `CLAUDE.md`
+- [x] `game/board.ts`: 19 hexágonos (coordenadas axiales), 54 cruces, 72 caminos, vecinos y posiciones de puertos
+- [x] `game/rng.ts`: aleatorio con semilla
+- [x] `game/generator.ts`: genera según opciones (espiral oficial y aleatorio con reglas)
+- [x] `game/rules.ts`: cada regla como función que devuelve qué incumple
+- [x] Puntuación de equilibrio del tablero (0-100) y análisis (`game/score.ts`)
+- [x] Código de compartir (`game/share.ts`, unos 33 caracteres)
+- [x] Tests (ver sección 10): `npm test`
+- [x] Vista 2D sencilla en SVG para comprobar visualmente (`components/BoardSvg.tsx` + pantalla de prueba en `App.tsx`)
 
 ### Fase 2: Interfaz y flujo
 - [ ] Tokens de diseño provisionales (o los de Claude Design si ya están)
@@ -385,17 +394,17 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 
 ## 10. Chequeos
 
-### 10.1 Tests automáticos del generador (Vitest)
-- [ ] Siempre hay exactamente 19 hexágonos con la cantidad correcta de cada terreno
-- [ ] Siempre hay 18 números con la distribución correcta y el desierto sin número
-- [ ] Siempre hay 9 puertos (4 de 3:1 y 5 de 2:1, uno por recurso)
-- [ ] El ladrón empieza donde dice la opción
-- [ ] **10.000 generaciones** con cada preset → ninguna incumple sus reglas activas
-- [ ] Misma semilla + mismas opciones → **exactamente el mismo tablero**
-- [ ] Código de compartir: codificar → decodificar → mismo tablero
-- [ ] La espiral oficial reproduce el orden A-R correctamente
-- [ ] Generar un tablero tarda **< 50 ms** (si hay que reintentar mucho, usar backtracking)
-- [ ] Combinaciones de opciones imposibles → mensaje claro al usuario, nunca un bucle infinito (límite de intentos)
+### 10.1 Tests automáticos del generador (Vitest): `tests/generator.test.ts`
+- [x] Siempre hay exactamente 19 hexágonos con la cantidad correcta de cada terreno
+- [x] Siempre hay 18 números con la distribución correcta y el desierto sin número
+- [x] Siempre hay 9 puertos (4 de 3:1 y 5 de 2:1, uno por recurso)
+- [x] El ladrón empieza donde dice la opción
+- [x] **10.000 generaciones** con cada preset → ninguna incumple sus reglas activas
+- [x] Misma semilla + mismas opciones → **exactamente el mismo tablero**
+- [x] Código de compartir: codificar → decodificar → mismo tablero
+- [x] La espiral oficial reproduce el orden A-R correctamente
+- [x] Generar un tablero tarda **< 50 ms** (medido: Oficial 0,03 ms · Equilibrado 0,25 ms · Caos 0,02 ms)
+- [x] Combinaciones de opciones imposibles → mensaje claro al usuario, nunca un bucle infinito (responde en ~15 ms)
 
 ### 10.2 Chequeos visuales y de uso (en cada fase)
 - [ ] Se ve bien en móvil de 360 px de ancho y en PC
@@ -439,7 +448,12 @@ Claude: añade aquí ideas nuevas. El usuario elegirá cuáles entran.
 | Fecha | Decisión | Motivo |
 |---|---|---|
 | 2026-10-30 | Plan inicial creado | Idea del usuario: generador con animación épica en el espacio |
-| | | |
+| 2026-11-02 | Proyecto en `C:\Users\alaea\catan`, git local, trabajo en `main` | El usuario no usa ramas; un commit por fase |
+| 2026-11-02 | Quitado el tope de 10 puntitos por cruce | Siempre sale, pero tarda 150-300 ms por tablero (casi no hay combinaciones válidas). 11 ya da mapas muy igualados y sale en < 3 ms |
+| 2026-11-02 | "Sin rojos en la costa" + "6 y 8 nunca juntos" es imposible | Solo hay 7 casillas interiores y en ellas caben 3 rojos sin tocarse, no 4. El menú de la Fase 2 debe impedirlo |
+| 2026-11-02 | Tipos de puerto siempre barajados (sin opción "orden oficial") | No hay un orden oficial fijo fiable; en la 5.ª edición se mezclan las piezas del marco |
+| 2026-11-02 | Posiciones fijas de puertos = separaciones 3-3-4 en la costa | Aproximación al marco de la 5.ª edición; revisar si el usuario tiene otra edición |
+| 2026-11-02 | Números con reglas: se colocan primero las fichas más difíciles (6/8, luego 5/9…) | Mucho más rápido que ir casilla a casilla cuando hay topes de puntitos |
 
 ---
 

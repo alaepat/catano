@@ -1,0 +1,30 @@
+/* Tokens de diseño provisionales (PLAN_CATAN.md, sección 3).
+   Cuando llegue el diseño de Claude Design, se cambian aquí sin tocar los componentes. */
+:root {
+  --crema: #f3e9d2;
+  --crema-suave: #e8dcc0;
+  --marfil: #fff8ec;
+  --tinta: #1e1b18;
+  --tinta-2: #2a2622;
+  --tarjeta: rgba(30, 27, 24, 0.55);
+  --tarjeta-borde: rgba(243, 233, 210, 0.12);
+  --acento: #e0a458;
+  --rojo-numero: #c8402f;
+
+  --radio-s: 12px;
+  --radio-m: 18px;
+  --radio-l: 28px;
+  --radio-pildora: 999px;
+
+  --fuente-titulo: 'Fraunces', Georgia, serif;
+  --fuente-texto: 'Nunito', system-ui, sans-serif;
+
+  /* Terrenos */
+  --bosque: #2f5d3a;
+  --pasto: #8dbf5a;
+  --cereal: #e3b94c;
+  --colinas: #c0623b;
+  --montanas: #8a8d91;
+  --desierto: #d9c49a;
+  --mar: #1d3b4f;
+}
