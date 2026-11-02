@@ -1,7 +1,8 @@
 // Tablero en 2D (SVG). Es el modo 2D de Ajustes y el respaldo si el móvil no puede con el 3D.
 // Con `speed` > 0, el tablero aparece animado: hexágonos del centro hacia fuera, números, puertos y ladrón.
 import { motion } from 'motion/react';
-import { COAST_EDGES, EDGES, HEXES, VERTICES, pips, isRed, type Board, type PortType, type Terrain } from '../game';
+import { COAST_EDGES, EDGES, HEXES, VERTICES, pips, isRed, type Board, type Terrain } from '../game';
+import { GLYPHS, type GlyphName } from '../lib/glyphs';
 import { REVEAL_INDEX, REVEAL_TIMING as T } from '../lib/reveal';
 
 const S = 50; // radio de un hexágono en píxeles del SVG
@@ -15,23 +16,40 @@ const TERRAIN_FILL: Record<Terrain, string> = {
   desierto: 'var(--desierto)',
 };
 
-const TERRAIN_ICON: Record<Terrain, string> = {
-  bosque: '🌲',
-  pasto: '🐑',
-  cereal: '🌾',
-  colinas: '🧱',
-  montanas: '⛰️',
-  desierto: '🏜️',
+const TERRAIN_ICON: Record<Terrain, GlyphName> = {
+  bosque: 'madera',
+  pasto: 'lana',
+  cereal: 'trigo',
+  colinas: 'arcilla',
+  montanas: 'mineral',
+  desierto: 'desierto',
 };
 
-const PORT_ICON: Record<PortType, string> = {
-  generico: '?',
-  madera: '🌲',
-  lana: '🐑',
-  trigo: '🌾',
-  arcilla: '🧱',
-  mineral: '⛰️',
+/** Color del icono sobre cada terreno: claro sobre los oscuros, oscuro sobre los claros. */
+const TERRAIN_INK: Record<Terrain, string> = {
+  bosque: 'var(--marfil)',
+  pasto: 'var(--tinta)',
+  cereal: 'var(--tinta)',
+  colinas: 'var(--marfil)',
+  montanas: 'var(--marfil)',
+  desierto: 'var(--tinta)',
 };
+
+/** Icono (24 × 24) centrado en (x, y) con el tamaño dado. */
+function SvgGlyph({ name, x, y, size, color, opacity = 1 }: { name: GlyphName; x: number; y: number; size: number; color: string; opacity?: number }) {
+  return (
+    <path
+      d={GLYPHS[name]}
+      transform={`translate(${x - size / 2} ${y - size / 2}) scale(${size / 24})`}
+      fill="none"
+      stroke={color}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      opacity={opacity}
+    />
+  );
+}
 
 // Vista cuadrada que deja sitio al mar y a los puertos.
 const SEA_R = S * 5.3;
@@ -126,9 +144,13 @@ export function BoardSvg({ board, showPips = true, highlight = [], speed = 0, fo
             <line x1={a.x * S} y1={a.y * S} x2={px} y2={py} stroke="var(--crema-suave)" strokeWidth={3} strokeLinecap="round" opacity={0.7} />
             <line x1={b.x * S} y1={b.y * S} x2={px} y2={py} stroke="var(--crema-suave)" strokeWidth={3} strokeLinecap="round" opacity={0.7} />
             <circle cx={px} cy={py} r={S * 0.34} fill="var(--marfil)" />
-            <text x={px} y={py - 3} textAnchor="middle" fontSize={port.type === 'generico' ? 12 : 13} dominantBaseline="middle">
-              {PORT_ICON[port.type]}
-            </text>
+            {port.type === 'generico' ? (
+              <text x={px} y={py - 3} textAnchor="middle" fontSize={12} fontWeight={700} fill="var(--tinta)" dominantBaseline="middle">
+                ?
+              </text>
+            ) : (
+              <SvgGlyph name={port.type} x={px} y={py - 4} size={13} color="var(--tinta)" />
+            )}
             <text x={px} y={py + 10} textAnchor="middle" fontSize={9} fontWeight={700} fill="var(--tinta)" dominantBaseline="middle">
               {port.type === 'generico' ? '3:1' : '2:1'}
             </text>
@@ -143,9 +165,7 @@ export function BoardSvg({ board, showPips = true, highlight = [], speed = 0, fo
         return (
           <motion.g key={hex.id} style={fromCenter} {...enter(REVEAL_INDEX[hex.id] * T.hex, { scale: 0.2, rotate: -40 })}>
             <polygon points={points} fill={TERRAIN_FILL[terrain]} stroke="var(--tinta)" strokeWidth={3} strokeLinejoin="round" />
-            <text x={hex.x * S} y={hex.y * S - S * 0.55} textAnchor="middle" fontSize={14} dominantBaseline="middle">
-              {TERRAIN_ICON[terrain]}
-            </text>
+            <SvgGlyph name={TERRAIN_ICON[terrain]} x={hex.x * S} y={hex.y * S - S * 0.58} size={15} color={TERRAIN_INK[terrain]} opacity={0.8} />
           </motion.g>
         );
       })}

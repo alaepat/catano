@@ -102,29 +102,28 @@ export const PRESETS: Record<PresetId, GenOptions> = {
 
 export interface PresetInfo {
   label: string;
-  emoji: string;
   /** Para qué sirve el modo, en una frase. */
   description: string;
 }
 
 export const PRESET_INFO: Record<PresetId, PresetInfo> = {
-  oficial: { label: 'Oficial', emoji: '📜', description: 'Como dice el reglamento: terrenos al azar y números en espiral A-R.' },
-  equilibrado: { label: 'Equilibrado', emoji: '⚖️', description: 'Justo para todos. El modo para una partida normal.' },
+  oficial: { label: 'Oficial', description: 'Como dice el reglamento: terrenos al azar y números en espiral A-R.' },
+  equilibrado: { label: 'Equilibrado', description: 'Justo para todos. El modo para una partida normal.' },
   competitivo: {
     label: 'Competitivo',
-    emoji: '🏆',
+   
     description: 'Equilibrio máximo: ningún terreno repetido junto, cruces de 11 puntitos como mucho y puertos lejos de su recurso.',
   },
-  tranquila: { label: 'Tranquila', emoji: '☕', description: 'Equilibrado y sin ladrón al empezar. Para jugar relajados o con gente nueva.' },
-  escasez: { label: 'Escasez', emoji: '📉', description: 'Un recurso al azar solo tiene números malos. Tocará negociar… o pelearse.' },
+  tranquila: { label: 'Tranquila', description: 'Equilibrado y sin ladrón al empezar. Para jugar relajados o con gente nueva.' },
+  escasez: { label: 'Escasez', description: 'Un recurso al azar solo tiene números malos. Tocará negociar… o pelearse.' },
   continentes: {
     label: 'Continentes',
-    emoji: '🗺️',
+   
     description: 'Cada terreno forma una sola región. Nadie lo tiene todo cerca: hay que expandirse o comerciar.',
   },
-  centro: { label: 'Pelea por el centro', emoji: '🔥', description: 'Todos los 6 y 8 en el interior. Quien domine el centro manda.' },
-  mercaderes: { label: 'Mercaderes', emoji: '⚓', description: 'Cada puerto 2:1 está junto a su recurso: los puertos valen oro.' },
-  caos: { label: 'Caos total', emoji: '🌪️', description: 'Sin ninguna regla. Puede salir cualquier cosa.' },
+  centro: { label: 'Pelea por el centro', description: 'Todos los 6 y 8 en el interior. Quien domine el centro manda.' },
+  mercaderes: { label: 'Mercaderes', description: 'Cada puerto 2:1 está junto a su recurso: los puertos valen oro.' },
+  caos: { label: 'Caos total', description: 'Sin ninguna regla. Puede salir cualquier cosa.' },
 };
 
 export const PRESET_IDS = Object.keys(PRESETS) as PresetId[];

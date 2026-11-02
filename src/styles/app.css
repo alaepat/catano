@@ -401,9 +401,12 @@
   cursor: default;
 }
 
-.mode-card-emoji {
-  font-size: 1.5rem;
-  line-height: 1;
+.mode-card-icon {
+  color: var(--acento);
+}
+
+.mode-card.active .mode-card-icon {
+  color: currentColor;
 }
 
 .mode-card-label {
@@ -633,6 +636,22 @@
   font-size: 1.05rem;
 }
 
+.tablero-title > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.title-glyph {
+  color: var(--acento);
+}
+
+.dato-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .tablero-title small {
   font-family: var(--fuente-texto);
   font-size: 0.72rem;
@@ -805,7 +824,8 @@
   transition: opacity 0.2s, background 0.2s;
 }
 
-.action span {
+.action span,
+.action svg {
   font-size: 1rem;
   line-height: 1;
 }
@@ -1624,4 +1644,9 @@
   .confetti {
     display: none;
   }
+}
+
+.collapsible-icon {
+  display: inline-flex;
+  color: var(--acento);
 }

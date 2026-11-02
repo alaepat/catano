@@ -1,6 +1,7 @@
 // Pantalla de inicio: dato curioso arriba, título y bienvenida en el centro, botón de generar.
 import { AnimatePresence, motion, type Variants } from 'motion/react';
 import { useRef, useState } from 'react';
+import { Glyph } from '../components/icons';
 import { GearIcon, IconButton } from '../components/ui';
 import datos from '../data/datos-curiosos.json';
 import { datoDelDia } from '../lib/datoDelDia';
@@ -56,7 +57,7 @@ export function Inicio() {
       <motion.nav variants={item} className="inicio-bottom">
         {FEATURES.guardar && (
           <button type="button" className="pill-button" onClick={() => goTo('tableros')}>
-            <span aria-hidden>📜</span> Mis tableros
+            <Glyph name="oficial" size={18} /> Mis tableros
             {savedCount > 0 && <span className="pill-count">{savedCount}</span>}
           </button>
         )}
@@ -91,7 +92,7 @@ function DatoCurioso() {
   return (
     <motion.button type="button" layout className={open ? 'dato open' : 'dato'} onClick={onTap} aria-expanded={open} transition={{ layout: { duration: 0.3, ease: [0.32, 0.72, 0, 1] } }}>
       <motion.span layout="position" className="dato-label">
-        💡 Dato curioso del día
+        <Glyph name="idea" size={14} className="dato-glyph" /> Dato curioso del día
       </motion.span>
       <AnimatePresence mode="popLayout" initial={false}>
         <motion.span key={texto} layout="position" className="dato-text" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>

@@ -85,7 +85,7 @@ export function IconButton({ label, onClick, children }: { label: string; onClic
 }
 
 /** Sección plegable con animación de altura. */
-export function Collapsible({ title, icon, children, defaultOpen = false }: { title: string; icon: string; children: ReactNode; defaultOpen?: boolean }) {
+export function Collapsible({ title, icon, children, defaultOpen = false }: { title: string; icon: ReactNode; children: ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
   const id = useId();
   return (

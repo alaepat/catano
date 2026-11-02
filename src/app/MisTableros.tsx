@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 import { BoardSvg } from '../components/BoardSvg';
 import { BackIcon, IconButton } from '../components/ui';
+import { Glyph } from '../components/icons';
 import { PRESET_INFO } from '../game';
 import { unlockAudio } from '../lib/sound';
 import type { SavedBoard } from '../lib/saved';
@@ -33,10 +34,10 @@ export function MisTableros() {
         {saved.length === 0 ? (
           <div className="card empty-card">
             <span aria-hidden className="empty-icon">
-              📜
+              <Glyph name="oficial" size={40} />
             </span>
             <p>Aún no has guardado ninguna isla.</p>
-            <p className="muted">Cuando salga un tablero que te guste, pulsa ⭐ Guardar y aparecerá aquí.</p>
+            <p className="muted">Cuando salga un tablero que te guste, pulsa Guardar y aparecerá aquí.</p>
           </div>
         ) : (
           <ul className="saved-list">
@@ -56,7 +57,7 @@ function SavedItem({ entry }: { entry: SavedBoard }) {
   const { openSaved, renameSaved, deleteSaved, settings } = useApp();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(entry.name);
-  const mode = entry.mode === 'personalizado' ? '🛠️ Personalizado' : `${PRESET_INFO[entry.mode].emoji} ${PRESET_INFO[entry.mode].label}`;
+  const mode = entry.mode === 'personalizado' ? 'Personalizado' : PRESET_INFO[entry.mode].label;
 
   const open = () => {
     if (editing) return;
@@ -125,10 +126,10 @@ function SavedItem({ entry }: { entry: SavedBoard }) {
             setEditing(true);
           }}
         >
-          <span aria-hidden>✏️</span>
+          <Glyph name="lapiz" size={18} />
         </IconButton>
         <IconButton label="Borrar" onClick={borrar}>
-          <span aria-hidden>🗑️</span>
+          <Glyph name="papelera" size={18} />
         </IconButton>
       </div>
     </motion.li>

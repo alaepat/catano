@@ -1,6 +1,7 @@
 // Personalizar la generación: elegir un modo de un toque y, si se quiere, retocar opciones.
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect } from 'react';
+import { Glyph } from '../components/icons';
 import { BackIcon, Chips, Collapsible, IconButton, Switch, Toast } from '../components/ui';
 import { PRESET_IDS, PRESET_INFO, type GenOptions } from '../game';
 import { loadBoard3D } from '../lib/board3d';
@@ -11,8 +12,8 @@ import { useApp, type ModeChoice } from '../store';
 const MODE_CHOICES: ModeChoice[] = [...PRESET_IDS, 'sorpresa'];
 
 function modeInfo(choice: ModeChoice) {
-  if (choice === 'sorpresa') return { emoji: '🎲', label: 'Sorpresa', description: 'Un modo al azar cada vez. Ni tú sabrás qué te espera.' };
-  if (choice === 'personalizado') return { emoji: '🛠️', label: 'Personalizado', description: 'Tus propias reglas.' };
+  if (choice === 'sorpresa') return { label: 'Sorpresa', description: 'Un modo al azar cada vez. Ni tú sabrás qué te espera.' };
+  if (choice === 'personalizado') return { label: 'Personalizado', description: 'Tus propias reglas.' };
   return PRESET_INFO[choice];
 }
 
@@ -57,14 +58,14 @@ export function Personalizar() {
                 whileTap={{ scale: 0.96 }}
                 onClick={() => selectMode(id)}
               >
-                <span className="mode-card-emoji">{m.emoji}</span>
+                <Glyph name={id} size={26} className="mode-card-icon" />
                 <span className="mode-card-label">{m.label}</span>
               </motion.button>
             );
           })}
           {choice === 'personalizado' && (
             <div className="mode-card active custom" role="radio" aria-checked>
-              <span className="mode-card-emoji">🛠️</span>
+              <Glyph name="personalizado" size={26} className="mode-card-icon" />
               <span className="mode-card-label">Personalizado</span>
             </div>
           )}
@@ -107,7 +108,7 @@ type SetOption = <K extends keyof GenOptions>(key: K, value: GenOptions[K]) => v
 function AdvancedOptions({ options: o, setOption }: { options: GenOptions; setOption: SetOption }) {
   return (
     <div className="advanced">
-      <Collapsible title="Terrenos" icon="🏝️">
+      <Collapsible title="Terrenos" icon={<Glyph name="isla" size={20} />}>
         <Chips label="Desierto" value={o.desert} onChange={(v) => setOption('desert', v)} options={[['centro', 'Centro'], ['aleatorio', 'Al azar'], ['costa', 'Costa']]} />
         <Chips
           label="Distribución"
@@ -123,7 +124,7 @@ function AdvancedOptions({ options: o, setOption }: { options: GenOptions; setOp
         />
       </Collapsible>
 
-      <Collapsible title="Números" icon="🎲">
+      <Collapsible title="Números" icon={<Glyph name="sorpresa" size={20} />}>
         <Chips
           label="Colocación"
           value={o.numberMethod}
@@ -158,16 +159,16 @@ function AdvancedOptions({ options: o, setOption }: { options: GenOptions; setOp
           options={[
             ['ninguno', 'Ninguna'],
             ['aleatorio', 'Al azar'],
-            ['madera', '🌲 Madera'],
-            ['lana', '🐑 Lana'],
-            ['trigo', '🌾 Trigo'],
-            ['arcilla', '🧱 Arcilla'],
-            ['mineral', '⛰️ Mineral'],
+            ['madera', 'Madera'],
+            ['lana', 'Lana'],
+            ['trigo', 'Trigo'],
+            ['arcilla', 'Arcilla'],
+            ['mineral', 'Mineral'],
           ]}
         />
       </Collapsible>
 
-      <Collapsible title="Puertos" icon="⚓">
+      <Collapsible title="Puertos" icon={<Glyph name="mercaderes" size={20} />}>
         <Switch label="Puertos" checked={o.ports} onChange={(v) => setOption('ports', v)} />
         <Chips
           label="Posición"
@@ -185,7 +186,7 @@ function AdvancedOptions({ options: o, setOption }: { options: GenOptions; setOp
         />
       </Collapsible>
 
-      <Collapsible title="Ladrón" icon="🦹">
+      <Collapsible title="Ladrón" icon={<Glyph name="ladron" size={20} />}>
         <Chips label="Empieza en" value={o.robberStart} onChange={(v) => setOption('robberStart', v)} options={[['desierto', 'El desierto'], ['fuera', 'Fuera del tablero']]} />
       </Collapsible>
     </div>

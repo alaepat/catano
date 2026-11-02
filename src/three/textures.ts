@@ -1,6 +1,7 @@
 // Texturas dibujadas con canvas 2D: caras de las fichas, etiquetas de puertos y brillos.
 // Se dibujan en el móvil (sin descargar nada), así funcionan sin internet.
 import { CanvasTexture, SRGBColorSpace } from 'three';
+import { strokeGlyph } from '../lib/glyphs';
 import { isRed, pips, type PortType } from '../game';
 
 const cache = new Map<string, CanvasTexture>();
@@ -57,14 +58,6 @@ export function tokenTexture(n: number, showPips: boolean, fontsVersion: number)
   });
 }
 
-const PORT_ICON: Record<PortType, string> = {
-  generico: '?',
-  madera: '🌲',
-  lana: '🐑',
-  trigo: '🌾',
-  arcilla: '🧱',
-  mineral: '⛰️',
-};
 
 /** Etiqueta redonda que flota sobre cada barco: recurso y cambio (2:1 o 3:1). */
 export function portTexture(type: PortType, fontsVersion: number): CanvasTexture {
@@ -85,8 +78,7 @@ export function portTexture(type: PortType, fontsVersion: number): CanvasTexture
       ctx.font = '700 96px Fraunces, Georgia, serif';
       ctx.fillText('?', c, 104);
     } else {
-      ctx.font = '88px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
-      ctx.fillText(PORT_ICON[type], c, 104);
+      strokeGlyph(ctx, type, c, 100, 92, TINTA, 2);
     }
     ctx.fillStyle = TINTA;
     ctx.font = '800 54px Nunito, system-ui, sans-serif';

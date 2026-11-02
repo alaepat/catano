@@ -1,5 +1,6 @@
 // Iconos propios de la app: trazo fino y redondeado, del color del texto (sustituyen a los emojis).
 import type { ReactNode, SVGProps } from 'react';
+import { GLYPHS, type GlyphName } from '../lib/glyphs';
 
 type IconProps = SVGProps<SVGSVGElement> & { size?: number };
 
@@ -22,6 +23,13 @@ function Icon({ size = 22, children, ...rest }: IconProps & { children: ReactNod
     </svg>
   );
 }
+
+/** Icono del juego de trazos compartido (recursos, modos, acciones). */
+export const Glyph = ({ name, ...p }: IconProps & { name: GlyphName }) => (
+  <Icon {...p}>
+    <path d={GLYPHS[name]} />
+  </Icon>
+);
 
 /** Pueblo: casita. */
 export const HouseIcon = (p: IconProps) => (

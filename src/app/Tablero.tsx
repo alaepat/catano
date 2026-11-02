@@ -5,6 +5,7 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } fro
 import { BoardSvg } from '../components/BoardSvg';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { HexCard } from '../components/HexCard';
+import { Glyph } from '../components/icons';
 import { Marcador } from '../components/Marcador';
 import { BackIcon, IconButton, Toast } from '../components/ui';
 import { PRESET_INFO, analyzeBoard, type Resource } from '../game';
@@ -18,11 +19,11 @@ import { hasWebGL } from '../lib/webgl';
 import { ANIM_FACTOR, useApp } from '../store';
 
 const RESOURCE_LABEL: Record<Resource, string> = {
-  madera: '🌲 Madera',
-  lana: '🐑 Lana',
-  trigo: '🌾 Trigo',
-  arcilla: '🧱 Arcilla',
-  mineral: '⛰️ Mineral',
+  madera: 'Madera',
+  lana: 'Lana',
+  trigo: 'Trigo',
+  arcilla: 'Arcilla',
+  mineral: 'Mineral',
 };
 
 const Board3D = lazy(loadBoard3D);
@@ -66,8 +67,7 @@ export function Tablero() {
 
   if (!generation) return null;
 
-  const modeLabel =
-    generation.mode === 'personalizado' ? '🛠️ Personalizado' : `${PRESET_INFO[generation.mode].emoji} ${PRESET_INFO[generation.mode].label}`;
+  const modeLabel = generation.mode === 'personalizado' ? 'Personalizado' : PRESET_INFO[generation.mode].label;
   const saved = Boolean(generation.savedId);
 
   const otraVez = () => {
@@ -77,7 +77,7 @@ export function Tablero() {
 
   const guardar = () => {
     toggleSaveCurrent();
-    setToast([saved ? 'Quitada de Mis tableros' : '⭐ Guardada en Mis tableros']);
+    setToast([saved ? 'Quitada de Mis tableros' : 'Guardada en Mis tableros']);
   };
 
   const foto = async () => {
@@ -98,7 +98,7 @@ export function Tablero() {
         soft: use3d,
       });
       const result = await shareImage(blob, generation.name);
-      if (result === 'descargada') setToast(['📷 Foto descargada']);
+      if (result === 'descargada') setToast(['Foto descargada']);
     } catch (e) {
       console.error(e);
       setToast(['No se ha podido hacer la foto. Prueba otra vez.']);
@@ -114,7 +114,10 @@ export function Tablero() {
           <BackIcon />
         </IconButton>
         <div className="topbar-title tablero-title">
-          <span>{modeLabel}</span>
+          <span>
+            <Glyph name={generation.mode} size={18} className="title-glyph" />
+            {modeLabel}
+          </span>
           {choice === 'sorpresa' && !saved && <small>Sorpresa</small>}
         </div>
         {analysis ? (
@@ -237,12 +240,12 @@ export function Tablero() {
 
       <nav className={FEATURES.foto && FEATURES.guardar ? 'action-bar five' : 'action-bar'} aria-label="Acciones del tablero">
         <button type="button" className={showAnalysis ? 'action active' : 'action'} aria-pressed={showAnalysis} onClick={() => setShowAnalysis(!showAnalysis)} disabled={!board}>
-          <span aria-hidden>📊</span>
+          <Glyph name="analisis" size={20} />
           Análisis
         </button>
         {FEATURES.guardar && (
           <button type="button" className={saved ? 'action active' : 'action'} aria-pressed={saved} onClick={guardar} disabled={!board}>
-            <span aria-hidden>{saved ? '★' : '☆'}</span>
+            <Glyph name="estrella" size={20} fill={saved ? 'currentColor' : 'none'} />
             {saved ? 'Guardada' : 'Guardar'}
           </button>
         )}
@@ -251,7 +254,7 @@ export function Tablero() {
         </motion.button>
         {FEATURES.foto && (
           <button type="button" className="action" onClick={foto} disabled={!board || !revealed || busy}>
-            <span aria-hidden>📷</span>
+            <Glyph name="camara" size={20} />
             Foto
           </button>
         )}
