@@ -3,6 +3,7 @@ import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { useEffect, useRef } from 'react';
 import { Ajustes } from './app/Ajustes';
 import { Inicio } from './app/Inicio';
+import { MisTableros } from './app/MisTableros';
 import { Personalizar } from './app/Personalizar';
 import { Tablero } from './app/Tablero';
 import { Background } from './components/Background';
@@ -14,10 +15,11 @@ const SCREENS: Record<Screen, () => React.JSX.Element | null> = {
   personalizar: Personalizar,
   tablero: Tablero,
   ajustes: Ajustes,
+  tableros: MisTableros,
 };
 
 /** Profundidad de cada pantalla: al ir "hacia dentro" se desliza desde la derecha, al volver, desde la izquierda. */
-const DEPTH: Record<Screen, number> = { inicio: 0, ajustes: 1, personalizar: 1, tablero: 2 };
+const DEPTH: Record<Screen, number> = { inicio: 0, ajustes: 1, personalizar: 1, tableros: 1, tablero: 2 };
 
 export default function App() {
   const screen = useApp((s) => s.screen);

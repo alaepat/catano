@@ -1,0 +1,22 @@
+{
+  "_nota": "Nombre de cada isla = un lugar + un detalle. En 'bromas' podéis añadir detalles del grupo, por ejemplo \"de [nombre] el Tramposo\" (empiezan por de/del). Salen 1 de cada 4 veces.",
+  "lugares": [
+    "Isla", "Archipiélago", "Tierra", "Costa", "Bahía", "Península", "Atolón", "Cabo",
+    "Reino", "Valle", "Arrecife", "Islote", "Puerto", "Comarca", "Condado"
+  ],
+  "detalles": [
+    "de las Ovejas Perdidas", "del Ladrón Dormido", "de los Siete Dados", "del Dado Traicionero",
+    "de los Colonos Valientes", "de la Niebla", "del Último Puerto", "de las Mil Rutas",
+    "del Comercio Injusto", "de los Caminos Largos", "del Cruce Perfecto", "de la Calma",
+    "de los Pactos Rotos", "del Monopolio", "de la Tormenta", "del Faro Antiguo",
+    "de los Vientos", "del Sol Poniente", "de la Ruta Más Larga", "del Gran Ejército"
+  ],
+  "porRecurso": {
+    "madera": ["de los Mil Pinos", "del Bosque Susurrante", "de los Leñadores", "del Roble Viejo"],
+    "lana": ["de las Ovejas Gordas", "del Rebaño Infinito", "de la Lana Dorada", "de los Pastores"],
+    "trigo": ["del Trigo Maldito", "de los Campos Dorados", "del Pan Eterno", "de las Espigas"],
+    "arcilla": ["de la Arcilla Eterna", "de los Mil Ladrillos", "del Barro Rojo", "de los Alfareros"],
+    "mineral": ["de las Montañas Grises", "del Hierro Frío", "de las Minas Profundas", "de la Piedra Viva"]
+  },
+  "bromas": []
+}

@@ -1,14 +1,17 @@
-// El tablero generado (en 3D, o en 2D si se elige o si el móvil no puede), con acciones: otra vez, análisis y puntitos.
-
+// El tablero generado (en 3D, o en 2D si se elige o si el móvil no puede), con su nombre de isla
+// y las acciones: análisis, guardar, otra vez, foto y puntitos.
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BoardSvg } from '../components/BoardSvg';
 import { ErrorBoundary } from '../components/ErrorBoundary';
-import { BackIcon, IconButton } from '../components/ui';
-import { loadBoard3D } from '../lib/board3d';
-import { revealDuration } from '../lib/reveal';
-import { hasWebGL } from '../lib/webgl';
+import { BackIcon, IconButton, Toast } from '../components/ui';
 import { PRESET_INFO, analyzeBoard, type Resource } from '../game';
+import { loadBoard3D } from '../lib/board3d';
+import { comentario } from '../lib/comentario';
+import { capture2D, composePhoto, shareImage } from '../lib/photo';
+import { revealDuration } from '../lib/reveal';
+import { unlockAudio } from '../lib/sound';
+import { hasWebGL } from '../lib/webgl';
 import { ANIM_FACTOR, useApp } from '../store';
 
 const RESOURCE_LABEL: Record<Resource, string> = {
@@ -22,11 +25,15 @@ const RESOURCE_LABEL: Record<Resource, string> = {
 const Board3D = lazy(loadBoard3D);
 
 export function Tablero() {
-  const { generation, choice, settings, generate, updateSettings } = useApp();
+  const { generation, choice, settings, generate, updateSettings, toggleSaveCurrent } = useApp();
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [failed3d, setFailed3d] = useState(false);
+  const [toast, setToast] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
   // Generación cuya animación ya terminó (o se saltó tocando la pantalla).
   const [revealedId, setRevealedId] = useState<number | null>(null);
+  const capture3D = useRef<(() => HTMLCanvasElement) | null>(null);
+  const wrap2D = useRef<HTMLDivElement>(null);
 
   const reduceMotion = useReducedMotion();
   const speed = reduceMotion ? 0 : ANIM_FACTOR[settings.animSpeed];
@@ -34,6 +41,7 @@ export function Tablero() {
   const genId = generation?.id ?? null;
   const revealed = speed === 0 || revealedId === genId;
   const reveal = () => setRevealedId(genId);
+  const clearToast = useCallback(() => setToast([]), []);
 
   const board = generation?.result.ok ? generation.result.board : null;
   const analysis = useMemo(() => (board ? analyzeBoard(board) : null), [board]);
@@ -53,6 +61,44 @@ export function Tablero() {
 
   const modeLabel =
     generation.mode === 'personalizado' ? '🛠️ Personalizado' : `${PRESET_INFO[generation.mode].emoji} ${PRESET_INFO[generation.mode].label}`;
+  const saved = Boolean(generation.savedId);
+
+  const otraVez = () => {
+    if (settings.sound) unlockAudio();
+    generate();
+  };
+
+  const guardar = () => {
+    toggleSaveCurrent();
+    setToast([saved ? 'Quitada de Mis tableros' : '⭐ Guardada en Mis tableros']);
+  };
+
+  const foto = async () => {
+    if (!analysis || busy) return;
+    setBusy(true);
+    try {
+      let image: HTMLCanvasElement | null = null;
+      if (use3d) image = capture3D.current?.() ?? null;
+      else {
+        const svg = wrap2D.current?.querySelector('svg');
+        if (svg) image = await capture2D(svg);
+      }
+      if (!image) throw new Error('Sin tablero');
+      const blob = await composePhoto(image, {
+        name: generation.name,
+        subtitle: `${modeLabel} · Equilibrio ${analysis.score}`,
+        date: new Date(),
+        soft: use3d,
+      });
+      const result = await shareImage(blob, generation.name);
+      if (result === 'descargada') setToast(['📷 Foto descargada']);
+    } catch (e) {
+      console.error(e);
+      setToast(['No se ha podido hacer la foto. Prueba otra vez.']);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div className="screen tablero">
@@ -62,7 +108,7 @@ export function Tablero() {
         </IconButton>
         <div className="topbar-title tablero-title">
           <span>{modeLabel}</span>
-          {choice === 'sorpresa' && <small>Sorpresa</small>}
+          {choice === 'sorpresa' && !saved && <small>Sorpresa</small>}
         </div>
         {analysis ? (
           <motion.span className="score-chip" initial={{ opacity: 0 }} animate={{ opacity: revealed ? 1 : 0 }} title="Puntuación de equilibrio">
@@ -74,8 +120,21 @@ export function Tablero() {
       </header>
 
       <div className="tablero-main">
+        {board && (
+          // El nombre de la isla aparece al terminar la animación (su hueco está reservado para que nada salte).
+          <motion.h2
+            key={generation.id}
+            className="island-name"
+            initial={{ opacity: 0, y: 8, filter: 'blur(6px)' }}
+            animate={revealed ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 8, filter: 'blur(6px)' }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {generation.name}
+          </motion.h2>
+        )}
+
         {board && use3d ? (
-          <div className="board-3d" role="img" aria-label="Tablero de Catan en 3D" onClick={reveal}>
+          <div className="board-3d" role="img" aria-label={`Tablero de Catan en 3D: ${generation.name}`} onClick={reveal}>
             <ErrorBoundary fallback={null} onError={() => setFailed3d(true)}>
               <Suspense fallback={<div className="board-loading" />}>
                 <Board3D
@@ -87,6 +146,8 @@ export function Tablero() {
                   highlight={highlight}
                   quality={settings.quality === '2d' ? 'alta' : settings.quality}
                   stars={settings.background === 'espacio'}
+                  sound={settings.sound}
+                  captureRef={capture3D}
                   onDone={reveal}
                   onFail={() => setFailed3d(true)}
                 />
@@ -106,7 +167,7 @@ export function Tablero() {
             </AnimatePresence>
           </div>
         ) : board ? (
-          <div className="board-wrap" onClick={reveal}>
+          <div className="board-wrap" ref={wrap2D} onClick={reveal}>
             <BoardSvg key={generation.id} board={board} speed={speed} showPips={settings.showPips} highlight={highlight} />
           </div>
         ) : (
@@ -144,19 +205,30 @@ export function Tablero() {
                   </li>
                 </ul>
               </div>
+              <p className="analysis-comment">{comentario(analysis)}</p>
             </motion.section>
           )}
         </AnimatePresence>
       </div>
 
-      <nav className="action-bar" aria-label="Acciones del tablero">
+      <Toast messages={toast} onDone={clearToast} />
+
+      <nav className="action-bar five" aria-label="Acciones del tablero">
         <button type="button" className={showAnalysis ? 'action active' : 'action'} aria-pressed={showAnalysis} onClick={() => setShowAnalysis(!showAnalysis)} disabled={!board}>
           <span aria-hidden>📊</span>
           Análisis
         </button>
-        <motion.button type="button" className="btn-primary action-main" whileTap={{ scale: 0.95 }} onClick={generate}>
+        <button type="button" className={saved ? 'action active' : 'action'} aria-pressed={saved} onClick={guardar} disabled={!board}>
+          <span aria-hidden>{saved ? '★' : '☆'}</span>
+          {saved ? 'Guardada' : 'Guardar'}
+        </button>
+        <motion.button type="button" className="btn-primary action-main" whileTap={{ scale: 0.95 }} onClick={otraVez}>
           Otra vez
         </motion.button>
+        <button type="button" className="action" onClick={foto} disabled={!board || !revealed || busy}>
+          <span aria-hidden>📷</span>
+          Foto
+        </button>
         <button
           type="button"
           className={settings.showPips ? 'action active' : 'action'}

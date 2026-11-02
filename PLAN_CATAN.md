@@ -399,16 +399,16 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 - [x] Secuencia de animación completa + saltar tocando ("Toca para saltar" acelera hasta el final)
 - [x] Calidad gráfica (Alta / Media / Baja / 2D en Ajustes) y modo 2D de respaldo si el 3D falla o el móvil no puede
 - [ ] Prueba real en el móvil del usuario (fluidez a 60 fps: no se puede medir desde el PC)
-- [ ] Nombre de la isla al final de la animación → pasa a la Fase 4 (va con "Nombres de isla aleatorios")
+- [x] Nombre de la isla al final de la animación (hecho en la Fase 4)
 
-### Fase 4: Pulido y personalidad
-- [ ] Todos los fondos seleccionables
-- [ ] Sonidos y música (opcionales)
-- [ ] Mis tableros (guardar, renombrar, borrar)
-- [ ] Nombres de isla aleatorios
-- [ ] Análisis del tablero
-- [ ] Foto del mapa para compartir
-- [ ] Integrar el diseño final de Claude Design
+### Fase 4: Pulido y personalidad ✅ (2026-11-02, salvo el diseño de Claude Design)
+- [x] Todos los fondos seleccionables: Espacio, Océano, Pergamino (oscuro, para que se lea el texto crema), Atardecer, Bosque nocturno y Minimal (`components/Background.tsx`)
+- [x] Sonidos: efectos sintetizados en el móvil (`lib/sound.ts`), apagados por defecto; se encienden en Ajustes. Música: no (pendiente de que el usuario la quiera)
+- [x] Mis tableros: guardar ⭐ desde el tablero, abrir, renombrar y borrar (`app/MisTableros.tsx`, máximo 60)
+- [x] Nombres de isla aleatorios (`lib/islandName.ts` + `data/nombres-isla.json`, con hueco para bromas del grupo); salen al terminar la animación
+- [x] Análisis del tablero, ahora con un comentario con gracia (`lib/comentario.ts`)
+- [x] Foto del mapa para compartir: imagen 1080×1350 con nombre, modo y equilibrio; en el iPhone abre el menú de compartir (`lib/photo.ts`)
+- [ ] Integrar el diseño final de Claude Design (esperando al usuario)
 
 ### Fase 5: Publicar (adelantada el 2026-11-02)
 - [x] PWA instalable y funcionando sin conexión (`vite-plugin-pwa` en `vite.config.ts`)
@@ -502,6 +502,11 @@ Claude: añade aquí ideas nuevas. El usuario elegirá cuáles entran.
 | 2026-11-02 | Números de las fichas dibujados con canvas, no con texto 3D | El texto 3D descargaría tipografías de internet y fallaría sin conexión |
 | 2026-11-02 | Con "reducir movimiento" del sistema, el tablero sale sin animación | Una cámara que vuela por el espacio puede marear; el plan decía "animación corta", pero es más seguro quitarla |
 | 2026-11-02 | La animación nunca avanza más de 0,1 s por fotograma | Si el móvil se atasca un momento, la animación va más lenta en vez de dar saltos |
+| 2026-11-02 | Sonidos sintetizados con Web Audio, no archivos ni Howler.js | No pesan nada, funcionan sin internet y no hay que buscar sonidos con licencia |
+| 2026-11-02 | Sonido apagado por defecto | El usuario aún no ha dicho si lo quiere, y que la app suene de golpe en público molesta |
+| 2026-11-02 | Pergamino oscuro (cuero viejo) en vez de claro | Con un pergamino claro el texto crema no se leería |
+| 2026-11-02 | La foto 3D se hace con un encuadre cuadrado propio y sin estrellas, con los bordes difuminados | Con el encuadre de la pantalla el aura quedaba cortada en seco |
+| 2026-11-02 | Mis tableros se guarda en el móvil (localStorage), hasta 60 islas | Una sola persona usa la app; no hace falta servidor |
 
 ---
 
@@ -510,7 +515,8 @@ Claude: añade aquí ideas nuevas. El usuario elegirá cuáles entran.
 - [ ] ¿Cómo se llama la app? (título de la pantalla de inicio)
 - [ ] ¿Nombres y colores de los amigos del grupo?
 - [ ] ¿Se usará sobre todo en móvil? ¿Android o iPhone?
-- [ ] ¿Queréis sonido y música?
+- [ ] ¿Queréis sonido y música? → hay efectos (apagados por defecto, en Ajustes). ¿Encenderlos por defecto? ¿Música?
+- [ ] Bromas del grupo para los nombres de isla (`src/data/nombres-isla.json`, lista `bromas`)
 - [ ] ¿Qué edición del Catan tenéis? (afecta a los puertos: marco fijo o fichas sueltas)
 - [ ] ¿Cuándo llegará el diseño de Claude Design y en qué formato?
 - [ ] Lista de bromas para el Dato curioso del día

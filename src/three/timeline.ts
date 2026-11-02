@@ -1,6 +1,7 @@
 // Guion de la animación 3D: cuándo empieza y cuánto dura cada parte (segundos, a velocidad "épica").
 // No usa Three.js, así que se puede probar con tests.
 import { REVEAL_INDEX } from '../lib/reveal';
+import type { SoundEvent } from '../lib/sound';
 
 export const SEQ = {
   /** 1. Un punto de luz crece en el espacio. */
@@ -82,4 +83,25 @@ export function landingFlash(t: number, w: Window): number {
 /** Cuánto dura la animación 3D a una velocidad dada (1 = épica, 0 = sin animación). */
 export function sequenceDuration(speed: number): number {
   return SEQ.end * speed;
+}
+
+/**
+ * Sonidos de la animación, en segundos reales (ya multiplicados por la velocidad).
+ * `numbered` = ids de los hexágonos con ficha.
+ */
+export function soundTimeline(numbered: number[], ports: number, robber: boolean, speed: number): SoundEvent[] {
+  const events: SoundEvent[] = [{ at: 0, kind: 'swell' }];
+  for (let id = 0; id < REVEAL_INDEX.length; id++) {
+    const w = hexWindow(id);
+    events.push({ at: w.start + w.dur, kind: 'tock', pitch: REVEAL_INDEX[id] / (REVEAL_INDEX.length - 1) });
+  }
+  for (const id of numbered) {
+    const w = tokenWindow(id);
+    // Primer bote de la ficha al caer (la curva outBounce toca el suelo al 36 %).
+    events.push({ at: w.start + w.dur * 0.364, kind: 'clink', pitch: (id * 7) % 10 / 10 });
+  }
+  for (let j = 0; j < ports; j++) events.push({ at: portWindow(j).start, kind: 'whoosh' });
+  if (robber) events.push({ at: SEQ.smoke.start, kind: 'puff' });
+  events.push({ at: SEQ.end - 0.35, kind: 'chord' });
+  return events.map((e) => ({ ...e, at: e.at * speed })).sort((a, b) => a.at - b.at);
 }

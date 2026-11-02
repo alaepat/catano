@@ -44,8 +44,110 @@
   height: 100%;
 }
 
+/* Océano: profundidad azul, un brillo de sol que se mueve y olas abajo. */
+.bg-oceano {
+  background:
+    radial-gradient(ellipse 70% 40% at 50% 0%, rgba(140, 210, 240, 0.22), transparent 70%),
+    linear-gradient(180deg, #164a66 0%, #0b2a3d 45%, #061724 100%);
+}
+
+.bg-oceano::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 50% 30% at 30% 20%, rgba(200, 240, 255, 0.1), transparent 70%);
+  animation: brillo 9s ease-in-out infinite alternate;
+}
+
+@keyframes brillo {
+  from { opacity: 0.4; transform: translateX(-4%); }
+  to { opacity: 1; transform: translateX(4%); }
+}
+
+.waves {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 26vh;
+  overflow: hidden;
+}
+
+.wave {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 200%;
+  animation: ola 26s linear infinite;
+}
+
+.wave svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Todas las capas llegan hasta abajo; cambia solo la altura de la cresta. */
+.wave-0 { height: 100%; opacity: 0.16; animation-duration: 34s; }
+.wave-0 path { fill: #7fc3e6; }
+.wave-1 { height: 78%; opacity: 0.22; animation-duration: 24s; animation-direction: reverse; }
+.wave-1 path { fill: #3f8fb8; }
+.wave-2 { height: 55%; opacity: 0.55; animation-duration: 18s; }
+.wave-2 path { fill: #0a2536; }
+
+@keyframes ola {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* Pergamino: cuero viejo oscuro (para que el texto crema se lea), con cuadrícula de mapa y viñeta. */
+.bg-pergamino {
+  color: #f3e9d2;
+  background:
+    radial-gradient(ellipse at 50% 45%, transparent 40%, rgba(10, 6, 2, 0.65) 100%),
+    repeating-linear-gradient(0deg, rgba(243, 233, 210, 0.035) 0 1px, transparent 1px 64px),
+    repeating-linear-gradient(90deg, rgba(243, 233, 210, 0.035) 0 1px, transparent 1px 64px),
+    radial-gradient(circle at 50% 40%, #5a4029 0%, #3a2817 50%, #1f150c 100%);
+}
+
+.bg-pergamino::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.22;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.compass {
+  position: absolute;
+  right: -40px;
+  bottom: 12vh;
+  width: 220px;
+  height: 220px;
+  opacity: 0.07;
+}
+
+/* Bosque nocturno: cielo con luna, pinos y luciérnagas. */
+.bg-bosque {
+  background:
+    radial-gradient(circle at 22% 14%, rgba(255, 246, 220, 0.9) 0 18px, rgba(255, 246, 220, 0.12) 19px, transparent 120px),
+    linear-gradient(180deg, #13263a 0%, #102a2c 50%, #081613 100%);
+}
+
+.trees {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 32vh;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .bg-atardecer { animation: none; }
+  .bg-atardecer,
+  .bg-oceano::before,
+  .wave { animation: none; }
 }
 
 /* ---------- Estructura ---------- */
@@ -779,4 +881,158 @@
   font-size: 0.8rem;
   color: var(--crema-suave);
   opacity: 0.45;
+}
+
+/* ---------- Fase 4: nombre de la isla, barra de 5 botones, Mis tableros ---------- */
+.island-name {
+  margin: 0;
+  min-height: 1.3em;
+  text-align: center;
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: clamp(1.3rem, 6vw, 1.7rem);
+  line-height: 1.2;
+  color: var(--crema);
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.45);
+  text-wrap: balance;
+}
+
+.action-bar.five {
+  grid-template-columns: 1fr 1fr auto 1fr 1fr;
+  gap: 2px;
+  padding: 6px;
+}
+
+.action-bar.five .action-main {
+  padding: 0 18px;
+}
+
+.action-bar.five .action {
+  font-size: 0.66rem;
+  min-width: 0;
+}
+
+.analysis-comment {
+  margin: 0;
+  padding: 0 20px 16px;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--crema-suave);
+  font-style: italic;
+}
+
+.pill-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px;
+  border-radius: var(--radio-pildora);
+  border: 1px solid var(--tarjeta-borde);
+  background: var(--tarjeta);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.pill-count {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: var(--radio-pildora);
+  background: var(--acento);
+  color: var(--tinta);
+  font-size: 0.75rem;
+  display: inline-grid;
+  place-items: center;
+}
+
+.empty-card {
+  margin-top: 24px;
+  padding: 32px 24px;
+  text-align: center;
+  display: grid;
+  gap: 8px;
+}
+
+.empty-card p {
+  margin: 0;
+}
+
+.empty-icon {
+  font-size: 2.4rem;
+}
+
+.saved-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+
+.saved-item {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 8px 10px 10px;
+  overflow: hidden;
+}
+
+.saved-thumb {
+  width: 76px;
+  height: 76px;
+  padding: 4px;
+  border: none;
+  border-radius: var(--radio-m);
+  background: rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+}
+
+.saved-info {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.saved-name {
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: 1.02rem;
+  line-height: 1.25;
+  color: var(--crema);
+  cursor: pointer;
+}
+
+.saved-input {
+  width: 100%;
+  min-height: 36px;
+  padding: 4px 10px;
+  border-radius: var(--radio-s);
+  border: 1px solid var(--acento);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--crema);
+  font: 700 1rem var(--fuente-titulo);
+}
+
+.saved-meta {
+  font-size: 0.78rem;
+  color: var(--crema-suave);
+  opacity: 0.75;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.saved-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }

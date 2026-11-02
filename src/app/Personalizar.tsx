@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { BackIcon, Chips, Collapsible, IconButton, Switch, Toast } from '../components/ui';
 import { PRESET_IDS, PRESET_INFO, type GenOptions } from '../game';
 import { loadBoard3D } from '../lib/board3d';
+import { unlockAudio } from '../lib/sound';
 import { hasWebGL } from '../lib/webgl';
 import { useApp, type ModeChoice } from '../store';
 
@@ -25,6 +26,7 @@ export function Personalizar() {
   }, [settings.quality]);
 
   const crear = () => {
+    if (settings.sound) unlockAudio();
     generate();
     goTo('tablero');
   };

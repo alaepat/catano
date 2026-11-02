@@ -1,16 +1,17 @@
 // Escena 3D del tablero: la isla aparece en el espacio con la secuencia "épica" (timeline.ts).
 // Se carga aparte (lazy) para que la app arranque rápido; si falla, Tablero muestra el 2D.
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { MathUtils, type Group, type PerspectiveCamera } from 'three';
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { MathUtils, Vector2, Vector3, type Group, type PerspectiveCamera } from 'three';
 import type { Board } from '../game';
+import { playSequence, playSound } from '../lib/sound';
 import type { Quality } from '../store';
 import { ClockContext, useClock, type Clock } from './clock';
 import { SEA_R } from './coords';
 import { Island } from './Island';
 import { Ports, Robber } from './Pieces';
 import { Aura, Burst, Sea, Stars } from './Space';
-import { SEQ, ease, lerp, progress } from './timeline';
+import { SEQ, ease, lerp, progress, soundTimeline } from './timeline';
 
 type Quality3D = Exclude<Quality, '2d'>;
 
@@ -35,6 +36,10 @@ export interface Board3DProps {
   quality: Quality3D;
   /** Estrellas 3D (solo con el fondo Espacio). */
   stars: boolean;
+  /** Efectos de sonido. */
+  sound: boolean;
+  /** Aquí la escena deja una función que hace una foto del tablero tal como se ve. */
+  captureRef?: RefObject<(() => HTMLCanvasElement) | null>;
   onDone: () => void;
   onFail: () => void;
 }
@@ -85,7 +90,7 @@ export default function Board3D(props: Board3DProps) {
   );
 }
 
-function Scene({ board, speed, skip, showPips, highlight, quality, stars, onDone, fontsVersion }: Board3DProps & { fontsVersion: number }) {
+function Scene({ board, speed, skip, showPips, highlight, quality, stars, sound, captureRef, onDone, fontsVersion }: Board3DProps & { fontsVersion: number }) {
   const q = QUALITY[quality];
   const clock = useRef<Clock>({ t: speed > 0 ? 0 : SEQ.end, doneAt: null });
   const done = useRef(speed <= 0);
@@ -95,6 +100,64 @@ function Scene({ board, speed, skip, showPips, highlight, quality, stars, onDone
     skipping.current = skip;
     onDoneRef.current = onDone;
   });
+
+  // Sonidos: se programan todos al empezar; si se salta la animación, se cortan y suena el acorde final.
+  const stopSound = useRef<() => void>(() => {});
+  useEffect(() => {
+    if (!sound) return;
+    if (speed <= 0) {
+      playSound('chord');
+      return;
+    }
+    const numbered = board.numbers.flatMap((n, id) => (n == null ? [] : [id]));
+    stopSound.current = playSequence(soundTimeline(numbered, board.ports.length, board.robber !== null, speed));
+    return () => stopSound.current();
+    // Solo al aparecer la escena (cada generación monta una escena nueva).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (skip && sound && speed > 0 && clock.current.t < SEQ.end - 0.4) {
+      stopSound.current();
+      playSound('chord');
+    }
+  }, [skip, sound, speed]);
+
+  // Foto: un fotograma cuadrado, más abierto (para que quepa toda el aura) y sin estrellas.
+  // Se dibuja, se copia y se deja todo como estaba en el mismo instante, así en pantalla no se nota nada.
+  const { gl, scene, camera } = useThree();
+  useEffect(() => {
+    if (!captureRef) return;
+    captureRef.current = () => {
+      const SIZE = 1200;
+      const view = camera as PerspectiveCamera;
+      const shot = view.clone();
+      shot.aspect = 1;
+      const reach = SEA_R * 1.45;
+      const dir = view.position.clone().normalize();
+      shot.position.copy(dir.multiplyScalar(reach / Math.sin(MathUtils.degToRad(FOV / 2))));
+      shot.lookAt(new Vector3(0, 0, 0.25));
+      shot.updateProjectionMatrix();
+
+      const size = gl.getSize(new Vector2());
+      const dpr = gl.getPixelRatio();
+      const stars = scene.getObjectsByProperty('name', 'stars');
+      stars.forEach((o) => (o.visible = false));
+      gl.setPixelRatio(1);
+      gl.setSize(SIZE, SIZE, false);
+      gl.render(scene, shot);
+      const copy = document.createElement('canvas');
+      copy.width = copy.height = SIZE;
+      copy.getContext('2d')?.drawImage(gl.domElement, 0, 0);
+      stars.forEach((o) => (o.visible = true));
+      gl.setPixelRatio(dpr);
+      gl.setSize(size.x, size.y, false);
+      gl.render(scene, camera);
+      return copy;
+    };
+    return () => {
+      captureRef.current = null;
+    };
+  }, [captureRef, gl, scene, camera]);
 
   useFrame(({ clock: real }, dt) => {
     const c = clock.current;

@@ -147,8 +147,8 @@ export function Stars({ count }: { count: number }) {
   });
   return (
     <>
-      <points ref={ref} geometry={small} material={smallMat} />
-      <points ref={big} geometry={large} material={largeMat} />
+      <points ref={ref} name="stars" geometry={small} material={smallMat} />
+      <points ref={big} name="stars" geometry={large} material={largeMat} />
     </>
   );
 }

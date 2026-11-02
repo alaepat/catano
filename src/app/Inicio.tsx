@@ -26,6 +26,7 @@ const item: Variants = {
 
 export function Inicio() {
   const goTo = useApp((s) => s.goTo);
+  const savedCount = useApp((s) => s.saved.length);
 
   return (
     <motion.div className="screen inicio" variants={container} initial="hidden" animate="show">
@@ -53,6 +54,10 @@ export function Inicio() {
       </div>
 
       <motion.nav variants={item} className="inicio-bottom">
+        <button type="button" className="pill-button" onClick={() => goTo('tableros')}>
+          <span aria-hidden>📜</span> Mis tableros
+          {savedCount > 0 && <span className="pill-count">{savedCount}</span>}
+        </button>
         <IconButton label="Ajustes" onClick={() => goTo('ajustes')}>
           <GearIcon />
         </IconButton>
