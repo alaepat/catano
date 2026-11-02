@@ -2,6 +2,7 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect } from 'react';
 import { Glyph } from '../components/icons';
+import { ModeWheel } from '../components/ModeWheel';
 import { BackIcon, Chips, Collapsible, IconButton, Switch, Toast } from '../components/ui';
 import { PRESET_IDS, PRESET_INFO, type GenOptions } from '../game';
 import { loadBoard3D } from '../lib/board3d';
@@ -16,6 +17,8 @@ function modeInfo(choice: ModeChoice) {
   if (choice === 'personalizado') return { label: 'Personalizado', description: 'Tus propias reglas.' };
   return PRESET_INFO[choice];
 }
+
+const LABELS = Object.fromEntries([...MODE_CHOICES, 'personalizado' as const].map((m) => [m, modeInfo(m).label]));
 
 export function Personalizar() {
   const { choice, options, notes, goTo, selectMode, setOption, clearNotes, generate, settings } = useApp();
@@ -43,45 +46,28 @@ export function Personalizar() {
       </header>
 
       <div className="scroll">
-        <h2 className="section-title">Modo</h2>
-        <div className="mode-grid" role="radiogroup" aria-label="Modo de generación">
-          {MODE_CHOICES.map((id) => {
-            const m = modeInfo(id);
-            const active = choice === id;
-            return (
-              <motion.button
-                key={id}
-                type="button"
-                role="radio"
-                aria-checked={active}
-                className={active ? 'mode-card active' : 'mode-card'}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => selectMode(id)}
-              >
-                <Glyph name={id} size={26} className="mode-card-icon" />
-                <span className="mode-card-label">{m.label}</span>
-              </motion.button>
-            );
-          })}
-          {choice === 'personalizado' && (
-            <div className="mode-card active custom" role="radio" aria-checked>
-              <Glyph name="personalizado" size={26} className="mode-card-icon" />
-              <span className="mode-card-label">Personalizado</span>
-            </div>
-          )}
-        </div>
+        <ModeWheel
+          modes={MODE_CHOICES}
+          choice={choice}
+          options={options}
+          labels={LABELS}
+          sound={settings.sound}
+          onSelect={selectMode}
+        />
 
-        <AnimatePresence mode="wait">
-          <motion.p
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
             key={choice}
-            className="mode-description"
+            className="mode-info"
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.18 }}
+            aria-live="polite"
           >
-            {info.description}
-          </motion.p>
+            <h3 className="mode-name">{info.label}</h3>
+            <p className="mode-description">{info.description}</p>
+          </motion.div>
         </AnimatePresence>
 
         <h2 className="section-title">Ajustes avanzados</h2>

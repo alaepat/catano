@@ -469,9 +469,9 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 - [x] Historial de ganadores (Salón de la fama), en la hoja "¿Quién juega?" y en el menú de la partida.
 
 **6.4 Pantalla de modos más bonita**
-- [ ] El usuario elige uno de los diseños propuestos el 2026-11-02 (carrusel de cartas, ruleta, mosaico o mazo).
-  Idea común a todos: cada modo muestra un minitablero de ejemplo generado con ese modo.
-  El 2026-11-02 se le enseñaron los 4 diseños en SVG; falta que elija.
+- [x] Elegida la **Rueda** (2026-11-02). `ModeWheel.tsx`: los modos en círculo; se gira con el dedo (con impulso
+  y encaje), o se toca uno para subirlo arriba. El de arriba (junto a la marca) es el elegido, con un "toc" y una
+  vibración corta. En el centro, un minitablero de ejemplo de ese modo (semilla fija). Debajo, nombre y descripción.
 
 **6.5 Fondos nuevos**
 - [x] Playa (arena, olas, palmeras al atardecer). `components/Scenes.tsx`.
