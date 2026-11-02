@@ -3,6 +3,7 @@
 import { CanvasTexture, SRGBColorSpace } from 'three';
 import { strokeGlyph } from '../lib/glyphs';
 import { isRed, pips, type PortType } from '../game';
+import type { NumberStyle } from '../lib/numberStyle';
 
 const cache = new Map<string, CanvasTexture>();
 
@@ -24,8 +25,8 @@ const TINTA = '#1e1b18';
 const ROJO = '#c8402f';
 
 /** Cara de una ficha de número. `fontsVersion` cambia cuando terminan de cargar las tipografías. */
-export function tokenTexture(n: number, showPips: boolean, fontsVersion: number): CanvasTexture {
-  return draw(`token-${n}-${showPips}-${fontsVersion}`, 256, (ctx, s) => {
+export function tokenTexture(n: number, showPips: boolean, style: NumberStyle, fontsVersion: number): CanvasTexture {
+  return draw(`token-${n}-${showPips}-${style.key}-${fontsVersion}`, 256, (ctx, s) => {
     const c = s / 2;
     const face = ctx.createRadialGradient(c, c * 0.8, 10, c, c, c);
     face.addColorStop(0, '#fffaf0');
@@ -41,11 +42,16 @@ export function tokenTexture(n: number, showPips: boolean, fontsVersion: number)
     ctx.stroke();
 
     const red = isRed(n);
-    ctx.fillStyle = red ? ROJO : TINTA;
+    ctx.fillStyle = red && style.red ? ROJO : TINTA;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
-    ctx.font = `700 ${red ? 120 : 106}px Fraunces, Georgia, serif`;
-    ctx.fillText(String(n), c, showPips ? 152 : 166);
+    ctx.font = `${style.weight} ${Math.round((red ? 120 : 106) * style.size)}px ${style.family}`;
+    // Centrado a ojo según el dibujo real de las cifras (cada letra tiene sus medidas).
+    const m = ctx.measureText(String(n));
+    const middle = showPips ? 110 : 128;
+    const up = m.actualBoundingBoxAscent || 80;
+    const down = m.actualBoundingBoxDescent || 0;
+    ctx.fillText(String(n), c, middle + (up - down) / 2);
     if (showPips) {
       const count = pips(n);
       const gap = 23;

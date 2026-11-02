@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode,
 import { MathUtils, Plane, Raycaster, Vector2, Vector3, type Group, type PerspectiveCamera } from 'three';
 import { HEXES } from '../game';
 import type { Board } from '../game';
+import { firstFamily, type NumberStyle } from '../lib/numberStyle';
 import { playSequence, playSound } from '../lib/sound';
 import type { Quality } from '../store';
 import { ClockContext, useClock, type Clock } from './clock';
@@ -37,8 +38,25 @@ interface View {
   tx: number;
   tz: number;
   tzoom: number;
-  /** Distancia real de la cámara (para convertir píxeles en distancia al arrastrar). */
+  /** Distancia real de la cámara. */
   dist: number;
+  /** Distancia con la que cabe toda la isla en el hueco libre (zoom 1). */
+  fit: number;
+  /** Hay un dedo moviendo el mapa: la cámara le sigue más deprisa. */
+  live: boolean;
+}
+
+/** Inclinación final de la cámara, en grados. */
+const FINAL_ELEV = 54;
+
+/** Coloca la cámara mirando a (x, z) desde `dist`, con la inclinación y el giro dados. */
+function placeCamera(cam: PerspectiveCamera, x: number, z: number, zoom: number, dist: number, elevDeg: number, azim: number) {
+  const elev = MathUtils.degToRad(elevDeg);
+  // De cerca se mira a la cara de arriba de las fichas, no a la base.
+  const lookY = TOP * (1 - zoom);
+  const lz = z + 0.25 * zoom;
+  cam.position.set(x + dist * Math.cos(elev) * Math.sin(azim), lookY + dist * Math.sin(elev), lz + dist * Math.cos(elev) * Math.cos(azim));
+  cam.lookAt(x, lookY, lz);
 }
 
 const ViewContext = createContext<RefObject<View> | null>(null);
@@ -65,6 +83,8 @@ export interface Board3DProps {
   /** true = acelerar hasta el final (al tocar la pantalla). */
   skip: boolean;
   showPips: boolean;
+  /** Cómo se ven los números de las fichas. */
+  numberStyle: NumberStyle;
   highlight: number[];
   quality: Quality3D;
   /** Estrellas 3D (solo con el fondo Espacio). */
@@ -75,32 +95,38 @@ export interface Board3DProps {
   focus: number | null;
   /** Se toca un hexágono (su id) o fuera de la isla (null). */
   onPick: (hex: number | null) => void;
+  /**
+   * Hueco libre de la pantalla (entre los textos de arriba y la barra de abajo). El lienzo 3D ocupa
+   * toda la pantalla, pero la isla, sin zoom, se encaja en este hueco.
+   */
+  slotRef?: RefObject<HTMLElement | null>;
   /** Aquí la escena deja una función que hace una foto del tablero tal como se ve. */
   captureRef?: RefObject<(() => HTMLCanvasElement) | null>;
   onDone: () => void;
   onFail: () => void;
 }
 
-/** Espera a que estén las tipografías para dibujar bien los números de las fichas. */
-function useFontsVersion(): number {
+/** Espera a que estén las tipografías (también la elegida para los números) para dibujar bien las fichas. */
+function useFontsVersion(style: NumberStyle): number {
   const [version, setVersion] = useState(0);
+  const numberFont = `${style.weight} 100px ${firstFamily(style.family)}`;
   useEffect(() => {
     let alive = true;
     const fonts = document.fonts;
     if (!fonts) return;
-    Promise.all([fonts.load('700 100px Fraunces'), fonts.load('800 50px Nunito')])
-      .then(() => alive && setVersion(1))
+    Promise.all([fonts.load('700 100px Fraunces'), fonts.load('800 50px Nunito'), fonts.load(numberFont)])
+      .then(() => alive && setVersion((v) => v + 1))
       .catch(() => {});
     return () => {
       alive = false;
     };
-  }, []);
+  }, [numberFont]);
   return version;
 }
 
 export default function Board3D(props: Board3DProps) {
   const q = QUALITY[props.quality];
-  const fontsVersion = useFontsVersion();
+  const fontsVersion = useFontsVersion(props.numberStyle);
   const onFail = useRef(props.onFail);
   useEffect(() => {
     onFail.current = props.onFail;
@@ -127,7 +153,7 @@ export default function Board3D(props: Board3DProps) {
   );
 }
 
-function Scene({ board, speed, skip, showPips, highlight, quality, stars, sound, captureRef, onDone, focus, onPick, fontsVersion }: Board3DProps & { fontsVersion: number }) {
+function Scene({ board, speed, skip, showPips, numberStyle, highlight, quality, stars, sound, captureRef, onDone, focus, onPick, slotRef, fontsVersion }: Board3DProps & { fontsVersion: number }) {
   const q = QUALITY[quality];
   const clock = useRef<Clock>({ t: speed > 0 ? 0 : SEQ.end, doneAt: null });
   const done = useRef(speed <= 0);
@@ -141,7 +167,7 @@ function Scene({ board, speed, skip, showPips, highlight, quality, stars, sound,
   });
 
   // Cámara: se acerca al hexágono elegido o vuelve a la vista completa.
-  const view = useRef<View>({ x: 0, z: 0, zoom: 1, tx: 0, tz: 0, tzoom: 1, dist: 0 });
+  const view = useRef<View>({ x: 0, z: 0, zoom: 1, tx: 0, tz: 0, tzoom: 1, dist: 0, fit: 1, live: false });
   useEffect(() => flyTo(view.current, focus), [focus]);
 
   // Sonidos: se programan todos al empezar; si se salta la animación, se cortan y suena el acorde final.
@@ -174,6 +200,7 @@ function Scene({ board, speed, skip, showPips, highlight, quality, stars, sound,
       const SIZE = 1200;
       const view = camera as PerspectiveCamera;
       const shot = view.clone();
+      shot.clearViewOffset();
       shot.aspect = 1;
       const reach = SEA_R * 1.45;
       const dir = view.position.clone().normalize();
@@ -219,7 +246,7 @@ function Scene({ board, speed, skip, showPips, highlight, quality, stars, sound,
   return (
     <ClockContext.Provider value={clock}>
       <ViewContext.Provider value={view}>
-      <CameraRig />
+      <CameraRig slot={slotRef} />
       <hemisphereLight args={['#dfe9ff', '#2a1f2e', 1.15]} />
       <directionalLight
         position={[6, 10, 5]}
@@ -242,7 +269,7 @@ function Scene({ board, speed, skip, showPips, highlight, quality, stars, sound,
       <Controls onPick={(hex) => onPickRef.current(hex)}>
         <Aura />
         <Sea shadows={q.shadows} />
-        <Island board={board} showPips={showPips} highlight={highlight} decor={q.decor} shadows={q.shadows} fontsVersion={fontsVersion} />
+        <Island board={board} showPips={showPips} numberStyle={numberStyle} highlight={highlight} decor={q.decor} shadows={q.shadows} fontsVersion={fontsVersion} />
         <Ports ports={board.ports} fontsVersion={fontsVersion} shadows={q.shadows} />
         {board.robber !== null && <Robber hex={board.robber} shadows={q.shadows} />}
       </Controls>
@@ -253,19 +280,37 @@ function Scene({ board, speed, skip, showPips, highlight, quality, stars, sound,
 
 /**
  * Cámara: empieza muy lejos y casi desde arriba (la isla parece un planeta),
- * se acerca girando y al final se inclina para ver el relieve. Se ajusta al tamaño de la pantalla.
+ * se acerca girando y al final se inclina para ver el relieve.
+ * El lienzo ocupa toda la pantalla; sin zoom, la isla se encaja en el hueco libre (`slot`).
  */
-function CameraRig() {
+function CameraRig({ slot }: { slot?: RefObject<HTMLElement | null> }) {
   const clock = useClock();
   const view = useView();
+  const frame = useRef<{ cy: number; w: number; h: number } | null>(null);
   useFrame(({ camera, size, clock: real }, dt) => {
     const { t, doneAt } = clock.current;
     const cam = camera as PerspectiveCamera;
-    const aspect = size.width / Math.max(size.height, 1);
-    const vHalf = MathUtils.degToRad(FOV / 2);
-    const hHalf = Math.atan(Math.tan(vHalf) * aspect);
+    const W = Math.max(size.width, 1);
+    const H = Math.max(size.height, 1);
+    const step = Math.min(dt, 0.1);
+
+    // Hueco libre (si cambia, por ejemplo al abrir el análisis, la isla se recoloca poco a poco).
+    const r = slot?.current?.getBoundingClientRect();
+    const want = r && r.height > 40 ? { cy: r.top + r.height / 2 - size.top, w: Math.min(r.width, W), h: Math.min(r.height, H) } : { cy: H / 2, w: W, h: H };
+    const f = frame.current ?? { ...want };
+    const kf = frame.current ? 1 - Math.exp(-step * 6) : 1;
+    f.cy += (want.cy - f.cy) * kf;
+    f.w += (want.w - f.w) * kf;
+    f.h += (want.h - f.h) * kf;
+    frame.current = f;
+    // El centro de la vista baja o sube hasta el centro del hueco.
+    cam.setViewOffset(W, H, 0, H / 2 - f.cy, W, H);
+
+    const tanV = Math.tan(MathUtils.degToRad(FOV / 2));
+    const vHalf = Math.atan((tanV * f.h) / H);
+    const hHalf = Math.atan((tanV * f.w) / H);
     const R = SEA_R + 0.15;
-    // Distancia para que quepa todo el mar a lo ancho y a lo alto.
+    // Distancia para que quepa todo el mar a lo ancho y a lo alto del hueco.
     const fit = Math.max(R / Math.sin(hHalf), (R * 0.8) / Math.sin(vHalf));
 
     const approach = ease.outQuart(progress(t, SEQ.approach));
@@ -274,24 +319,17 @@ function CameraRig() {
     // Ya quieta, la cámara se balancea muy poco para que la escena no parezca una foto.
     const idle = doneAt === null ? 0 : 0.035 * Math.sin((real.elapsedTime - doneAt) * 0.25);
 
-    // Zoom y desplazamiento, suaves (como un vuelo corto).
+    // Zoom y desplazamiento, suaves (como un vuelo corto); con el dedo encima, casi al instante.
     const v = view.current;
-    const k = 1 - Math.exp(-Math.min(dt, 0.1) * 4.5);
+    const k = 1 - Math.exp(-step * (v.live ? 18 : 4.5));
     v.x += (v.tx - v.x) * k;
     v.z += (v.tz - v.z) * k;
     v.zoom += (v.tzoom - v.zoom) * k;
+    v.fit = fit;
 
     const dist = lerp(fit * 4.5, fit, approach) * v.zoom;
     v.dist = dist;
-    const elev = MathUtils.degToRad(lerp(84, 54, tilt));
-    const azim = lerp(-1.1, 0, swing) + idle;
-    // De cerca se mira a la cara de arriba de las fichas, no a la base.
-    const lookY = TOP * (1 - v.zoom);
-    const lx = v.x;
-    const lz = v.z + 0.25 * v.zoom;
-
-    cam.position.set(lx + dist * Math.cos(elev) * Math.sin(azim), lookY + dist * Math.sin(elev), lz + dist * Math.cos(elev) * Math.cos(azim));
-    cam.lookAt(lx, lookY, lz);
+    placeCamera(cam, v.x, v.z, v.zoom, dist, lerp(84, FINAL_ELEV, tilt), lerp(-1.1, 0, swing) + idle);
   });
   return null;
 }
@@ -299,8 +337,8 @@ function CameraRig() {
 /**
  * Gestos, cuando ya ha terminado la animación:
  * - Tocar un hexágono: la cámara vuela hasta él. Tocar el mar: vuelve a la vista completa.
- * - Pellizcar con dos dedos: zoom libre.
- * - Arrastrar: con zoom, mueve el mapa; sin zoom, gira un poco la isla y al soltar vuelve a su sitio.
+ * - Pellizcar con dos dedos: zoom hacia donde están los dedos (y se puede mover a la vez).
+ * - Arrastrar: con zoom, el mapa sigue al dedo; sin zoom, gira un poco la isla y al soltar vuelve a su sitio.
  */
 function Controls({ children, onPick }: { children: ReactNode; onPick: (hex: number | null) => void }) {
   const clock = useClock();
@@ -316,23 +354,68 @@ function Controls({ children, onPick }: { children: ReactNode; onPick: (hex: num
   useEffect(() => {
     const el = gl.domElement;
     const pointers = new Map<number, { x: number; y: number }>();
-    // Gesto de un dedo: dónde empezó, si se ha movido y desde dónde se arrastra el mapa.
-    let one: { x: number; y: number; time: number; moved: boolean; tx: number; tz: number } | null = null;
+    // Gesto de un dedo: dónde empezó y si se ha movido (para distinguir un toque de un arrastre).
+    let one: { x: number; y: number; time: number; moved: boolean } | null = null;
     let pinch: { d: number; zoom: number } | null = null;
+    // Punto de la isla que estaba bajo los dedos al empezar: se mantiene bajo los dedos.
+    let anchor: Vector3 | null = null;
     const ray = new Raycaster();
     const ground = new Plane(new Vector3(0, 1, 0), -TOP);
-    const hit = new Vector3();
 
     const spread = () => {
       const [a, b] = [...pointers.values()];
       return Math.hypot(a.x - b.x, a.y - b.y);
     };
+    const centroid = () => {
+      const all = [...pointers.values()];
+      return { x: all.reduce((s, p) => s + p.x, 0) / all.length, y: all.reduce((s, p) => s + p.y, 0) / all.length };
+    };
+
+    /** Punto del suelo de la isla bajo un punto de la pantalla, visto con la cámara `cam`. */
+    const groundAt = (cam: PerspectiveCamera, x: number, y: number): Vector3 | null => {
+      const r = el.getBoundingClientRect();
+      ray.setFromCamera(new Vector2(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1), cam);
+      return ray.ray.intersectPlane(ground, new Vector3());
+    };
+    /** Cámara de prueba, ya quieta, mirando a (x, z) con ese zoom. */
+    const probe = (x: number, z: number, zoom: number) => {
+      const cam = (camera as PerspectiveCamera).clone();
+      placeCamera(cam, x, z, zoom, view.current.fit * zoom, FINAL_ELEV, 0);
+      cam.updateMatrixWorld();
+      return cam;
+    };
+
+    const startAnchor = () => {
+      const v = view.current;
+      const c = centroid();
+      anchor = groundAt(probe(v.tx, v.tz, v.tzoom), c.x, c.y);
+    };
+
+    /** Coloca el objetivo de la cámara para que el punto ancla quede bajo los dedos con este zoom. */
+    const follow = (zoom: number) => {
+      const v = view.current;
+      v.tzoom = zoom;
+      if (!anchor) return;
+      const c = centroid();
+      const p = groundAt(probe(0, 0, zoom), c.x, c.y);
+      if (!p) return;
+      let nx = anchor.x - p.x;
+      let nz = anchor.z - p.z;
+      // Cuanto menos zoom, menos se puede mover (sin zoom, la isla vuelve al centro).
+      const max = PAN_MAX * Math.min(1, (1 - zoom) / 0.35);
+      const len = Math.hypot(nx, nz);
+      if (len > max) {
+        nx *= max / len;
+        nz *= max / len;
+      }
+      v.tx = nx;
+      v.tz = nz;
+    };
 
     const pick = (e: PointerEvent) => {
-      const r = el.getBoundingClientRect();
-      ray.setFromCamera(new Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera);
+      const hit = groundAt(camera as PerspectiveCamera, e.clientX, e.clientY);
       let hex: number | null = null;
-      if (ray.ray.intersectPlane(ground, hit)) {
+      if (hit) {
         let best = 0.95;
         HEXES.forEach((h, id) => {
           const d = Math.hypot(h.x - hit.x, h.y - hit.z);
@@ -355,11 +438,14 @@ function Controls({ children, onPick }: { children: ReactNode; onPick: (hex: num
         // Sin captura, el gesto funciona igual mientras el dedo siga sobre el tablero.
       }
       if (pointers.size === 1) {
-        one = { x: e.clientX, y: e.clientY, time: performance.now(), moved: false, tx: view.current.tx, tz: view.current.tz };
+        one = { x: e.clientX, y: e.clientY, time: performance.now(), moved: false };
+        startAnchor();
       } else if (pointers.size === 2) {
         one = null;
         target.current = { x: 0, y: 0 };
         pinch = { d: spread(), zoom: view.current.tzoom };
+        view.current.live = true;
+        startAnchor();
       }
     };
 
@@ -368,7 +454,7 @@ function Controls({ children, onPick }: { children: ReactNode; onPick: (hex: num
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       const v = view.current;
       if (pinch && pointers.size >= 2) {
-        v.tzoom = MathUtils.clamp((pinch.zoom * pinch.d) / Math.max(spread(), 1), ZOOM_MIN, 1);
+        follow(MathUtils.clamp((pinch.zoom * pinch.d) / Math.max(spread(), 1), ZOOM_MIN, 1));
         return;
       }
       if (!one) return;
@@ -378,13 +464,8 @@ function Controls({ children, onPick }: { children: ReactNode; onPick: (hex: num
       one.moved = true;
       if (v.tzoom < 0.95) {
         // Con zoom: el mapa sigue al dedo.
-        const perPx = (2 * v.dist * Math.tan(MathUtils.degToRad(FOV / 2))) / Math.max(el.clientHeight, 1);
-        const nx = one.tx - dx * perPx;
-        const nz = one.tz - (dy * perPx) / Math.sin(MathUtils.degToRad(54));
-        const len = Math.hypot(nx, nz);
-        const k = len > PAN_MAX ? PAN_MAX / len : 1;
-        v.tx = nx * k;
-        v.tz = nz * k;
+        v.live = true;
+        follow(v.tzoom);
       } else {
         target.current.y = MathUtils.clamp(dx * 0.006, -0.7, 0.7);
         target.current.x = MathUtils.clamp(dy * 0.004, -0.25, 0.35);
@@ -395,16 +476,25 @@ function Controls({ children, onPick }: { children: ReactNode; onPick: (hex: num
       if (!pointers.has(e.pointerId)) return;
       pointers.delete(e.pointerId);
       if (one && !one.moved && performance.now() - one.time < 400 && e.type === 'pointerup') pick(e);
+      one = null;
       if (pinch && pointers.size < 2) {
         pinch = null;
-        // Si se aleja del todo, vuelve a la vista completa (y se cierra la tarjeta del hexágono).
         if (view.current.tzoom > 0.92) {
+          // Si se aleja del todo, vuelve a la vista completa (y se cierra la tarjeta del hexágono).
           flyTo(view.current, null);
           onPickRef.current(null);
+        } else if (pointers.size === 1) {
+          // Queda un dedo: sigue moviendo el mapa desde donde está.
+          const [p] = [...pointers.values()];
+          one = { x: p.x, y: p.y, time: 0, moved: true };
+          startAnchor();
         }
       }
-      one = null;
-      if (pointers.size === 0) target.current = { x: 0, y: 0 };
+      if (pointers.size === 0) {
+        target.current = { x: 0, y: 0 };
+        anchor = null;
+        view.current.live = false;
+      }
     };
 
     el.addEventListener('pointerdown', down);

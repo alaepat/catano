@@ -3,6 +3,7 @@
 import { motion } from 'motion/react';
 import { COAST_EDGES, EDGES, HEXES, VERTICES, pips, isRed, type Board, type Terrain } from '../game';
 import { GLYPHS, type GlyphName } from '../lib/glyphs';
+import { DEFAULT_NUMBER_STYLE, type NumberStyle } from '../lib/numberStyle';
 import { REVEAL_INDEX, REVEAL_TIMING as T } from '../lib/reveal';
 
 const S = 50; // radio de un hexágono en píxeles del SVG
@@ -61,6 +62,8 @@ const fromCenter = { transformBox: 'fill-box' as const, transformOrigin: 'center
 interface Props {
   board: Board;
   showPips?: boolean;
+  /** Cómo se ven los números de las fichas. */
+  numberStyle?: NumberStyle;
   /** Cruces a resaltar (por ejemplo, los mejores). */
   highlight?: number[];
   /** 0 = sin animación; 1 = velocidad normal; menos de 1 = más rápido. */
@@ -73,7 +76,7 @@ interface Props {
 
 const ZOOM = 2.4;
 
-export function BoardSvg({ board, showPips = true, highlight = [], speed = 0, focus = null, onPickHex }: Props) {
+export function BoardSvg({ board, showPips = true, numberStyle = DEFAULT_NUMBER_STYLE, highlight = [], speed = 0, focus = null, onPickHex }: Props) {
   const animate = speed > 0;
   const d = (s: number) => s * speed;
   const enter = (delay: number, from: object) =>
@@ -176,18 +179,18 @@ export function BoardSvg({ board, showPips = true, highlight = [], speed = 0, fo
         if (n == null) return null;
         const cx = hex.x * S;
         const cy = hex.y * S;
-        const red = isRed(n);
+        const red = isRed(n) && numberStyle.red;
         return (
           <motion.g key={hex.id} style={fromCenter} {...enter(T.numbersStart + REVEAL_INDEX[hex.id] * T.number, { y: -40, scale: 1.4 })}>
-            <circle cx={cx} cy={cy + 2} r={S * 0.36} fill="var(--marfil)" stroke="rgba(0,0,0,0.15)" />
+            <circle cx={cx} cy={cy + 2} r={S * 0.36 * numberStyle.disc} fill="var(--marfil)" stroke="rgba(0,0,0,0.15)" />
             <text
               x={cx}
               y={cy - (showPips ? 1 : -2)}
               textAnchor="middle"
               dominantBaseline="middle"
-              fontFamily="var(--fuente-titulo)"
-              fontWeight={700}
-              fontSize={red ? 19 : 16}
+              fontFamily={numberStyle.family}
+              fontWeight={numberStyle.weight}
+              fontSize={(isRed(n) ? 19 : 16) * numberStyle.size}
               fill={red ? 'var(--rojo-numero)' : 'var(--tinta)'}
             >
               {n}

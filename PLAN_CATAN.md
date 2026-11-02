@@ -446,7 +446,7 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 - [ ] Probada instalada en el iPhone 17 del usuario ("Compartir → Añadir a pantalla de inicio" en Safari)
 - [ ] Chequeo final (sección 10.3)
 
-### Fase 6: Peticiones del usuario (2026-11-02, en curso: hechos 6.1, 6.2, 6.3, 6.6 y casi todo 6.5)
+### Fase 6: Peticiones del usuario (2026-11-02, en curso: hechos 6.1 a 6.4, 6.6, 6.8 y casi todo 6.5)
 
 **6.1 Esconder lo que no hace falta** (la app la usa una sola persona)
 - [x] Ocultar 📷 Foto y ⭐ Guardar / Mis tableros con interruptores en `lib/config.ts` (`FEATURES = { foto: false, guardar: false }`).
@@ -458,6 +458,10 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 - [x] Pellizcar con dos dedos = zoom libre (con límites para no perder la isla). Con zoom, arrastrar mueve el mapa.
   Tocar el mar o "Ver todo" vuelve a la vista completa. (El doble toque no hace falta: un toque ya acerca.)
 - [x] En modo 2D: tocar un hexágono lo amplía (zoom con CSS sobre el SVG) y muestra la misma tarjeta.
+- [x] (v0.7) El pellizco acerca hacia donde están los dedos (el punto bajo los dedos se queda bajo los dedos) y con
+  dos dedos también se mueve el mapa. Con un dedo, el mapa sigue al dedo exactamente.
+- [x] (v0.7) Sin bordes: el lienzo 3D ocupa toda la pantalla, por detrás de textos y botones. Sin zoom, la isla se encaja
+  en el hueco libre (`.board-3d` es solo ese hueco; la cámara se desplaza con `setViewOffset`). En 2D el SVG puede salirse de su caja.
 
 **6.3 Marcador de puntos** (dentro del tablero)
 - [x] Jugadores guardados en el móvil (nombre + color de Catan; se reutilizan en cada partida). `marcadorStore.ts`, `lib/marcador.ts`.
@@ -490,6 +494,10 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
   Sustituidos los emojis de toda la app, también los del 2D y las etiquetas de los puertos en 3D.
 
 **6.7 Expansión Navegantes de Catan** (si el usuario la compra; ver sección 5.6)
+
+**6.8 Números de las fichas a gusto** (Ajustes → "Números de las fichas", v0.7)
+- [x] Tamaño (pequeños / normales / grandes: cambia la cifra y un poco la ficha), letra (Clásica, Redonda, Moderna, Romana
+  con Cinzel, A mano con Caveat) y "El 6 y el 8 en rojo". Muestra en vivo con tres fichas. `lib/numberStyle.ts`; vale para 3D y 2D.
 
 ### Fase 7+: Extras (ver Banco de ideas)
 

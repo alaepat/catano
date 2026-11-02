@@ -12,6 +12,7 @@ import { PRESET_INFO, analyzeBoard, type Resource } from '../game';
 import { loadBoard3D } from '../lib/board3d';
 import { comentario } from '../lib/comentario';
 import { FEATURES } from '../lib/config';
+import { numberStyle } from '../lib/numberStyle';
 import { capture2D, composePhoto, shareImage } from '../lib/photo';
 import { revealDuration } from '../lib/reveal';
 import { unlockAudio } from '../lib/sound';
@@ -40,6 +41,7 @@ export function Tablero() {
   const [picked, setPicked] = useState<{ gen: number; hex: number } | null>(null);
   const capture3D = useRef<(() => HTMLCanvasElement) | null>(null);
   const wrap2D = useRef<HTMLDivElement>(null);
+  const slot3D = useRef<HTMLDivElement>(null);
 
   const reduceMotion = useReducedMotion();
   const speed = reduceMotion ? 0 : ANIM_FACTOR[settings.animSpeed];
@@ -52,6 +54,10 @@ export function Tablero() {
   const pick = useCallback((hex: number | null) => setPicked(hex === null || genId === null ? null : { gen: genId, hex }), [genId]);
 
   const board = generation?.result.ok ? generation.result.board : null;
+  const numbers = useMemo(
+    () => numberStyle(settings.numberSize, settings.numberFont, settings.redNumbers),
+    [settings.numberSize, settings.numberFont, settings.redNumbers],
+  );
   const analysis = useMemo(() => (board ? analyzeBoard(board) : null), [board]);
   const highlight = useMemo(
     () => (revealed && showAnalysis && analysis ? analysis.bestVertices.map((b) => b.vertex) : []),
@@ -154,7 +160,9 @@ export function Tablero() {
         {board && <Marcador visible={revealed} />}
 
         {board && use3d ? (
-          <div className="board-3d" role="img" aria-label={`Tablero de Catan en 3D: ${generation.name}`} onClick={reveal}>
+          // El hueco marca dónde se encaja la isla; el lienzo 3D va detrás de todo, a pantalla completa.
+          <div className="board-3d" ref={slot3D}>
+            <div className="board-3d-canvas" role="img" aria-label={`Tablero de Catan en 3D: ${generation.name}`} onClick={reveal}>
             <ErrorBoundary fallback={null} onError={() => setFailed3d(true)}>
               <Suspense fallback={<div className="board-loading" />}>
                 <Board3D
@@ -163,18 +171,21 @@ export function Tablero() {
                   speed={speed}
                   skip={revealed}
                   showPips={settings.showPips}
+                  numberStyle={numbers}
                   highlight={highlight}
                   quality={settings.quality === '2d' ? 'alta' : settings.quality}
                   stars={settings.background === 'espacio'}
                   sound={settings.sound}
                   focus={focus}
                   onPick={pick}
+                  slotRef={slot3D}
                   captureRef={capture3D}
                   onDone={reveal}
                   onFail={() => setFailed3d(true)}
                 />
               </Suspense>
             </ErrorBoundary>
+            </div>
             <AnimatePresence>
               {!revealed && (
                 <motion.p
@@ -195,6 +206,7 @@ export function Tablero() {
               board={board}
               speed={speed}
               showPips={settings.showPips}
+              numberStyle={numbers}
               highlight={highlight}
               focus={focus}
               onPickHex={revealed ? pick : undefined}

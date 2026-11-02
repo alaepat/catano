@@ -7,6 +7,7 @@ import {
   type GenOptions, type GenResult, type PresetId,
 } from './game';
 import { islandName } from './lib/islandName';
+import type { NumberFont, NumberSize } from './lib/numberStyle';
 import { MAX_SAVED, cleanName, isSavedBoard, newSavedId, type SavedBoard } from './lib/saved';
 import { safeStorage } from './lib/storage';
 
@@ -24,6 +25,10 @@ export interface Settings {
   quality: Quality;
   /** Efectos de sonido en la animación. */
   sound: boolean;
+  /** Números de las fichas: tamaño, letra y si el 6 y el 8 van en rojo. */
+  numberSize: NumberSize;
+  numberFont: NumberFont;
+  redNumbers: boolean;
 }
 
 export interface Generation {
@@ -69,7 +74,16 @@ interface State {
   openSaved: (id: string) => void;
 }
 
-const DEFAULT_SETTINGS: Settings = { background: 'espacio', animSpeed: 'epica', showPips: true, quality: 'alta', sound: false };
+const DEFAULT_SETTINGS: Settings = {
+  background: 'espacio',
+  animSpeed: 'epica',
+  showPips: true,
+  quality: 'alta',
+  sound: false,
+  numberSize: 'normal',
+  numberFont: 'clasica',
+  redNumbers: true,
+};
 
 export const ANIM_FACTOR: Record<AnimSpeed, number> = { epica: 1, rapida: 0.45, sin: 0 };
 

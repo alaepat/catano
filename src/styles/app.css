@@ -689,16 +689,54 @@
   margin: 0 auto;
 }
 
-/* Tablero 3D: ocupa todo el ancho (de borde a borde) y el alto que quede libre. */
+/*
+ * Tablero 3D: el lienzo ocupa toda la pantalla, por detrás de los textos y botones (sin bordes que lo corten).
+ * .board-3d es solo el hueco libre donde se encaja la isla sin zoom.
+ */
 .board-3d {
   position: relative;
   flex: 1 1 auto;
-  min-height: 340px;
+  min-height: 300px;
   margin: 0 -16px;
+  pointer-events: none;
+}
+
+.board-3d-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: auto;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Todo lo demás de la pantalla del tablero va por encima del lienzo, y solo los botones cogen los toques. */
+.tablero .topbar,
+.tablero-main > :not(.board-3d) {
+  position: relative;
+  z-index: 1;
+}
+
+.tablero .topbar,
+.tablero-main,
+.island-name {
+  pointer-events: none;
+}
+
+.tablero .topbar > *,
+.tablero-main > :not(.board-3d, .island-name) {
+  pointer-events: auto;
+}
+
+.tablero .topbar > .tablero-title {
+  pointer-events: none;
+}
+
+/* En 2D, al hacer zoom el tablero puede salirse de su caja y ocupar la pantalla. */
+.board-wrap svg {
+  overflow: visible;
 }
 
 /* Mientras se descarga la escena 3D: un punto de luz que late. */
@@ -882,6 +920,19 @@
   padding: 16px 18px;
   display: grid;
   gap: 16px;
+}
+
+/* Muestra de los números en Ajustes */
+.number-preview {
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+  justify-self: center;
+}
+
+.font-chip {
+  font-size: 1rem;
+  padding: 0 12px;
 }
 
 .danger-row {

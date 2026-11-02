@@ -8,6 +8,7 @@ import {
 import { HEXES, isRed, type Board, type Terrain } from '../game';
 import { useClock } from './clock';
 import { BASE_H, BEVEL, TERRAIN_COLOR, TILE_H, TILE_R, TOP, hexWorld, jitter, vertexWorld } from './coords';
+import type { NumberStyle } from '../lib/numberStyle';
 import { glowTexture, tokenTexture } from './textures';
 import { ease, hexWindow, landingFlash, lerp, progress, tokenWindow } from './timeline';
 
@@ -224,14 +225,14 @@ const FACE_GEO = new CircleGeometry(TOKEN_R * 0.98, 40).rotateX(-Math.PI / 2);
 const RIM_MAT = new MeshStandardMaterial({ color: '#eadcbc', roughness: 0.55 });
 const GLOW_GEO = new PlaneGeometry(1.8, 1.8).rotateX(-Math.PI / 2);
 
-function Token({ id, n, showPips, fontsVersion, shadows }: { id: number; n: number; showPips: boolean; fontsVersion: number; shadows: boolean }) {
+function Token({ id, n, showPips, numberStyle, fontsVersion, shadows }: { id: number; n: number; showPips: boolean; numberStyle: NumberStyle; fontsVersion: number; shadows: boolean }) {
   const clock = useClock();
   const group = useRef<Group>(null);
   const glow = useRef<Mesh>(null);
   const red = isRed(n);
   const face = useMemo(
-    () => new MeshStandardMaterial({ map: tokenTexture(n, showPips, fontsVersion), roughness: 0.6 }),
-    [n, showPips, fontsVersion],
+    () => new MeshStandardMaterial({ map: tokenTexture(n, showPips, numberStyle, fontsVersion), roughness: 0.6 }),
+    [n, showPips, numberStyle, fontsVersion],
   );
   const glowMat = useMemo(
     () => new MeshBasicMaterial({ map: glowTexture(), color: '#ff5a3c', transparent: true, opacity: 0, blending: AdditiveBlending, depthWrite: false }),
@@ -263,7 +264,7 @@ function Token({ id, n, showPips, fontsVersion, shadows }: { id: number; n: numb
   return (
     <>
       {red && <mesh ref={glow} geometry={GLOW_GEO} material={glowMat} position={[x, TOP + 0.004, z]} visible={false} />}
-      <group ref={group} position={[x, TOP, z]} visible={false}>
+      <group ref={group} position={[x, TOP, z]} scale={[numberStyle.disc, 1, numberStyle.disc]} visible={false}>
         <mesh geometry={RIM_GEO} material={RIM_MAT} position={[0, TOKEN_H / 2, 0]} castShadow={shadows} />
         <mesh geometry={FACE_GEO} material={face} position={[0, TOKEN_H + 0.001, 0]} />
       </group>
@@ -295,8 +296,8 @@ function Highlight({ vertex, index }: { vertex: number; index: number }) {
 // ---------- Todo junto ----------
 
 export function Island({
-  board, showPips, highlight, decor, shadows, fontsVersion,
-}: { board: Board; showPips: boolean; highlight: number[]; decor: boolean; shadows: boolean; fontsVersion: number }) {
+  board, showPips, numberStyle, highlight, decor, shadows, fontsVersion,
+}: { board: Board; showPips: boolean; numberStyle: NumberStyle; highlight: number[]; decor: boolean; shadows: boolean; fontsVersion: number }) {
   return (
     <group>
       {HEXES.map((h) => (
@@ -304,7 +305,7 @@ export function Island({
       ))}
       {HEXES.map((h) => {
         const n = board.numbers[h.id];
-        return n == null ? null : <Token key={h.id} id={h.id} n={n} showPips={showPips} fontsVersion={fontsVersion} shadows={shadows} />;
+        return n == null ? null : <Token key={h.id} id={h.id} n={n} showPips={showPips} numberStyle={numberStyle} fontsVersion={fontsVersion} shadows={shadows} />;
       })}
       {highlight.map((v, i) => (
         <Highlight key={v} vertex={v} index={i} />
