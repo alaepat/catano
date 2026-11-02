@@ -280,6 +280,15 @@
 .inicio {
   justify-content: space-between;
   text-align: center;
+  transition: opacity 0.35s ease;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Mantener pulsado en el inicio: se esconde todo y queda solo el fondo */
+.inicio.peek {
+  opacity: 0;
 }
 
 .inicio-top {

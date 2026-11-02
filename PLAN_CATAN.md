@@ -494,6 +494,11 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
   (no están en el repo) y pintados una vez como `<img>`; encima, `PaintedScenes.tsx` anima lo poco que se mueve
   (pájaros; lámpara que respira, polillas y luces del pueblo). Mismo lienzo 1080×1920 y encuadre `xMidYMax slice`.
 
+- [x] (v0.8.1) En el inicio, **mantener pulsado** (~0,5 s) esconde todo y deja ver solo el fondo; al soltar vuelve
+  (y ese toque no pulsa ningún botón). `usePeek` en `Inicio.tsx`.
+- [ ] Parque y Mesa de noche (v0.8) **no convencen** (2026-11-02): el usuario los pedirá a Claude Design (más humanos, pulidos,
+  con detalle). Cuando lleguen: imagen fija vertical (WebP) en `public/fondos/` + capa animada ligera encima.
+
 **6.6 Iconos propios en vez de emojis**
 - [x] Juego de iconos SVG propio (trazo fino y redondeado, color crema): recursos, modos, acciones, puertos. `lib/glyphs.ts`.
   Sustituidos los emojis de toda la app, también los del 2D y las etiquetas de los puertos en 3D.

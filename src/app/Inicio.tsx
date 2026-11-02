@@ -1,6 +1,6 @@
 // Pantalla de inicio: dato curioso arriba, título y bienvenida en el centro, botón de generar.
 import { AnimatePresence, motion, type Variants } from 'motion/react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
 import { Glyph } from '../components/icons';
 import { GearIcon, IconButton } from '../components/ui';
 import datos from '../data/datos-curiosos.json';
@@ -25,12 +25,70 @@ const item: Variants = {
   show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] } },
 };
 
+/** Mantener el dedo quieto este tiempo en el inicio esconde todo y deja ver solo el fondo. */
+const PEEK_MS = 450;
+const PEEK_SLOP = 12; // px que se puede mover el dedo sin que cuente como arrastrar
+
+/** Mantener pulsado: mientras el dedo siga apoyado, se ve solo el fondo. Al soltar, todo vuelve. */
+function usePeek() {
+  const [peek, setPeek] = useState(false);
+  const timer = useRef<number | undefined>(undefined);
+  const start = useRef<{ id: number; x: number; y: number } | null>(null);
+  const justPeeked = useRef(false);
+
+  const stopTimer = () => window.clearTimeout(timer.current);
+  useEffect(() => stopTimer, []);
+
+  const end = () => {
+    stopTimer();
+    start.current = null;
+    setPeek(false);
+  };
+
+  return {
+    peek,
+    handlers: {
+      onPointerDown: (e: PointerEvent) => {
+        if (start.current) {
+          end(); // un segundo dedo: no es un "mantener pulsado"
+          return;
+        }
+        justPeeked.current = false;
+        start.current = { id: e.pointerId, x: e.clientX, y: e.clientY };
+        stopTimer();
+        timer.current = window.setTimeout(() => {
+          justPeeked.current = true;
+          setPeek(true);
+          navigator.vibrate?.(8);
+        }, PEEK_MS);
+      },
+      onPointerMove: (e: PointerEvent) => {
+        const s = start.current;
+        if (!s || s.id !== e.pointerId || justPeeked.current) return;
+        if (Math.hypot(e.clientX - s.x, e.clientY - s.y) > PEEK_SLOP) end();
+      },
+      onPointerUp: end,
+      onPointerCancel: end,
+      onContextMenu: (e: MouseEvent) => e.preventDefault(),
+      // Si se soltó después de ver el fondo, ese toque no debe pulsar ningún botón.
+      onClickCapture: (e: MouseEvent) => {
+        if (justPeeked.current) {
+          justPeeked.current = false;
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      },
+    },
+  };
+}
+
 export function Inicio() {
   const goTo = useApp((s) => s.goTo);
   const savedCount = useApp((s) => s.saved.length);
+  const { peek, handlers } = usePeek();
 
   return (
-    <motion.div className="screen inicio" variants={container} initial="hidden" animate="show">
+    <motion.div className={peek ? 'screen inicio peek' : 'screen inicio'} variants={container} initial="hidden" animate="show" {...handlers}>
       <motion.div variants={item} className="inicio-top">
         <DatoCurioso />
       </motion.div>
