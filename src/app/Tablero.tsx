@@ -29,7 +29,7 @@ const RESOURCE_LABEL: Record<Resource, string> = {
 const Board3D = lazy(loadBoard3D);
 
 export function Tablero() {
-  const { generation, choice, settings, generate, updateSettings, toggleSaveCurrent } = useApp();
+  const { generation, choice, settings, generate, updateSettings, toggleSaveCurrent, setFlying } = useApp();
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [failed3d, setFailed3d] = useState(false);
   const [toast, setToast] = useState<string[]>([]);
@@ -57,6 +57,13 @@ export function Tablero() {
     () => (revealed && showAnalysis && analysis ? analysis.bestVertices.map((b) => b.vertex) : []),
     [revealed, showAnalysis, analysis],
   );
+
+  // Con la isla a la vista, el fondo Espacio empieza a "volar"; al salir, se para.
+  const shown = revealed && Boolean(board);
+  useEffect(() => {
+    setFlying(shown);
+    return () => setFlying(false);
+  }, [shown, setFlying]);
 
   // En 2D la animación dura un tiempo fijo; en 3D avisa la propia escena al terminar.
   useEffect(() => {

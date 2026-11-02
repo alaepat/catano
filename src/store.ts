@@ -12,7 +12,7 @@ import { safeStorage } from './lib/storage';
 
 export type Screen = 'inicio' | 'personalizar' | 'tablero' | 'ajustes' | 'tableros';
 export type ModeChoice = PresetId | 'personalizado' | 'sorpresa';
-export type BackgroundId = 'espacio' | 'oceano' | 'pergamino' | 'atardecer' | 'bosque' | 'minimal';
+export type BackgroundId = 'espacio' | 'oceano' | 'playa' | 'canoa' | 'camping' | 'pergamino' | 'atardecer' | 'bosque' | 'minimal';
 export type AnimSpeed = 'epica' | 'rapida' | 'sin';
 /** Calidad del tablero 3D. '2d' = tablero plano (para móviles lentos o si el 3D falla). */
 export type Quality = 'alta' | 'media' | 'baja' | '2d';
@@ -48,7 +48,10 @@ interface State {
   notes: string[];
   /** Mis tableros, el más reciente primero. */
   saved: SavedBoard[];
+  /** La isla ya está a la vista: el fondo Espacio "vuela" (no se guarda). */
+  flying: boolean;
 
+  setFlying: (flying: boolean) => void;
   goTo: (screen: Screen) => void;
   /** Cambia de pantalla sin añadir entrada al historial (para el botón atrás del móvil). */
   setScreenFromHistory: (screen: Screen) => void;
@@ -80,6 +83,11 @@ export const useApp = create<State>()(
       settings: DEFAULT_SETTINGS,
       notes: [],
       saved: [],
+      flying: false,
+
+      setFlying: (flying) => {
+        if (get().flying !== flying) set({ flying });
+      },
 
       goTo: (screen) => {
         try {

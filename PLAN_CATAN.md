@@ -446,7 +446,7 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 - [ ] Probada instalada en el iPhone 17 del usuario ("Compartir → Añadir a pantalla de inicio" en Safari)
 - [ ] Chequeo final (sección 10.3)
 
-### Fase 6: Peticiones del usuario (2026-11-02, en curso: hechos 6.1, 6.2 y 6.3)
+### Fase 6: Peticiones del usuario (2026-11-02, en curso: hechos 6.1, 6.2, 6.3, 6.6 y casi todo 6.5)
 
 **6.1 Esconder lo que no hace falta** (la app la usa una sola persona)
 - [x] Ocultar 📷 Foto y ⭐ Guardar / Mis tableros con interruptores en `lib/config.ts` (`FEATURES = { foto: false, guardar: false }`).
@@ -474,18 +474,20 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
   El 2026-11-02 se le enseñaron los 4 diseños en SVG; falta que elija.
 
 **6.5 Fondos nuevos**
-- [ ] Playa (arena, olas, palmeras al atardecer).
-- [ ] Canoa liderando los mares (canoa que se mece sobre olas animadas).
-- [ ] Espacio: con la isla ya generada, las estrellas pasan hacia abajo, como si la isla volara hacia arriba.
-- [ ] **Camping** (muy importante para el usuario): parque de acampada, 4 jugadores en sillas de playa y el tablero en el maletero
-  abierto de un Volkswagen Polo blanco de 2023. Opciones: ilustración plana en SVG hecha por Claude, o foto real del grupo.
+- [x] Playa (arena, olas, palmeras al atardecer). `components/Scenes.tsx`.
+- [x] Canoa liderando los mares (canoa con remero que se mece sobre olas animadas, al amanecer).
+- [x] Espacio: con la isla ya generada, las estrellas pasan hacia abajo con estela, como si la isla volara hacia arriba
+  (las estrellas 3D se apagan al terminar y toman el relevo las del fondo; `flying` en el store).
+- [x] **Camping** (muy importante para el usuario): parque de acampada, 4 jugadores en sillas de playa y el tablero en el maletero
+  abierto de un Volkswagen Polo blanco de 2023. Hecha como ilustración plana nocturna en SVG (Polo visto desde atrás con el
+  portón abierto e iluminado, tablero dentro, 4 jugadores en sillas, guirnalda de bombillas). Si prefiere foto real, cambiar.
 - [ ] **Mesa de noche**: la foto del usuario (`docs/referencias/fondo-mesa-noche.webp`: mesa de picnic con farolillo, ajedrez,
   pueblo iluminado al fondo). Oscurecerla un poco, con un brillo suave del farolillo que parpadea.
   OJO: la web y el repo son públicos; confirmar antes de publicar fotos personales.
 
 **6.6 Iconos propios en vez de emojis**
-- [ ] Juego de iconos SVG propio (trazo fino y redondeado, color crema): recursos, modos, acciones, puertos.
-  Sustituir los emojis de toda la app, también los del 2D y las etiquetas de los puertos en 3D.
+- [x] Juego de iconos SVG propio (trazo fino y redondeado, color crema): recursos, modos, acciones, puertos. `lib/glyphs.ts`.
+  Sustituidos los emojis de toda la app, también los del 2D y las etiquetas de los puertos en 3D.
 
 **6.7 Expansión Navegantes de Catan** (si el usuario la compra; ver sección 5.6)
 

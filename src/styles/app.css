@@ -1650,3 +1650,152 @@
   display: inline-flex;
   color: var(--acento);
 }
+
+/* ---------- Fondos ilustrados: Playa, Canoa y Camping ---------- */
+.scene {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+.bg-playa {
+  background: linear-gradient(180deg, #5b4a8a 0%, #c7708a 32%, #f2a65e 58%, #f7c983 72%);
+}
+
+.scene-beach {
+  height: 62vh;
+}
+
+.shore {
+  animation: orilla 7s ease-in-out infinite alternate;
+}
+
+.sun-glints {
+  animation: destellos 3.5s ease-in-out infinite alternate;
+}
+
+@keyframes orilla {
+  from { transform: translate(-10px, -4px); }
+  to { transform: translate(10px, 5px); }
+}
+
+@keyframes destellos {
+  from { opacity: 0.45; }
+  to { opacity: 1; }
+}
+
+.bg-canoa {
+  background:
+    radial-gradient(ellipse 60% 22% at 50% 60%, rgba(255, 200, 160, 0.45), transparent 70%),
+    linear-gradient(180deg, #1c2747 0%, #4d4f7a 32%, #c9877a 56%, #e9b48a 61.5%, #1d4a63 62%, #0b2433 100%);
+}
+
+.scene-canoe {
+  top: 62%;
+}
+
+.canoe-sea {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.canoe-wave {
+  position: absolute;
+  left: 0;
+  width: 200%;
+  animation: ola 20s linear infinite;
+}
+
+.canoe-wave svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.canoe-wave-back {
+  top: 6%;
+  height: 34%;
+  opacity: 0.55;
+  animation-duration: 28s;
+  animation-direction: reverse;
+}
+
+.canoe-wave-back path { fill: #2a6a86; }
+
+.canoe-wave-front {
+  top: 40%;
+  bottom: 0;
+  animation-duration: 16s;
+}
+
+.canoe-wave-front path { fill: #0d3045; }
+
+.canoe {
+  position: absolute;
+  left: 50%;
+  top: 14%;
+  width: 230px;
+  margin-left: -115px;
+  overflow: visible;
+  transform-origin: 50% 80%;
+  animation: mecerse 4.5s ease-in-out infinite;
+}
+
+.paddle {
+  transform-origin: 10px -23px;
+  transform-box: view-box;
+  animation: remar 2.2s ease-in-out infinite;
+}
+
+@keyframes mecerse {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(7px) rotate(3deg); }
+}
+
+@keyframes remar {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-24deg); }
+}
+
+.bg-camping {
+  background:
+    radial-gradient(circle at 80% 12%, rgba(255, 244, 214, 0.92) 0 14px, rgba(255, 244, 214, 0.1) 15px, transparent 70px),
+    radial-gradient(ellipse 80% 30% at 50% 100%, rgba(255, 190, 110, 0.12), transparent 70%),
+    linear-gradient(180deg, #070d22 0%, #111c3d 45%, #1d2a4c 75%, #1a2238 100%);
+}
+
+.scene-camping {
+  height: auto;
+  max-height: 48vh;
+}
+
+.bulbs circle {
+  animation: bombilla 2.2s ease-in-out infinite alternate;
+}
+
+.trunk-glow {
+  animation: brillo-maletero 5s ease-in-out infinite alternate;
+}
+
+@keyframes bombilla {
+  from { opacity: 0.55; }
+  to { opacity: 1; }
+}
+
+@keyframes brillo-maletero {
+  from { opacity: 0.1; }
+  to { opacity: 0.2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shore,
+  .sun-glints,
+  .canoe,
+  .canoe-wave,
+  .paddle,
+  .bulbs circle,
+  .trunk-glow { animation: none; }
+}

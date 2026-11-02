@@ -18,6 +18,9 @@ export const FEATURES = {
 export const BACKGROUNDS: { id: BackgroundId; label: string; preview: string }[] = [
   { id: 'espacio', label: 'Espacio', preview: 'radial-gradient(circle at 30% 30%, #2b2350 0%, #0b0a14 70%)' },
   { id: 'oceano', label: 'Océano', preview: 'linear-gradient(180deg, #1b5675 0%, #0b2a3d 55%, #2c6d8c 80%, #0a2230 100%)' },
+  { id: 'playa', label: 'Playa', preview: 'linear-gradient(180deg, #f2a65e 0%, #e98a6a 40%, #3a6f8f 62%, #e8c792 78%)' },
+  { id: 'canoa', label: 'Canoa', preview: 'linear-gradient(180deg, #2d3f66 0%, #c9877a 45%, #1d4a63 62%, #0b2433 100%)' },
+  { id: 'camping', label: 'Camping', preview: 'linear-gradient(180deg, #0b1530 0%, #1a2448 55%, #12261c 72%)' },
   { id: 'pergamino', label: 'Pergamino', preview: 'radial-gradient(circle at 50% 45%, #5a4029 0%, #2a1c10 85%)' },
   { id: 'atardecer', label: 'Atardecer', preview: 'linear-gradient(160deg, #f0a262 0%, #b0507a 50%, #2b2140 100%)' },
   { id: 'bosque', label: 'Bosque', preview: 'linear-gradient(180deg, #13263a 0%, #0f2420 60%, #050d0b 100%)' },

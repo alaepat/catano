@@ -141,9 +141,14 @@ export function Stars({ count }: { count: number }) {
     },
     [smallMat, largeMat],
   );
-  useFrame((_, dt) => {
+  const clock = useClock();
+  useFrame(({ clock: real }, dt) => {
     if (ref.current) ref.current.rotation.y += dt * 0.006;
     if (big.current) big.current.rotation.y += dt * 0.004;
+    // Con la isla ya formada se apagan poco a poco: toman el relevo las estrellas del fondo, que "vuelan".
+    const doneAt = clock.current.doneAt;
+    const k = doneAt === null ? 1 : Math.max(0, 1 - (real.elapsedTime - doneAt) / 2.5);
+    smallMat.opacity = largeMat.opacity = k;
   });
   return (
     <>

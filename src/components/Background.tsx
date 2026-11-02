@@ -1,7 +1,8 @@
 // Fondos intercambiables (PLAN_CATAN.md, sección 3). Todos ocupan la pantalla entera, detrás de todo.
 import { motion } from 'motion/react';
 import { useEffect, useRef } from 'react';
-import type { BackgroundId } from '../store';
+import { useApp, type BackgroundId } from '../store';
+import { Beach, Camping, Canoe } from './Scenes';
 
 export function Background({ id }: { id: BackgroundId }) {
   return (
@@ -13,8 +14,16 @@ export function Background({ id }: { id: BackgroundId }) {
       animate={{ opacity: 1 }}
       transition={{ duration: 1.2, ease: 'easeOut' }}
     >
-      {id === 'espacio' && <Stars />}
+      {id === 'espacio' && <Stars flying />}
       {id === 'oceano' && <Waves />}
+      {id === 'playa' && <Beach />}
+      {id === 'canoa' && <Canoe />}
+      {id === 'camping' && (
+        <>
+          <Stars />
+          <Camping />
+        </>
+      )}
       {id === 'pergamino' && <Compass />}
       {id === 'bosque' && (
         <>
@@ -146,9 +155,18 @@ interface Star {
   phase: number;
 }
 
-/** Campo de estrellas que parpadean y se desplazan muy despacio (tres profundidades). */
-function Stars() {
+/**
+ * Campo de estrellas que parpadean y se desplazan muy despacio (tres profundidades).
+ * Con `flying`, al aparecer la isla las estrellas pasan hacia abajo cada vez más rápido,
+ * con una estela: parece que la isla vuela hacia arriba.
+ */
+function Stars({ flying = false }: { flying?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const fly = useRef(false);
+  const isFlying = useApp((s) => s.flying);
+  useEffect(() => {
+    fly.current = flying && isFlying;
+  }, [flying, isFlying]);
 
   useEffect(() => {
     const canvas = ref.current;
@@ -160,6 +178,9 @@ function Stars() {
     let w = 0;
     let h = 0;
     let frame = 0;
+    let last = 0;
+    // 0 = quietas; 1 = a toda velocidad. Cambia poco a poco, como un cohete que arranca.
+    let boost = 0;
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -176,16 +197,31 @@ function Stars() {
     };
 
     const draw = (t: number) => {
+      const dt = last ? Math.min((t - last) / 1000, 0.1) : 0;
+      last = t;
+      const target = fly.current && !reduce ? 1 : 0;
+      boost += (target - boost) * (1 - Math.exp(-dt * (target ? 0.5 : 1.2)));
       ctx.clearRect(0, 0, w, h);
+      ctx.strokeStyle = '#fff8ec';
+      ctx.lineCap = 'round';
       for (const s of stars) {
-        const drift = reduce ? 0 : (t / 1000) * (2 + s.depth * 6);
-        const y = (s.y + drift) % h;
+        const speed = 2 + s.depth * 6 + boost * (20 + s.depth * 150);
+        if (!reduce) s.y = (s.y + speed * dt) % (h + 20);
         const twinkle = reduce ? 0.8 : 0.55 + 0.45 * Math.sin(t / 900 + s.phase);
         ctx.globalAlpha = twinkle * (0.35 + s.depth * 0.65);
-        ctx.fillStyle = '#fff8ec';
-        ctx.beginPath();
-        ctx.arc(s.x, y, s.r, 0, Math.PI * 2);
-        ctx.fill();
+        const trail = boost * s.depth * s.depth * 26;
+        if (trail > 1.2) {
+          ctx.lineWidth = s.r * 1.6;
+          ctx.beginPath();
+          ctx.moveTo(s.x, s.y - trail);
+          ctx.lineTo(s.x, s.y);
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = '#fff8ec';
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
       if (!reduce) frame = requestAnimationFrame(draw);
     };
