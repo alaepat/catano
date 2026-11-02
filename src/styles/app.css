@@ -1830,6 +1830,10 @@
   background: linear-gradient(180deg, #04060c 0%, #070a12 100%);
 }
 
+.bg-flotante {
+  background: linear-gradient(180deg, #0c0d33 0%, #1d1a5a 60%, #2a1f66 100%);
+}
+
 .painted,
 .painted-live {
   position: absolute;
@@ -1849,6 +1853,11 @@
 .bg-mesa .painted,
 .bg-mesa .painted-live {
   height: 117%;
+}
+
+.bg-flotante .painted,
+.bg-flotante .painted-live {
+  height: 112%;
 }
 
 .painted {
@@ -1962,6 +1971,40 @@
   70% { opacity: 0.2; }
 }
 
+/* Mesa en el espacio: la isla flota (sube y baja muy poco y muy despacio) */
+.isla-flota {
+  animation: flotar 7s ease-in-out infinite alternate;
+}
+
+@keyframes flotar {
+  from { transform: translateY(-7px); }
+  to { transform: translateY(7px); }
+}
+
+.lantern-glow {
+  animation: respirar-calido 3.2s ease-in-out infinite alternate;
+}
+
+@keyframes respirar-calido {
+  from { opacity: 0.35; }
+  to { opacity: 0.8; }
+}
+
+.moon-glow {
+  animation: sol 8s ease-in-out infinite alternate;
+}
+
+.twinkle {
+  fill: #fffbe8;
+  opacity: 0;
+  animation: parpadeo 5s ease-in-out infinite;
+}
+
+@keyframes parpadeo {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.9; }
+}
+
 /* Una estrella fugaz de vez en cuando (cruza en el primer 6 % del ciclo y luego descansa) */
 .shooting-star {
   opacity: 0;
@@ -1984,6 +2027,9 @@
   .birds,
   .bird,
   .sun-glow,
+  .moon-glow,
+  .lantern-glow,
+  .isla-flota,
   .lamp-breath,
   .moth,
   .moth path,
@@ -1991,6 +2037,7 @@
   .birds { transform: translate(420px, 700px); }
   .moth,
   .seed,
+  .twinkle,
   .shooting-star { display: none; }
 }
 

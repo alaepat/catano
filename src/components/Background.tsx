@@ -2,7 +2,7 @@
 import { motion } from 'motion/react';
 import { useEffect, useRef } from 'react';
 import { useApp, type BackgroundId } from '../store';
-import { NightTable, Park } from './PaintedScenes';
+import { FloatingTable, NightTable, Park } from './PaintedScenes';
 import { Beach, Canoe } from './Scenes';
 
 export function Background({ id }: { id: BackgroundId }) {
@@ -21,6 +21,7 @@ export function Background({ id }: { id: BackgroundId }) {
       {id === 'canoa' && <Canoe />}
       {id === 'parque' && <Park />}
       {id === 'mesa' && <NightTable />}
+      {id === 'flotante' && <FloatingTable />}
       {id === 'pergamino' && <Compass />}
       {id === 'bosque' && (
         <>

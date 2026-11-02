@@ -2,7 +2,7 @@ import type { AnimSpeed, BackgroundId, Quality } from '../store';
 
 /** Título provisional: el usuario aún no ha decidido el nombre de la app (PLAN_CATAN.md, sección 13). */
 export const APP_TITLE = 'Catan';
-export const APP_VERSION = '0.9.0';
+export const APP_VERSION = '0.9.1';
 
 /**
  * Partes de la app escondidas (la app es para una sola persona). El código sigue ahí:
@@ -22,6 +22,7 @@ export const BACKGROUNDS: { id: BackgroundId; label: string; preview: string }[]
   { id: 'canoa', label: 'Canoa', preview: 'linear-gradient(180deg, #2d3f66 0%, #c9877a 45%, #1d4a63 62%, #0b2433 100%)' },
   { id: 'parque', label: 'Parque', preview: `center 78% / cover url(${import.meta.env.BASE_URL}fondos/parque.webp), #5b3b6c` },
   { id: 'mesa', label: 'Mesa de noche', preview: `center 70% / cover url(${import.meta.env.BASE_URL}fondos/mesa-noche.webp), #05070d` },
+  { id: 'flotante', label: 'Mesa en el espacio', preview: `center 62% / cover url(${import.meta.env.BASE_URL}fondos/mesa-espacio-mini.webp), #161447` },
   { id: 'pergamino', label: 'Pergamino', preview: 'radial-gradient(circle at 50% 45%, #5a4029 0%, #2a1c10 85%)' },
   { id: 'atardecer', label: 'Atardecer', preview: 'linear-gradient(160deg, #f0a262 0%, #b0507a 50%, #2b2140 100%)' },
   { id: 'bosque', label: 'Bosque', preview: 'linear-gradient(180deg, #13263a 0%, #0f2420 60%, #050d0b 100%)' },

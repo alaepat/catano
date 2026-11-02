@@ -503,6 +503,10 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
   Capa animada en `PaintedScenes.tsx` (mismo tamaño que la imagen): parque = sol que palpita, pájaros, semillas al viento y
   cielo de arriba oscurecido para leer el título; noche = lámpara que respira, polillas, luces del pueblo y estrella fugaz.
   En CSS la imagen se agranda desde arriba (120 % / 117 %) para que la escena quede bajo el botón "Generar tablero".
+- [x] (v0.9.1) Fondo extra **Mesa en el espacio** (`flotante`): la mesa sobre una isla flotante con luna (imagen del usuario, ChatGPT).
+  La isla está recortada aparte con transparencia (`mesa-espacio-isla.webp`, GrabCut con contorno a mano) y sube y baja
+  despacio sobre el cielo (`mesa-espacio.webp`, con el hueco rellenado). Lámpara, luna, estrellas que parpadean y estrella fugaz.
+  Miniatura para Ajustes: `mesa-espacio-mini.webp` (la imagen entera, pequeña).
 
 **6.6 Iconos propios en vez de emojis**
 - [x] Juego de iconos SVG propio (trazo fino y redondeado, color crema): recursos, modos, acciones, puertos. `lib/glyphs.ts`.

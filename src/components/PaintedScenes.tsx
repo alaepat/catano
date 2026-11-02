@@ -1,17 +1,17 @@
-// Fondos pintados (Parque y Mesa de noche): la ilustración es una imagen fija (se dibuja una sola vez,
+// Fondos pintados (Parque, Mesa de noche y Mesa en el espacio): la ilustración es una imagen fija (se dibuja una sola vez,
 // así no gasta batería) y encima va una capa ligera con lo que se mueve. La capa usa el mismo tamaño
-// que la imagen (852 × 1846) y el mismo encuadre, así lo animado cae justo en su sitio.
+// que la imagen y el mismo encuadre, así lo animado cae justo en su sitio.
 import type { ReactNode } from 'react';
 
 const W = 852;
 const H = 1846;
 
-function Painted({ src, children }: { src: string; children?: ReactNode }) {
+function Painted({ src, children, w = W, h = H }: { src: string; children?: ReactNode; w?: number; h?: number }) {
   return (
     <>
       <img className="painted" src={`${import.meta.env.BASE_URL}fondos/${src}`} alt="" decoding="async" draggable={false} />
       {children && (
-        <svg className="painted-live" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+        <svg className="painted-live" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="xMidYMax slice" aria-hidden="true">
           {children}
         </svg>
       )}
@@ -101,6 +101,55 @@ export function NightTable() {
       ))}
       <g transform="translate(640 210) rotate(152)">
         <rect className="shooting-star" x="0" y="-0.8" width="120" height="1.6" rx="0.8" fill="url(#shooting)" />
+      </g>
+    </Painted>
+  );
+}
+
+/** Estrellas de la imagen que parpadean de vez en cuando: [x, y, retraso en s]. */
+const TWINKLES = [
+  [157, 201, 0],
+  [124, 532, 1.7],
+  [390, 70, 3.1],
+  [515, 232, 0.8],
+  [763, 937, 2.4],
+  [100, 683, 4],
+  [790, 1560, 1.2],
+  [523, 400, 3.6],
+];
+
+/**
+ * Mesa en el espacio: la isla (recortada aparte, con transparencia) sube y baja despacio sobre el cielo,
+ * la lámpara brilla, la luna respira, algunas estrellas parpadean y a veces cruza una estrella fugaz.
+ */
+export function FloatingTable() {
+  const base = import.meta.env.BASE_URL;
+  return (
+    <Painted src="mesa-espacio.webp" w={853} h={1844}>
+      <defs>
+        <radialGradient id="lantern-glow">
+          <stop offset="0" stopColor="#ffd38a" stopOpacity="0.9" />
+          <stop offset="1" stopColor="#ffb34d" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="moon-glow">
+          <stop offset="0.45" stopColor="#f4ecd6" stopOpacity="0.35" />
+          <stop offset="1" stopColor="#f4ecd6" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="shooting-2" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#fff" stopOpacity="0" />
+          <stop offset="1" stopColor="#fff" stopOpacity="0.9" />
+        </linearGradient>
+      </defs>
+      <circle className="moon-glow" cx="695" cy="277" r="120" fill="url(#moon-glow)" />
+      {TWINKLES.map(([x, y, d], i) => (
+        <circle key={i} className="twinkle" cx={x} cy={y} r="2.2" style={{ animationDelay: `${d}s` }} />
+      ))}
+      <g transform="translate(330 120) rotate(155)">
+        <rect className="shooting-star" x="0" y="-0.8" width="120" height="1.6" rx="0.8" fill="url(#shooting-2)" />
+      </g>
+      <g className="isla-flota">
+        <image href={`${base}fondos/mesa-espacio-isla.webp`} x="22" y="749" width="794" height="888" />
+        <circle className="lantern-glow" cx="420" cy="918" r="70" fill="url(#lantern-glow)" />
       </g>
     </Painted>
   );

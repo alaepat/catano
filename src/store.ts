@@ -13,8 +13,8 @@ import { safeStorage } from './lib/storage';
 
 export type Screen = 'inicio' | 'personalizar' | 'tablero' | 'ajustes' | 'tableros';
 export type ModeChoice = PresetId | 'personalizado' | 'sorpresa';
-export type BackgroundId = 'espacio' | 'oceano' | 'playa' | 'canoa' | 'parque' | 'mesa' | 'pergamino' | 'atardecer' | 'bosque' | 'minimal';
-const BACKGROUND_IDS: BackgroundId[] = ['espacio', 'oceano', 'playa', 'canoa', 'parque', 'mesa', 'pergamino', 'atardecer', 'bosque', 'minimal'];
+export type BackgroundId = 'espacio' | 'oceano' | 'playa' | 'canoa' | 'parque' | 'mesa' | 'flotante' | 'pergamino' | 'atardecer' | 'bosque' | 'minimal';
+const BACKGROUND_IDS: BackgroundId[] = ['espacio', 'oceano', 'playa', 'canoa', 'parque', 'mesa', 'flotante', 'pergamino', 'atardecer', 'bosque', 'minimal'];
 
 /** Fondo guardado de una versión anterior: el Camping pasó a ser el Parque; uno que ya no existe vuelve al Espacio. */
 function migrateBackground(id: unknown): BackgroundId {
