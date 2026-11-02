@@ -1,9 +1,13 @@
-// El tablero generado, con acciones: otra vez, análisis y puntitos.
-import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useMemo, useState } from 'react';
+// El tablero generado (en 3D, o en 2D si se elige o si el móvil no puede), con acciones: otra vez, análisis y puntitos.
+
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { BoardSvg } from '../components/BoardSvg';
-import { revealDuration } from '../lib/reveal';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import { BackIcon, IconButton } from '../components/ui';
+import { loadBoard3D } from '../lib/board3d';
+import { revealDuration } from '../lib/reveal';
+import { hasWebGL } from '../lib/webgl';
 import { PRESET_INFO, analyzeBoard, type Resource } from '../game';
 import { ANIM_FACTOR, useApp } from '../store';
 
@@ -15,22 +19,35 @@ const RESOURCE_LABEL: Record<Resource, string> = {
   mineral: '⛰️ Mineral',
 };
 
+const Board3D = lazy(loadBoard3D);
+
 export function Tablero() {
   const { generation, choice, settings, generate, updateSettings } = useApp();
   const [showAnalysis, setShowAnalysis] = useState(false);
-  const [revealed, setRevealed] = useState(false);
+  const [failed3d, setFailed3d] = useState(false);
+  // Generación cuya animación ya terminó (o se saltó tocando la pantalla).
+  const [revealedId, setRevealedId] = useState<number | null>(null);
 
-  const speed = ANIM_FACTOR[settings.animSpeed];
+  const reduceMotion = useReducedMotion();
+  const speed = reduceMotion ? 0 : ANIM_FACTOR[settings.animSpeed];
+  const use3d = settings.quality !== '2d' && !failed3d && hasWebGL();
+  const genId = generation?.id ?? null;
+  const revealed = speed === 0 || revealedId === genId;
+  const reveal = () => setRevealedId(genId);
+
   const board = generation?.result.ok ? generation.result.board : null;
   const analysis = useMemo(() => (board ? analyzeBoard(board) : null), [board]);
+  const highlight = useMemo(
+    () => (revealed && showAnalysis && analysis ? analysis.bestVertices.map((b) => b.vertex) : []),
+    [revealed, showAnalysis, analysis],
+  );
 
-  // Tras la animación, aparecen los mejores cruces y se puede regenerar sin pisar la animación.
+  // En 2D la animación dura un tiempo fijo; en 3D avisa la propia escena al terminar.
   useEffect(() => {
-    setRevealed(speed === 0);
-    if (speed === 0) return;
-    const t = setTimeout(() => setRevealed(true), revealDuration(speed) * 1000);
+    if (speed === 0 || use3d || genId === null) return;
+    const t = setTimeout(() => setRevealedId(genId), revealDuration(speed) * 1000);
     return () => clearTimeout(t);
-  }, [generation?.id, speed]);
+  }, [genId, speed, use3d]);
 
   if (!generation) return null;
 
@@ -57,15 +74,40 @@ export function Tablero() {
       </header>
 
       <div className="tablero-main">
-        {board ? (
-          <div className="board-wrap" onClick={() => setRevealed(true)}>
-            <BoardSvg
-              key={generation.id}
-              board={board}
-              speed={speed}
-              showPips={settings.showPips}
-              highlight={revealed && showAnalysis ? analysis?.bestVertices.map((b) => b.vertex) : []}
-            />
+        {board && use3d ? (
+          <div className="board-3d" role="img" aria-label="Tablero de Catan en 3D" onClick={reveal}>
+            <ErrorBoundary fallback={null} onError={() => setFailed3d(true)}>
+              <Suspense fallback={<div className="board-loading" />}>
+                <Board3D
+                  board={board}
+                  animKey={generation.id}
+                  speed={speed}
+                  skip={revealed}
+                  showPips={settings.showPips}
+                  highlight={highlight}
+                  quality={settings.quality === '2d' ? 'alta' : settings.quality}
+                  stars={settings.background === 'espacio'}
+                  onDone={reveal}
+                  onFail={() => setFailed3d(true)}
+                />
+              </Suspense>
+            </ErrorBoundary>
+            <AnimatePresence>
+              {!revealed && (
+                <motion.p
+                  className="skip-hint"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1, transition: { delay: 1.2, duration: 0.6 } }}
+                  exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                >
+                  Toca para saltar
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
+        ) : board ? (
+          <div className="board-wrap" onClick={reveal}>
+            <BoardSvg key={generation.id} board={board} speed={speed} showPips={settings.showPips} highlight={highlight} />
           </div>
         ) : (
           <div className="card error-card">

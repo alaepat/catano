@@ -12,11 +12,14 @@ export type Screen = 'inicio' | 'personalizar' | 'tablero' | 'ajustes';
 export type ModeChoice = PresetId | 'personalizado' | 'sorpresa';
 export type BackgroundId = 'espacio' | 'atardecer' | 'minimal';
 export type AnimSpeed = 'epica' | 'rapida' | 'sin';
+/** Calidad del tablero 3D. '2d' = tablero plano (para móviles lentos o si el 3D falla). */
+export type Quality = 'alta' | 'media' | 'baja' | '2d';
 
 export interface Settings {
   background: BackgroundId;
   animSpeed: AnimSpeed;
   showPips: boolean;
+  quality: Quality;
 }
 
 export interface Generation {
@@ -47,7 +50,7 @@ interface State {
   resetAll: () => void;
 }
 
-const DEFAULT_SETTINGS: Settings = { background: 'espacio', animSpeed: 'epica', showPips: true };
+const DEFAULT_SETTINGS: Settings = { background: 'espacio', animSpeed: 'epica', showPips: true, quality: 'alta' };
 
 export const ANIM_FACTOR: Record<AnimSpeed, number> = { epica: 1, rapida: 0.45, sin: 0 };
 

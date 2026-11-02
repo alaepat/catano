@@ -1,8 +1,8 @@
-import type { AnimSpeed, BackgroundId } from '../store';
+import type { AnimSpeed, BackgroundId, Quality } from '../store';
 
 /** Título provisional: el usuario aún no ha decidido el nombre de la app (PLAN_CATAN.md, sección 13). */
 export const APP_TITLE = 'Catan';
-export const APP_VERSION = '0.2.0';
+export const APP_VERSION = '0.3.0';
 
 export const BACKGROUNDS: { id: BackgroundId; label: string; preview: string }[] = [
   { id: 'espacio', label: 'Espacio', preview: 'radial-gradient(circle at 30% 30%, #2b2350 0%, #0b0a14 70%)' },
@@ -14,4 +14,11 @@ export const ANIM_SPEEDS: [AnimSpeed, string][] = [
   ['epica', 'Épica'],
   ['rapida', 'Rápida'],
   ['sin', 'Sin animación'],
+];
+
+export const QUALITIES: [Quality, string][] = [
+  ['alta', 'Alta'],
+  ['media', 'Media'],
+  ['baja', 'Baja'],
+  ['2d', '2D'],
 ];

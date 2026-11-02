@@ -381,6 +381,14 @@
   color: var(--crema-suave);
 }
 
+.field-hint {
+  margin: -4px 0 4px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--crema-suave);
+  opacity: 0.7;
+}
+
 .chips {
   display: flex;
   flex-wrap: wrap;
@@ -558,6 +566,52 @@
   width: 100%;
   max-width: 520px;
   margin: 0 auto;
+}
+
+/* Tablero 3D: ocupa todo el ancho (de borde a borde) y el alto que quede libre. */
+.board-3d {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 340px;
+  margin: 0 -16px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mientras se descarga la escena 3D: un punto de luz que late. */
+.board-loading {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--crema);
+  box-shadow: 0 0 24px 8px rgba(255, 236, 205, 0.45);
+  animation: latido 1.4s ease-in-out infinite;
+}
+
+@keyframes latido {
+  50% {
+    transform: scale(0.6);
+    opacity: 0.5;
+  }
+}
+
+.skip-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 4px;
+  margin: 0;
+  text-align: center;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  color: var(--crema-suave);
+  opacity: 0.7;
+  pointer-events: none;
 }
 
 .error-card {

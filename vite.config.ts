@@ -7,6 +7,8 @@ const base = process.env.BASE_PATH ?? '/';
 
 export default defineConfig({
   base,
+  // La escena 3D (Three.js) va en su propio archivo de ~900 kB; se descarga aparte y se guarda para usarla sin internet.
+  build: { chunkSizeWarningLimit: 1000 },
   plugins: [
     react(),
     // Hace la app instalable ("Añadir a pantalla de inicio") y que funcione sin conexión.

@@ -1,7 +1,10 @@
 // Personalizar la generación: elegir un modo de un toque y, si se quiere, retocar opciones.
 import { AnimatePresence, motion } from 'motion/react';
+import { useEffect } from 'react';
 import { BackIcon, Chips, Collapsible, IconButton, Switch, Toast } from '../components/ui';
 import { PRESET_IDS, PRESET_INFO, type GenOptions } from '../game';
+import { loadBoard3D } from '../lib/board3d';
+import { hasWebGL } from '../lib/webgl';
 import { useApp, type ModeChoice } from '../store';
 
 const MODE_CHOICES: ModeChoice[] = [...PRESET_IDS, 'sorpresa'];
@@ -13,8 +16,13 @@ function modeInfo(choice: ModeChoice) {
 }
 
 export function Personalizar() {
-  const { choice, options, notes, goTo, selectMode, setOption, clearNotes, generate } = useApp();
+  const { choice, options, notes, goTo, selectMode, setOption, clearNotes, generate, settings } = useApp();
   const info = modeInfo(choice);
+
+  // Descarga la escena 3D mientras se eligen opciones, para que la isla salga sin esperas.
+  useEffect(() => {
+    if (settings.quality !== '2d' && hasWebGL()) void loadBoard3D().catch(() => {});
+  }, [settings.quality]);
 
   const crear = () => {
     generate();

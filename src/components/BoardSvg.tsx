@@ -1,8 +1,8 @@
-// Tablero en 2D (SVG). Se usa hasta que llegue la escena 3D y como modo 2D de respaldo.
+// Tablero en 2D (SVG). Es el modo 2D de Ajustes y el respaldo si el móvil no puede con el 3D.
 // Con `speed` > 0, el tablero aparece animado: hexágonos del centro hacia fuera, números, puertos y ladrón.
 import { motion } from 'motion/react';
 import { COAST_EDGES, EDGES, HEXES, VERTICES, pips, isRed, type Board, type PortType, type Terrain } from '../game';
-import { REVEAL_TIMING as T } from '../lib/reveal';
+import { REVEAL_INDEX, REVEAL_TIMING as T } from '../lib/reveal';
 
 const S = 50; // radio de un hexágono en píxeles del SVG
 
@@ -37,15 +37,6 @@ const PORT_ICON: Record<PortType, string> = {
 const SEA_R = S * 5.3;
 const HALF = S * 5.6;
 const VIEWBOX = `${-HALF} ${-HALF} ${HALF * 2} ${HALF * 2}`;
-
-/** Orden de aparición: del centro hacia fuera, girando. */
-const REVEAL_INDEX: number[] = (() => {
-  const order = HEXES.slice().sort((a, b) => a.ring - b.ring || Math.atan2(a.y, a.x) - Math.atan2(b.y, b.x));
-  const index: number[] = [];
-  order.forEach((h, i) => (index[h.id] = i));
-  return index;
-})();
-
 
 const fromCenter = { transformBox: 'fill-box' as const, transformOrigin: 'center' };
 

@@ -42,7 +42,7 @@ Además tiene personalidad propia: un "Dato curioso del día" con bromas interna
 | Pieza | Elección | Por qué |
 |---|---|---|
 | Base | **Vite + React + TypeScript** | Rápido, fácil de ampliar con secciones nuevas |
-| 3D | **Three.js** con **@react-three/fiber** + **@react-three/drei** | La animación 3D del mapa en el espacio |
+| 3D | **Three.js** con **@react-three/fiber** (sin drei: no hacía falta) | La animación 3D del mapa en el espacio |
 | Animaciones de interfaz | **Framer Motion** (paquete `motion`) | Fades, transiciones entre pantallas, menús |
 | Sonido (opcional) | **Howler.js** | Efectos y música con control de volumen |
 | Estado | **Zustand** | Simple; guarda ajustes y opciones de generación |
@@ -335,11 +335,21 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 - Decoración low-poly sencilla: árboles (bosque), ovejas (pasto), espigas (cereal), ladrillos/colinas (arcilla), picos (montaña), dunas (desierto).
 - Fichas: discos color crema con el número en tipografía de título y los puntitos debajo.
 
+### 7.3 bis: Cómo está hecho (Fase 3, 2026-11-02)
+- Todo en `src/three/`. `Board3D.tsx` monta el lienzo, la cámara, las luces y el giro con el dedo;
+  `Island.tsx` (hexágonos, decoración, fichas, cruces del análisis), `Pieces.tsx` (barcos y ladrón con humo),
+  `Space.tsx` (mar, aura, destello inicial y estrellas 3D).
+- **Guion de la animación** en `src/three/timeline.ts` (tiempos de cada parte), con tests en `tests/timeline.test.ts`.
+  Para retocar la animación, cambiar los números de `SEQ`.
+- Las caras de las fichas y las etiquetas de los puertos se dibujan con canvas en el propio móvil (sin descargar nada).
+- La escena 3D se descarga aparte (~245 kB comprimida) y Personalizar la pide por adelantado.
+- Al acabar, la isla flota despacio y se puede girar un poco con el dedo; al soltar vuelve a su sitio.
+
 ### 7.4 Rendimiento y accesibilidad
 - Objetivo: **60 fps en un móvil de gama media**. Medir y ajustar.
 - Ajuste **Calidad gráfica**: Alta / Media / Baja (menos estrellas, sin sombras, menos partículas).
 - **Modo 2D** de respaldo (SVG + Framer Motion) si WebGL falla o el usuario lo elige.
-- Si el sistema tiene `prefers-reduced-motion`, usar por defecto la animación corta.
+- Si el sistema tiene `prefers-reduced-motion`, el tablero sale directamente, sin animación (ver decisiones).
 - Toque en pantalla = **saltar animación**.
 
 ---
@@ -382,13 +392,14 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 - [x] Ajustes básicos (fondo, velocidad de animación, puntitos, borrar datos) guardados en el móvil (`src/app/Ajustes.tsx`, `src/store.ts`)
 - [x] Fondos de momento: Espacio (estrellas animadas), Atardecer y Minimal. El resto, en la Fase 4.
 
-### Fase 3: La escena 3D épica
-- [ ] Fondo espacial con estrellas y parallax
-- [ ] Isla 3D: hexágonos, fichas, puertos, ladrón
-- [ ] Aura/atmósfera y anillo de mar
-- [ ] Secuencia de animación completa + saltar tocando
-- [ ] Calidad gráfica y modo 2D de respaldo
-- [ ] Prueba real en el móvil del usuario
+### Fase 3: La escena 3D épica ✅ (2026-11-02, falta probarla en el iPhone)
+- [x] Fondo espacial con estrellas y parallax (estrellas 3D sobre el fondo animado; solo con el fondo Espacio)
+- [x] Isla 3D: hexágonos con bisel y decoración low-poly, fichas, barcos en los puertos, ladrón (`src/three/`)
+- [x] Aura/atmósfera y anillo de mar
+- [x] Secuencia de animación completa + saltar tocando ("Toca para saltar" acelera hasta el final)
+- [x] Calidad gráfica (Alta / Media / Baja / 2D en Ajustes) y modo 2D de respaldo si el 3D falla o el móvil no puede
+- [ ] Prueba real en el móvil del usuario (fluidez a 60 fps: no se puede medir desde el PC)
+- [ ] Nombre de la isla al final de la animación → pasa a la Fase 4 (va con "Nombres de isla aleatorios")
 
 ### Fase 4: Pulido y personalidad
 - [ ] Todos los fondos seleccionables
@@ -486,6 +497,11 @@ Claude: añade aquí ideas nuevas. El usuario elegirá cuáles entran.
 | 2026-11-02 | Animación 2D provisional al generar (hexágonos del centro hacia fuera, números, puertos, ladrón) | Para que la Fase 2 ya se sienta viva; la Fase 3 la sustituye por la escena 3D |
 | 2026-11-02 | Publicada como web instalable (PWA) en GitHub Pages, no en App Store / Play Store | Gratis y se actualiza sola; la App Store cuesta 99 €/año, pide Mac, revisa cada versión y rechazaría el nombre "Catan" (marca registrada). El usuario de la app tiene iPhone |
 | 2026-11-02 | La app la usa una sola persona | Por eso no hay código para compartir ni funciones multijugador |
+| 2026-11-02 | 3D sin @react-three/drei; los controles (girar con el dedo y volver) están hechos a mano | Lo único que se usaba era eso; así la descarga pesa menos |
+| 2026-11-02 | La escena 3D se carga aparte (lazy) y el lienzo 3D no se recrea al pulsar "Otra vez" | La app arranca igual de rápido que antes, y el iPhone no acumula lienzos 3D |
+| 2026-11-02 | Números de las fichas dibujados con canvas, no con texto 3D | El texto 3D descargaría tipografías de internet y fallaría sin conexión |
+| 2026-11-02 | Con "reducir movimiento" del sistema, el tablero sale sin animación | Una cámara que vuela por el espacio puede marear; el plan decía "animación corta", pero es más seguro quitarla |
+| 2026-11-02 | La animación nunca avanza más de 0,1 s por fotograma | Si el móvil se atasca un momento, la animación va más lenta en vez de dar saltos |
 
 ---
 
