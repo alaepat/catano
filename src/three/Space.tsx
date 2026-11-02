@@ -77,7 +77,8 @@ export function Burst() {
     if (!s) return;
     const t = clock.current.t;
     const grow = ease.outCubic(progress(t, { start: SEQ.light.start, dur: SEQ.light.dur * 0.6 }));
-    const fade = 1 - ease.inOutCubic(progress(t, { start: SEQ.light.start + SEQ.light.dur * 0.55, dur: SEQ.light.dur * 0.45 }));
+    // Se apaga mientras el mar ya está creciendo, para que no quede ningún momento vacío.
+    const fade = 1 - ease.inOutCubic(progress(t, { start: SEQ.light.start + SEQ.light.dur * 0.7, dur: SEQ.light.dur * 0.6 }));
     s.visible = fade > 0;
     s.scale.setScalar(lerp(0.5, 18, grow));
     material.opacity = fade;
