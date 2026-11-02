@@ -15,8 +15,10 @@ export type RuleId =
   | 'iguales-juntos'
   | '2-12-juntos'
   | 'tope-cruce'
-  | 'rojos-costa'
+  | 'zona-rojos'
   | 'reparto-justo'
+  | 'escasez'
+  | 'regiones'
   | 'puerto-recurso';
 
 export const RULE_LABELS: Record<RuleId, string> = {
@@ -27,8 +29,10 @@ export const RULE_LABELS: Record<RuleId, string> = {
   'iguales-juntos': 'Hay dos números iguales juntos',
   '2-12-juntos': 'El 2 y el 12 están juntos',
   'tope-cruce': 'Algún cruce supera el tope de puntitos',
-  'rojos-costa': 'Hay un 6 u 8 en la costa',
+  'zona-rojos': 'Hay un 6 u 8 fuera de la zona elegida',
   'reparto-justo': 'Algún recurso tiene números mucho peores que otro',
+  escasez: 'Ningún recurso tiene solo números malos',
+  regiones: 'Algún terreno no forma una sola región',
   'puerto-recurso': 'Los puertos 2:1 no respetan la opción elegida',
 };
 
@@ -116,9 +120,39 @@ export function numberViolations(terrains: Cell<Terrain>, numbers: Cell<number>,
   if (opts.avoidSameAdjacent && countAdjacentPairs(numbers, sameAdjacent) > 0) out.push('iguales-juntos');
   if (opts.avoid2And12Adjacent && countAdjacentPairs(numbers, twoTwelveAdjacent) > 0) out.push('2-12-juntos');
   if (opts.maxVertexPips > 0 && Math.max(...vertexPips(numbers)) > opts.maxVertexPips) out.push('tope-cruce');
-  if (opts.noRedsOnCoast && HEXES.some((h) => h.ring === 2 && isRed(numbers[h.id]))) out.push('rojos-costa');
+  if (opts.redsZone !== 'cualquiera' && HEXES.some((h) => isRed(numbers[h.id]) && !inRedsZone(h.id, opts.redsZone))) out.push('zona-rojos');
   if (opts.fairResources && resourceSpread(terrains, numbers) > FAIR_SPREAD) out.push('reparto-justo');
+  if (opts.scarceResource !== 'ninguno') {
+    const scarce = scarceResources(terrains, numbers);
+    const ok = opts.scarceResource === 'aleatorio' ? scarce.length > 0 : scarce.includes(opts.scarceResource);
+    if (!ok) out.push('escasez');
+  }
   return out;
+}
+
+/** Números "malos" para la escasez: 2, 3, 11 y 12 (2 puntitos o menos). */
+export const SCARCE_MAX_PIPS = 2;
+
+export function inRedsZone(hex: number, zone: GenOptions['redsZone']): boolean {
+  if (zone === 'interior') return HEXES[hex].ring < 2;
+  if (zone === 'costa') return HEXES[hex].ring === 2;
+  return true;
+}
+
+/** Recursos cuyos hexágonos tienen todos números malos. */
+export function scarceResources(terrains: Cell<Terrain>, numbers: Cell<number>): Resource[] {
+  return RESOURCES.filter((r) => {
+    const hexes = terrains.map((t, i) => (t && TERRAIN_RESOURCE[t] === r ? i : -1)).filter((i) => i >= 0);
+    return hexes.length > 0 && hexes.every((i) => pips(numbers[i]) <= SCARCE_MAX_PIPS);
+  });
+}
+
+/** ¿Cada terreno forma un solo bloque? */
+export function allTerrainsInRegions(terrains: Cell<Terrain>): boolean {
+  return TERRAINS.every((t) => {
+    const first = terrains.indexOf(t);
+    return first >= 0 && groupSize(terrains, first) === TERRAIN_COUNTS[t];
+  });
 }
 
 /**
@@ -140,6 +174,7 @@ export function findViolations(board: Board, opts: GenOptions): RuleId[] {
   if (opts.desert === 'costa' && HEXES[desert]?.ring !== 2) out.push('desierto');
   if (board.robber !== (opts.robberStart === 'desierto' ? desert : null)) out.push('ladron');
   if (opts.maxTerrainGroup > 0 && largestTerrainGroup(board.terrains) > opts.maxTerrainGroup) out.push('grupo-terreno');
+  if (opts.terrainLayout === 'regiones' && !allTerrainsInRegions(board.terrains)) out.push('regiones');
   out.push(...numberViolations(board.terrains, board.numbers, opts));
   if (opts.ports && board.ports.some((p) => !portFits(p.type, p.coast, board.terrains, opts.portNearResource))) {
     out.push('puerto-recurso');

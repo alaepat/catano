@@ -64,7 +64,6 @@ src/
     generator.ts  # genera el tablero según las opciones
     rules.ts      # comprobaciones de equilibrio
     rng.ts        # aleatorio con semilla (mulberry32 o similar)
-    share.ts      # codificar/decodificar tablero en un código o enlace
   three/          # escena 3D: espacio, isla, hexágonos, fichas, aura
   data/
     datos-curiosos.json
@@ -149,8 +148,10 @@ Al entrar, **todo aparece con un fade-in escalonado** (fondo → título → bie
 ### 4.3 Personalizar la generación
 Se abre al pulsar "Generar tablero". Debe ser **rápido de usar**: arriba unos **presets** de un toque,
 y debajo las opciones detalladas, agrupadas y plegables (sección 5.4).
-- Presets: **Oficial**, **Equilibrado** (recomendado), **Caos total**, **Personalizado**.
-- Tocar cualquier opción cambia el preset a "Personalizado".
+- Modos (sección 5.5): **Oficial**, **Equilibrado** (recomendado), **Competitivo**, **Tranquila**, **Escasez**,
+  **Continentes**, **Pelea por el centro**, **Mercaderes**, **Caos total**, más **🎲 Sorpresa** y **Personalizado**.
+  Cada modo muestra su frase de "para qué sirve".
+- Tocar cualquier opción cambia el modo a "Personalizado".
 - Recordar la última configuración usada.
 - Botón final grande: **"¡Crear isla!"**
 
@@ -162,7 +163,6 @@ El mapa ya colocado, en 3D, con un ligero giro posible con el dedo (limitado, si
 Acciones (barra inferior con botones redondeados):
 - 🔄 **Otra vez** (regenera con las mismas opciones, animación más corta)
 - ⭐ **Guardar** en Mis tableros
-- 🔗 **Compartir** (código corto o enlace; mismo código = mismo tablero)
 - 📊 **Análisis**: puntuación de equilibrio, mejores cruces, recurso más escaso
 - 👁️ Mostrar/ocultar **puntitos de probabilidad**
 - 📷 **Foto**: guarda una imagen del mapa para mandarla al grupo
@@ -172,7 +172,7 @@ Acciones (barra inferior con botones redondeados):
 Ver sección 8.
 
 ### 4.7 Mis tableros
-Lista de tableros guardados (miniatura, nombre de la isla, fecha). Abrir, renombrar, borrar o compartir.
+Lista de tableros guardados (miniatura, nombre de la isla, fecha). Abrir, renombrar o borrar.
 
 ---
 
@@ -236,10 +236,11 @@ Un cruce vale la **suma de puntitos** de sus hasta 3 hexágonos. Los cruces de 1
 - Reglas de juego (no de montaje), solo para la chuleta: *ladrón amistoso* (no puede robar a quien tiene ≤ 2 puntos), etc.
 
 ### 5.4 Opciones del menú de personalización
-Cada opción tiene un valor por defecto **según el preset**.
+Cada opción tiene un valor por defecto **según el modo** (sección 5.5). Las opciones están en `src/game/options.ts`.
 
 **🏝️ Terrenos**
 - Posición del desierto: `Centro` · `Aleatorio` · `En la costa`
+- Distribución: `Normal` · `Regiones` (cada terreno forma un solo bloque)
 - Máximo de terrenos iguales juntos: `Sin límite` · `3` · `2` · `Ninguno juntos`
 
 **🎲 Números**
@@ -249,8 +250,15 @@ Cada opción tiene un valor por defecto **según el preset**.
 - 2 y 12 juntos: `Permitir` · `Evitar`
 - Reparto justo por recurso: `Off` · `On` (diferencia máxima de puntitos entre recursos)
 - Tope de puntitos por cruce: `Sin tope` · `12` · `11` (el 10 se quitó: ver Registro de decisiones)
-- Sin "rojos" en la costa (opcional). **Incompatible con "6 y 8: Evitar"**: en las 7 casillas interiores
-  solo caben 3 rojos sin tocarse. En el menú, al activar una, desactivar o avisar de la otra.
+- Zona de los 6 y 8: `Cualquiera` · `Solo interior` · `Solo costa`
+- Escasez: `Ninguna` · `Recurso al azar` · un recurso concreto (ese recurso solo recibe 2, 3, 11 o 12)
+
+**🚫 Combinaciones imposibles** (`optionConflicts()` en `options.ts`; el generador las rechaza al momento
+y el menú de la Fase 2 debe impedirlas o avisar):
+- 6 y 8 *solo en el interior* + *6 y 8 nunca juntos*: en las 7 casillas interiores solo caben 3 sin tocarse.
+- *Escasez* + *reparto justo*: se contradicen.
+- *Regiones* + límite de terrenos iguales juntos.
+- *Espiral oficial* + zona de 6/8 o escasez: la espiral tiene un orden fijo.
 
 **⚓ Puertos**
 - Puertos: `Sí` · `No`
@@ -265,17 +273,24 @@ Cada opción tiene un valor por defecto **según el preset**.
 **🦹 Ladrón**
 - Empieza en: `Desierto` (oficial) · `Fuera del tablero` (variante)
 
-**Presets**
-| Opción | Oficial | Equilibrado | Caos total |
-|---|---|---|---|
-| Desierto | Aleatorio | Centro | Aleatorio |
-| Terrenos iguales juntos | Sin límite | 2 | Sin límite |
-| Método números | Espiral | Aleatorio con reglas | Aleatorio |
-| 6-8 juntos | Evitar (por espiral) | Evitar | Permitir |
-| Iguales juntos | — | Evitar | Permitir |
-| Reparto justo | Off | On | Off |
-| Tope por cruce | Sin tope | 12 | Sin tope |
-| Puertos | Fija | Aleatoria | Aleatoria |
+### 5.5 Modos de generación
+Cada modo es un conjunto de opciones pensado para un tipo de partida. El usuario elige un modo de un toque
+y, si quiere, retoca opciones (entonces pasa a *Personalizado*). Hay también un botón **🎲 Sorpresa**,
+que elige un modo al azar y dice cuál ha tocado.
+
+| Modo | Para qué | Opciones clave |
+|---|---|---|
+| 📜 **Oficial** | Como el reglamento | Espiral A-R, puertos fijos, desierto al azar |
+| ⚖️ **Equilibrado** | Partida normal y justa | Desierto en el centro, máx. 2 terrenos iguales juntos, 6/8, iguales y 2-12 separados, reparto justo, tope 12 |
+| 🏆 **Competitivo** | Equilibrio máximo | Como Equilibrado + ningún terreno igual junto, tope 11, puertos fijos y lejos de su recurso |
+| ☕ **Tranquila** | Jugar relajados o con gente nueva | Como Equilibrado + ladrón fuera al empezar, desierto en la costa |
+| 📉 **Escasez** | Partidas de mucho comercio | Un recurso al azar solo tiene 2, 3, 11 o 12 |
+| 🗺️ **Continentes** | Expandirse o comerciar | Cada terreno forma una sola región, reparto justo |
+| 🔥 **Pelea por el centro** | Pelearse por el interior | Todos los 6 y 8 en el interior (pueden tocarse), desierto en la costa |
+| ⚓ **Mercaderes** | Estrategia de puertos | Como Equilibrado + cada puerto 2:1 junto a su recurso |
+| 🌪️ **Caos total** | Lo que salga | Sin reglas |
+
+Velocidad medida (10.000 tableros por modo): todos por debajo de 0,5 ms por tablero.
 
 ---
 
@@ -353,7 +368,8 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 - [x] `game/generator.ts`: genera según opciones (espiral oficial y aleatorio con reglas)
 - [x] `game/rules.ts`: cada regla como función que devuelve qué incumple
 - [x] Puntuación de equilibrio del tablero (0-100) y análisis (`game/score.ts`)
-- [x] Código de compartir (`game/share.ts`, unos 33 caracteres)
+- [x] 9 modos de generación + Sorpresa, con descripción (`game/options.ts`)
+- ~~Código de compartir~~ (quitado: la app la usa una sola persona)
 - [x] Tests (ver sección 10): `npm test`
 - [x] Vista 2D sencilla en SVG para comprobar visualmente (`components/BoardSvg.tsx` + pantalla de prueba en `App.tsx`)
 
@@ -361,7 +377,7 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 - [ ] Tokens de diseño provisionales (o los de Claude Design si ya están)
 - [ ] Pantalla de Inicio con fade-in escalonado y Dato curioso del día
 - [ ] Menú de Personalizar con presets y opciones plegables
-- [ ] Pantalla de Tablero (2D de momento) con Otra vez / Compartir / Puntitos
+- [ ] Pantalla de Tablero (2D de momento) con Otra vez / Puntitos
 - [ ] Transiciones suaves entre pantallas
 - [ ] Ajustes básicos (fondo, velocidad) guardados en localStorage
 
@@ -401,7 +417,8 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 - [x] El ladrón empieza donde dice la opción
 - [x] **10.000 generaciones** con cada preset → ninguna incumple sus reglas activas
 - [x] Misma semilla + mismas opciones → **exactamente el mismo tablero**
-- [x] Código de compartir: codificar → decodificar → mismo tablero
+- [x] Cada modo especial cumple lo suyo (escasez, regiones, 6/8 en el interior o la costa, ladrón fuera)
+- [x] Los modos no tienen opciones contradictorias
 - [x] La espiral oficial reproduce el orden A-R correctamente
 - [x] Generar un tablero tarda **< 50 ms** (medido: Oficial 0,03 ms · Equilibrado 0,25 ms · Caos 0,02 ms)
 - [x] Combinaciones de opciones imposibles → mensaje claro al usuario, nunca un bucle infinito (responde en ~15 ms)
@@ -454,6 +471,9 @@ Claude: añade aquí ideas nuevas. El usuario elegirá cuáles entran.
 | 2026-11-02 | Tipos de puerto siempre barajados (sin opción "orden oficial") | No hay un orden oficial fijo fiable; en la 5.ª edición se mezclan las piezas del marco |
 | 2026-11-02 | Posiciones fijas de puertos = separaciones 3-3-4 en la costa | Aproximación al marco de la 5.ª edición; revisar si el usuario tiene otra edición |
 | 2026-11-02 | Números con reglas: se colocan primero las fichas más difíciles (6/8, luego 5/9…) | Mucho más rápido que ir casilla a casilla cuando hay topes de puntitos |
+| 2026-11-02 | Quitado el código para compartir tableros | La app la usa una sola persona |
+| 2026-11-02 | 9 modos de generación + Sorpresa (sección 5.5) | El usuario quería más modos, cada uno con un motivo distinto, no solo Caos total |
+| 2026-11-02 | "Sin rojos en la costa" pasa a "Zona de los 6 y 8" (cualquiera / interior / costa) | Hace falta para el modo Pelea por el centro |
 
 ---
 

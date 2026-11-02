@@ -2,11 +2,14 @@
 // Coloca terrenos, después números y después puertos. Si algo no encaja, vuelve a intentarlo
 // (con un límite, para no quedarse colgado con combinaciones imposibles).
 import { CENTER_HEX, COAST_EDGES, HEXES, OFFICIAL_PORT_COAST, VERTICES, spiralOrder } from './board';
-import { NUMBER_TOKENS, PORT_TYPES, SPIRAL_TOKENS, TERRAIN_COUNTS, TERRAINS, isRed, pips, terrainPool } from './catan';
-import type { GenOptions } from './options';
+import { NUMBER_TOKENS, PORT_TYPES, RESOURCES, SPIRAL_TOKENS, TERRAIN_COUNTS, TERRAIN_RESOURCE, TERRAINS, isRed, pips, terrainPool } from './catan';
+import { optionConflicts, type GenOptions } from './options';
 import { createRng, randInt, randomSeed, shuffle, type Rng } from './rng';
-import { FAIR_SPREAD, RULE_LABELS, findViolations, groupSize, numberViolations, portFits, resourceSpread, type RuleId } from './rules';
-import type { Board, Port, PortType, Terrain } from './types';
+import {
+  FAIR_SPREAD, RULE_LABELS, SCARCE_MAX_PIPS, findViolations, groupSize, inRedsZone, numberViolations, portFits, resourceSpread,
+  type RuleId,
+} from './rules';
+import type { Board, Port, PortType, Resource, Terrain } from './types';
 
 const MAX_ATTEMPTS = 300;
 /** Límite de pasos en cada búsqueda con vuelta atrás. */
@@ -25,6 +28,9 @@ const STAGE_MESSAGES: Record<'terrenos' | 'numeros' | 'puertos', string> = {
 };
 
 export function generateBoard(opts: GenOptions, seed: number = randomSeed()): GenResult {
+  const conflicts = optionConflicts(opts);
+  if (conflicts.length) return { ok: false, seed, error: conflicts[0] };
+
   const rng = createRng(seed);
   const failures = new Map<Stage, number>();
   const fail = (stage: Stage) => failures.set(stage, (failures.get(stage) ?? 0) + 1);
@@ -35,7 +41,9 @@ export function generateBoard(opts: GenOptions, seed: number = randomSeed()): Ge
       fail('terrenos');
       continue;
     }
-    const numbers = opts.numberMethod === 'espiral' ? spiralNumbers(terrains, opts, rng) : placeNumbers(terrains, opts, rng);
+    const scarce: Resource | null =
+      opts.scarceResource === 'ninguno' ? null : opts.scarceResource === 'aleatorio' ? RESOURCES[randInt(rng, RESOURCES.length)] : opts.scarceResource;
+    const numbers = opts.numberMethod === 'espiral' ? spiralNumbers(terrains, opts, rng) : placeNumbers(terrains, opts, rng, scarce);
     if (!numbers) {
       fail('numeros');
       continue;
@@ -82,6 +90,8 @@ function placeTerrains(opts: GenOptions, rng: Rng): Terrain[] | null {
   terrains[desert] = 'desierto';
   const order = HEXES.map((h) => h.id).filter((id) => id !== desert);
 
+  if (opts.terrainLayout === 'regiones') return placeRegions(terrains, rng);
+
   if (opts.maxTerrainGroup === 0) {
     const pool = shuffle(terrainPool(), rng);
     order.forEach((id, i) => (terrains[id] = pool[i]));
@@ -112,6 +122,39 @@ function placeTerrains(opts: GenOptions, rng: Rng): Terrain[] | null {
   return place(0) ? (terrains as Terrain[]) : null;
 }
 
+/**
+ * Cada terreno crece como una mancha desde una casilla con pocos vecinos libres
+ * (así no deja huecos aislados). Si una mancha se queda sin sitio, se vuelve a empezar.
+ */
+function placeRegions(start: (Terrain | null)[], rng: Rng): Terrain[] | null {
+  const types = TERRAINS.filter((t) => t !== 'desierto');
+  const freeNeighbors = (terrains: (Terrain | null)[], id: number) => HEXES[id].neighbors.filter((n) => terrains[n] === null).length;
+
+  for (let tries = 0; tries < 200; tries++) {
+    const terrains = start.slice();
+    let ok = true;
+    for (const type of shuffle(types, rng)) {
+      const free = shuffle(HEXES.map((h) => h.id).filter((id) => terrains[id] === null), rng);
+      const seed = free.reduce((best, id) => (freeNeighbors(terrains, id) < freeNeighbors(terrains, best) ? id : best), free[0]);
+      const region = [seed];
+      terrains[seed] = type;
+      while (region.length < TERRAIN_COUNTS[type]) {
+        const frontier = [...new Set(region.flatMap((id) => HEXES[id].neighbors).filter((n) => terrains[n] === null))];
+        if (!frontier.length) {
+          ok = false;
+          break;
+        }
+        const next = frontier[randInt(rng, frontier.length)];
+        terrains[next] = type;
+        region.push(next);
+      }
+      if (!ok) break;
+    }
+    if (ok) return terrains as Terrain[];
+  }
+  return null;
+}
+
 // ---------- Números ----------
 
 function spiralNumbers(terrains: Terrain[], opts: GenOptions, rng: Rng): (number | null)[] | null {
@@ -126,14 +169,23 @@ function spiralNumbers(terrains: Terrain[], opts: GenOptions, rng: Rng): (number
   return null;
 }
 
-function hasLocalNumberRules(opts: GenOptions): boolean {
-  return opts.avoidRedAdjacent || opts.avoidSameAdjacent || opts.avoid2And12Adjacent || opts.maxVertexPips > 0 || opts.noRedsOnCoast;
+function hasLocalNumberRules(opts: GenOptions, scarce: Resource | null): boolean {
+  return (
+    opts.avoidRedAdjacent || opts.avoidSameAdjacent || opts.avoid2And12Adjacent || opts.maxVertexPips > 0 || opts.redsZone !== 'cualquiera' || scarce !== null
+  );
+}
+
+interface NumberContext {
+  opts: GenOptions;
+  terrains: Terrain[];
+  scarce: Resource | null;
 }
 
 /** ¿Se puede poner el número n en este hexágono sin romper ninguna regla local? */
-function numberFits(id: number, n: number, numbers: (number | null)[], opts: GenOptions): boolean {
+function numberFits(id: number, n: number, numbers: (number | null)[], { opts, terrains, scarce }: NumberContext): boolean {
   const hex = HEXES[id];
-  if (opts.noRedsOnCoast && hex.ring === 2 && isRed(n)) return false;
+  if (isRed(n) && !inRedsZone(id, opts.redsZone)) return false;
+  if (scarce && TERRAIN_RESOURCE[terrains[id]] === scarce && pips(n) > SCARCE_MAX_PIPS) return false;
   for (const nb of hex.neighbors) {
     const m = numbers[nb];
     if (m == null) continue;
@@ -158,7 +210,7 @@ const vertexHexes = VERTICES.map((v) => v.hexes);
  * Coloca primero las fichas más difíciles (6 y 8, luego 5 y 9...) eligiendo para cada una
  * un hexágono libre al azar donde encaje. Si una no cabe, deshace la anterior y prueba otro sitio.
  */
-function backtrackNumbers(free: number[], numbers: (number | null)[], opts: GenOptions, rng: Rng): boolean {
+function backtrackNumbers(free: number[], numbers: (number | null)[], ctx: NumberContext, rng: Rng): boolean {
   const tokens = shuffle(NUMBER_TOKENS, rng).sort((a, b) => pips(b) - pips(a));
   const used = new Set<number>();
   let nodes = 0;
@@ -170,7 +222,7 @@ function backtrackNumbers(free: number[], numbers: (number | null)[], opts: GenO
     // Dos fichas iguales seguidas: la segunda va en un hexágono "posterior" para no repetir casos.
     const minId = i > 0 && tokens[i - 1] === n ? numbers.indexOf(n) : -1;
     for (const id of shuffle(free, rng)) {
-      if (used.has(id) || id <= minId || !numberFits(id, n, numbers, opts)) continue;
+      if (used.has(id) || id <= minId || !numberFits(id, n, numbers, ctx)) continue;
       numbers[id] = n;
       used.add(id);
       if (place(i + 1)) return true;
@@ -183,15 +235,16 @@ function backtrackNumbers(free: number[], numbers: (number | null)[], opts: GenO
   return place(0);
 }
 
-function placeNumbers(terrains: Terrain[], opts: GenOptions, rng: Rng): (number | null)[] | null {
+function placeNumbers(terrains: Terrain[], opts: GenOptions, rng: Rng, scarce: Resource | null): (number | null)[] | null {
   const desert = terrains.indexOf('desierto');
   const order = HEXES.map((h) => h.id).filter((id) => id !== desert);
-  const local = hasLocalNumberRules(opts);
+  const local = hasLocalNumberRules(opts, scarce);
+  const ctx: NumberContext = { opts, terrains, scarce };
 
   for (let tries = 0; tries < 20; tries++) {
     const numbers: (number | null)[] = Array(HEXES.length).fill(null);
     if (local) {
-      if (!backtrackNumbers(order, numbers, opts, rng)) return null;
+      if (!backtrackNumbers(order, numbers, ctx, rng)) return null;
     } else {
       const pool = shuffle(NUMBER_TOKENS, rng);
       order.forEach((id, i) => (numbers[id] = pool[i]));

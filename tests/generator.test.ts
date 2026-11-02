@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
-  CENTER_HEX, COAST_EDGES, EDGES, HEXES, OFFICIAL_PORT_COAST, PRESETS, SPIRAL_TOKENS, VERTICES,
-  countAdjacentPairs, decodeBoard, encodeBoard, findViolations, generateBoard, isRed,
-  numberViolations, spiralOrder, validateStructure,
-  type Board, type GenOptions, type PresetId, type Terrain,
+  CENTER_HEX, COAST_EDGES, EDGES, HEXES, OFFICIAL_PORT_COAST, PRESETS, PRESET_IDS, PRESET_INFO, SPIRAL_TOKENS, VERTICES,
+  allTerrainsInRegions, countAdjacentPairs, findViolations, generateBoard, isRed, numberViolations, optionConflicts,
+  pips, scarceResources, spiralOrder, validateStructure,
+  type Board, type GenOptions, type Terrain,
 } from '../src/game';
 
 const RUNS = 10_000;
@@ -82,7 +82,7 @@ describe('espiral oficial', () => {
   });
 });
 
-describe.each(Object.keys(PRESETS) as PresetId[])('preset %s', (preset) => {
+describe.each(PRESET_IDS)('modo %s', (preset) => {
   const opts = PRESETS[preset];
 
   it(`${RUNS} tableros: piezas correctas y ninguna regla incumplida`, () => {
@@ -94,13 +94,18 @@ describe.each(Object.keys(PRESETS) as PresetId[])('preset %s', (preset) => {
       if (broken.length) throw new Error(`Semilla ${seed} incumple: ${broken.join(', ')}`);
     }
     const ms = (performance.now() - start) / RUNS;
-    console.log(`Preset ${preset}: ${ms.toFixed(2)} ms por tablero de media`);
+    console.log(`Modo ${preset}: ${ms.toFixed(2)} ms por tablero de media`);
     expect(ms).toBeLessThan(50);
   }, 120_000);
 
-  it('el ladrón empieza en el desierto', () => {
+  it('el ladrón empieza donde dice el modo', () => {
     const board = mustGenerate(opts, 7);
-    expect(board.robber).toBe(board.terrains.indexOf('desierto'));
+    expect(board.robber).toBe(opts.robberStart === 'desierto' ? board.terrains.indexOf('desierto') : null);
+  });
+
+  it('no tiene opciones contradictorias y tiene descripción', () => {
+    expect(optionConflicts(opts)).toEqual([]);
+    expect(PRESET_INFO[preset].description.length).toBeGreaterThan(10);
   });
 });
 
@@ -142,51 +147,82 @@ describe('opciones concretas', () => {
     }
   });
 
-  it('sin rojos en la costa (solo si se permite que 6 y 8 se toquen)', () => {
-    // Con "6 y 8 nunca juntos" es imposible: en el interior solo caben 3 rojos sin tocarse.
-    const opts: GenOptions = { ...PRESETS.caos, noRedsOnCoast: true };
+  it('6 y 8 solo en la costa', () => {
+    const opts: GenOptions = { ...PRESETS.equilibrado, redsZone: 'costa' };
     for (let seed = 0; seed < 300; seed++) {
       const board = mustGenerate(opts, seed);
-      expect(numberViolations(board.terrains, board.numbers, opts)).toEqual([]);
+      for (const h of HEXES) if (isRed(board.numbers[h.id])) expect(h.ring).toBe(2);
     }
   });
 });
 
-describe('semilla y código de compartir', () => {
+describe('modos especiales', () => {
+  it('Escasez: un recurso solo tiene 2, 3, 11 o 12', () => {
+    for (let seed = 0; seed < 500; seed++) {
+      const board = mustGenerate(PRESETS.escasez, seed);
+      const scarce = scarceResources(board.terrains, board.numbers);
+      expect(scarce.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('Escasez de un recurso concreto', () => {
+    const opts: GenOptions = { ...PRESETS.escasez, scarceResource: 'mineral' };
+    for (let seed = 0; seed < 200; seed++) {
+      const board = mustGenerate(opts, seed);
+      board.terrains.forEach((t, i) => {
+        if (t === 'montanas') expect(pips(board.numbers[i])).toBeLessThanOrEqual(2);
+      });
+    }
+  });
+
+  it('Continentes: cada terreno forma una sola región', () => {
+    for (let seed = 0; seed < 500; seed++) {
+      expect(allTerrainsInRegions(mustGenerate(PRESETS.continentes, seed).terrains)).toBe(true);
+    }
+  });
+
+  it('Pelea por el centro: todos los 6 y 8 en el interior', () => {
+    for (let seed = 0; seed < 500; seed++) {
+      const board = mustGenerate(PRESETS.centro, seed);
+      for (const h of HEXES) if (isRed(board.numbers[h.id])) expect(h.ring).toBeLessThan(2);
+    }
+  });
+
+  it('Tranquila: el ladrón empieza fuera del tablero', () => {
+    expect(mustGenerate(PRESETS.tranquila, 1).robber).toBeNull();
+  });
+});
+
+describe('semilla', () => {
   it('misma semilla y opciones → exactamente el mismo tablero', () => {
-    for (const preset of Object.keys(PRESETS) as PresetId[]) {
+    for (const preset of PRESET_IDS) {
       expect(mustGenerate(PRESETS[preset], 42)).toEqual(mustGenerate(PRESETS[preset], 42));
     }
-  });
-
-  it('codificar y decodificar devuelve el mismo tablero', () => {
-    for (let seed = 0; seed < 500; seed++) {
-      const opts = [PRESETS.oficial, PRESETS.equilibrado, { ...PRESETS.caos, ports: false, robberStart: 'fuera' as const }][seed % 3];
-      const board = mustGenerate(opts, seed);
-      const code = encodeBoard(board);
-      expect(code.length).toBeLessThanOrEqual(40);
-      expect(decodeBoard(code)).toEqual(board);
-    }
-  });
-
-  it('un código inventado o roto no se acepta', () => {
-    expect(decodeBoard('')).toBeNull();
-    expect(decodeBoard('hola')).toBeNull();
-    expect(decodeBoard('1!!!')).toBeNull();
-    expect(decodeBoard('1abc')).toBeNull();
   });
 });
 
 describe('combinaciones imposibles', () => {
-  it('devuelve un mensaje claro y no se queda colgado', () => {
-    // Sin rojos en la costa + 6 y 8 nunca juntos: los cuatro 6/8 irían a las 7 casillas
-    // interiores, donde solo caben 3 sin tocarse.
-    const opts: GenOptions = { ...PRESETS.equilibrado, noRedsOnCoast: true, avoidRedAdjacent: true };
+  it('se rechazan al momento con un mensaje claro', () => {
+    const cases: GenOptions[] = [
+      { ...PRESETS.caos, redsZone: 'interior', avoidRedAdjacent: true },
+      { ...PRESETS.equilibrado, scarceResource: 'aleatorio' },
+      { ...PRESETS.continentes, maxTerrainGroup: 2 },
+      { ...PRESETS.oficial, redsZone: 'costa' },
+    ];
+    for (const opts of cases) {
+      const result = generateBoard(opts, 1);
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error.length).toBeGreaterThan(20);
+    }
+  });
+
+  it('si algo no sale, da un mensaje y no se queda colgado', () => {
+    // Modo competitivo con puertos fijos forzados junto a su recurso: muy restrictivo.
+    const opts: GenOptions = { ...PRESETS.competitivo, maxVertexPips: 11, portNearResource: 'forzar', avoid2And12Adjacent: true, desert: 'costa' };
     const start = performance.now();
     const result = generateBoard(opts, 1);
     const ms = performance.now() - start;
-    console.log(`Combinación imposible: respuesta en ${ms.toFixed(0)} ms`);
-    expect(result.ok).toBe(false);
+    console.log(`Combinación difícil: ${result.ok ? 'encontrada' : 'rechazada'} en ${ms.toFixed(0)} ms`);
     if (!result.ok) expect(result.error).toMatch(/imposible/);
     expect(ms).toBeLessThan(3000);
   });

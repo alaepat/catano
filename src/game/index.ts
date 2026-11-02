@@ -6,4 +6,3 @@ export * from './options';
 export * from './rules';
 export * from './generator';
 export * from './score';
-export * from './share';
