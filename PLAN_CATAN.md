@@ -399,10 +399,12 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 - [ ] Foto del mapa para compartir
 - [ ] Integrar el diseño final de Claude Design
 
-### Fase 5: Publicar
-- [ ] PWA instalable y funcionando sin conexión
-- [ ] Icono y pantalla de arranque
-- [ ] Publicada con un enlace para el grupo
+### Fase 5: Publicar (adelantada el 2026-11-02)
+- [x] PWA instalable y funcionando sin conexión (`vite-plugin-pwa` en `vite.config.ts`)
+- [x] Icono (`public/icon.svg` → `npm run iconos` genera los PNG). Pantalla de arranque: pendiente
+- [ ] Publicada: **https://alaepat.github.io/catano/** (repo `alaepat/catano`, se publica sola en cada push a `main`
+      con `.github/workflows/publicar.yml`; si un test falla, no se publica). Falta comprobar que carga
+- [ ] Probada instalada en el iPhone 17 del usuario ("Compartir → Añadir a pantalla de inicio" en Safari)
 - [ ] Chequeo final (sección 10.3)
 
 ### Fase 6+: Extras (ver Banco de ideas)
@@ -481,6 +483,8 @@ Claude: añade aquí ideas nuevas. El usuario elegirá cuáles entran.
 | 2026-11-02 | Sin router: la pantalla vive en el estado y se usa el historial del navegador | El botón atrás del móvil funciona sin añadir dependencias |
 | 2026-11-02 | "Mis tableros" no aparece en el Inicio hasta la Fase 4 | No mostrar botones que aún no hacen nada |
 | 2026-11-02 | Animación 2D provisional al generar (hexágonos del centro hacia fuera, números, puertos, ladrón) | Para que la Fase 2 ya se sienta viva; la Fase 3 la sustituye por la escena 3D |
+| 2026-11-02 | Publicada como web instalable (PWA) en GitHub Pages, no en App Store / Play Store | Gratis y se actualiza sola; la App Store cuesta 99 €/año, pide Mac, revisa cada versión y rechazaría el nombre "Catan" (marca registrada). El usuario de la app tiene iPhone |
+| 2026-11-02 | La app la usa una sola persona | Por eso no hay código para compartir ni funciones multijugador |
 
 ---
 
@@ -493,4 +497,5 @@ Claude: añade aquí ideas nuevas. El usuario elegirá cuáles entran.
 - [ ] ¿Qué edición del Catan tenéis? (afecta a los puertos: marco fijo o fichas sueltas)
 - [ ] ¿Cuándo llegará el diseño de Claude Design y en qué formato?
 - [ ] Lista de bromas para el Dato curioso del día
-- [ ] ¿Dónde publicarla? (GitHub Pages, Netlify…)
+- [x] ¿Dónde publicarla? → GitHub Pages, https://alaepat.github.io/catano/ (repo público: todo lo que se suba se ve)
+- [x] ¿Móvil? → la usará una persona con un **iPhone 17** (402×874 puntos)
