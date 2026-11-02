@@ -373,13 +373,14 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 - [x] Tests (ver sección 10): `npm test`
 - [x] Vista 2D sencilla en SVG para comprobar visualmente (`components/BoardSvg.tsx` + pantalla de prueba en `App.tsx`)
 
-### Fase 2: Interfaz y flujo
-- [ ] Tokens de diseño provisionales (o los de Claude Design si ya están)
-- [ ] Pantalla de Inicio con fade-in escalonado y Dato curioso del día
-- [ ] Menú de Personalizar con presets y opciones plegables
-- [ ] Pantalla de Tablero (2D de momento) con Otra vez / Puntitos
-- [ ] Transiciones suaves entre pantallas
-- [ ] Ajustes básicos (fondo, velocidad) guardados en localStorage
+### Fase 2: Interfaz y flujo ✅ (2026-11-02)
+- [x] Tokens de diseño provisionales (`src/styles/tokens.css`; estilos de pantallas en `src/styles/app.css`)
+- [x] Pantalla de Inicio con fade-in escalonado y Dato curioso del día (`src/app/Inicio.tsx`)
+- [x] Menú de Personalizar con modos y opciones plegables; si una opción choca con otra, ajusta la otra y avisa (`src/app/Personalizar.tsx`)
+- [x] Pantalla de Tablero (2D de momento) con Otra vez / Análisis / Puntitos y animación de aparición provisional (`src/app/Tablero.tsx`)
+- [x] Transiciones suaves entre pantallas; el botón "atrás" del móvil vuelve a la pantalla anterior
+- [x] Ajustes básicos (fondo, velocidad de animación, puntitos, borrar datos) guardados en el móvil (`src/app/Ajustes.tsx`, `src/store.ts`)
+- [x] Fondos de momento: Espacio (estrellas animadas), Atardecer y Minimal. El resto, en la Fase 4.
 
 ### Fase 3: La escena 3D épica
 - [ ] Fondo espacial con estrellas y parallax
@@ -424,6 +425,8 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 - [x] Combinaciones de opciones imposibles → mensaje claro al usuario, nunca un bucle infinito (responde en ~15 ms)
 
 ### 10.2 Chequeos visuales y de uso (en cada fase)
+*Fase 2 (2026-11-02): probado a 375 y 390 px. Sin scroll horizontal, botones y chips de 44 px o más,
+sin errores en la consola, ajustes que sobreviven a recargar. Pendiente: contraste medido y prueba en el móvil real.*
 - [ ] Se ve bien en móvil de 360 px de ancho y en PC
 - [ ] Sin scroll horizontal
 - [ ] Botones de al menos 44 px de alto (fáciles de tocar)
@@ -474,6 +477,10 @@ Claude: añade aquí ideas nuevas. El usuario elegirá cuáles entran.
 | 2026-11-02 | Quitado el código para compartir tableros | La app la usa una sola persona |
 | 2026-11-02 | 9 modos de generación + Sorpresa (sección 5.5) | El usuario quería más modos, cada uno con un motivo distinto, no solo Caos total |
 | 2026-11-02 | "Sin rojos en la costa" pasa a "Zona de los 6 y 8" (cualquiera / interior / costa) | Hace falta para el modo Pelea por el centro |
+| 2026-11-02 | Al tocar una opción que choca con otra, se respeta la tocada y se ajusta la otra con un aviso | Más cómodo que bloquear opciones; `setOptionResolving()` en `options.ts`, con tests |
+| 2026-11-02 | Sin router: la pantalla vive en el estado y se usa el historial del navegador | El botón atrás del móvil funciona sin añadir dependencias |
+| 2026-11-02 | "Mis tableros" no aparece en el Inicio hasta la Fase 4 | No mostrar botones que aún no hacen nada |
+| 2026-11-02 | Animación 2D provisional al generar (hexágonos del centro hacia fuera, números, puertos, ladrón) | Para que la Fase 2 ya se sienta viva; la Fase 3 la sustituye por la escena 3D |
 
 ---
 

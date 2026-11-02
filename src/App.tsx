@@ -1,96 +1,69 @@
-// Pantalla de prueba de la Fase 1: elegir un modo, generar tableros y verlos en 2D.
-// En la Fase 2 se sustituye por el flujo real (Inicio → Personalizar → Tablero).
-import { useMemo, useState } from 'react';
-import './App.css';
-import { BoardSvg } from './components/BoardSvg';
-import { PRESETS, PRESET_IDS, PRESET_INFO, analyzeBoard, generateBoard, surprisePreset, type PresetId } from './game';
+// Estructura de la app: fondo elegido detrás y la pantalla actual delante, con transiciones suaves.
+import { AnimatePresence, MotionConfig, motion } from 'motion/react';
+import { useEffect, useRef } from 'react';
+import { Ajustes } from './app/Ajustes';
+import { Inicio } from './app/Inicio';
+import { Personalizar } from './app/Personalizar';
+import { Tablero } from './app/Tablero';
+import { Background } from './components/Background';
+import { useApp, type Screen } from './store';
+import './styles/app.css';
 
-type Choice = PresetId | 'sorpresa';
+const SCREENS: Record<Screen, () => React.JSX.Element | null> = {
+  inicio: Inicio,
+  personalizar: Personalizar,
+  tablero: Tablero,
+  ajustes: Ajustes,
+};
 
-function run(choice: Choice) {
-  const mode = choice === 'sorpresa' ? surprisePreset() : choice;
-  return { mode, result: generateBoard(PRESETS[mode]) };
-}
+/** Profundidad de cada pantalla: al ir "hacia dentro" se desliza desde la derecha, al volver, desde la izquierda. */
+const DEPTH: Record<Screen, number> = { inicio: 0, ajustes: 1, personalizar: 1, tablero: 2 };
 
 export default function App() {
-  const [choice, setChoice] = useState<Choice>('equilibrado');
-  const [{ mode, result }, setRun] = useState(() => run('equilibrado'));
-  const [showPips, setShowPips] = useState(true);
+  const screen = useApp((s) => s.screen);
+  const previous = useRef<Screen>(screen);
+  useEffect(() => {
+    previous.current = screen;
+  }, [screen]);
+  const background = useApp((s) => s.settings.background);
+  const setScreenFromHistory = useApp((s) => s.setScreenFromHistory);
 
-  const board = result.ok ? result.board : null;
-  const analysis = useMemo(() => (board ? analyzeBoard(board) : null), [board]);
+  // El botón "atrás" del móvil vuelve a la pantalla anterior en vez de salir de la app.
+  useEffect(() => {
+    try {
+      window.history.replaceState({ screen: 'inicio' }, '');
+    } catch {
+      /* sin historial */
+    }
+    const onPop = (e: PopStateEvent) => setScreenFromHistory((e.state?.screen as Screen) ?? 'inicio');
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [setScreenFromHistory]);
 
-  const generate = (c: Choice = choice) => setRun(run(c));
+  const direction = DEPTH[screen] >= DEPTH[previous.current] ? 1 : -1;
+  const Current = SCREENS[screen];
 
   return (
-    <main className="dev">
-      <header className="dev-header">
-        <h1>Catan</h1>
-        <p>Fase 1 · prueba del generador</p>
-      </header>
-
-      <div className="modes" role="radiogroup" aria-label="Modo de generación">
-        {[...PRESET_IDS, 'sorpresa' as const].map((id) => (
-          <button
-            key={id}
-            role="radio"
-            aria-checked={choice === id}
-            className={choice === id ? 'mode active' : 'mode'}
-            onClick={() => {
-              setChoice(id);
-              generate(id);
-            }}
-          >
-            <span className="mode-emoji">{id === 'sorpresa' ? '🎲' : PRESET_INFO[id].emoji}</span>
-            {id === 'sorpresa' ? 'Sorpresa' : PRESET_INFO[id].label}
-          </button>
-        ))}
-      </div>
-
-      <p className="mode-desc">
-        {choice === 'sorpresa' && (
-          <>
-            Ha tocado <b>{PRESET_INFO[mode].label}</b>.{' '}
-          </>
-        )}
-        {PRESET_INFO[mode].description}
-      </p>
-
-      <section className="board-card">
-        {board ? (
-          <BoardSvg board={board} showPips={showPips} highlight={analysis?.bestVertices.map((b) => b.vertex)} />
-        ) : (
-          <p className="error">{!result.ok && result.error}</p>
-        )}
-      </section>
-
-      <button className="primary" onClick={() => generate()}>
-        Otra vez
-      </button>
-
-      {analysis && (
-        <section className="card stats">
-          <div className="score">
-            <span className="score-num">{analysis.score}</span>
-            <span className="score-label">equilibrio</span>
-          </div>
-          <ul>
-            <li>
-              Mejor cruce: <b>{analysis.bestVertices[0].pips} puntitos</b> <span className="dot" /> (marcados en el mapa)
-            </li>
-            <li>
-              Recurso más escaso: <b>{analysis.scarcest}</b>
-            </li>
-            <li>
-              Recurso más abundante: <b>{analysis.richest}</b>
-            </li>
-          </ul>
-          <label className="toggle">
-            <input type="checkbox" checked={showPips} onChange={(e) => setShowPips(e.target.checked)} />
-            Mostrar puntitos
-          </label>
-        </section>
-      )}
-    </main>
+    <MotionConfig reducedMotion="user">
+      <Background id={background} />
+      <AnimatePresence mode="wait" initial={false} custom={direction}>
+        <motion.main
+          key={screen}
+          className="screen-host"
+          custom={direction}
+          variants={{
+            enter: (dir: number) => ({ opacity: 0, x: screen === 'inicio' ? 0 : 28 * dir }),
+            center: { opacity: 1, x: 0 },
+            exit: (dir: number) => ({ opacity: 0, x: -20 * dir }),
+          }}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{ duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
+        >
+          <Current />
+        </motion.main>
+      </AnimatePresence>
+    </MotionConfig>
   );
 }

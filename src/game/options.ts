@@ -163,3 +163,59 @@ export function optionConflicts(o: GenOptions): string[] {
   }
   return out;
 }
+
+/**
+ * Cambia una opción y, si choca con otra, ajusta la otra para que la combinación sea posible.
+ * Devuelve las opciones nuevas y frases que explican qué se ha ajustado (para avisar al usuario).
+ */
+export function setOptionResolving<K extends keyof GenOptions>(
+  current: GenOptions,
+  key: K,
+  value: GenOptions[K],
+): { options: GenOptions; notes: string[] } {
+  const o: GenOptions = { ...current, [key]: value };
+  const notes: string[] = [];
+
+  // 6 y 8 en el interior ↔ 6 y 8 separados
+  if (o.redsZone === 'interior' && o.avoidRedAdjacent) {
+    if (key === 'avoidRedAdjacent') {
+      o.redsZone = 'cualquiera';
+      notes.push('Los 6 y 8 ya pueden ir en cualquier sitio: en el interior no caben separados.');
+    } else {
+      o.avoidRedAdjacent = false;
+      notes.push('Con los 6 y 8 en el interior tienen que poder tocarse: he quitado "6 y 8 separados".');
+    }
+  }
+  // Escasez ↔ reparto justo
+  if (o.scarceResource !== 'ninguno' && o.fairResources) {
+    if (key === 'fairResources') {
+      o.scarceResource = 'ninguno';
+      notes.push('He quitado la escasez: no puede ir con el reparto justo.');
+    } else {
+      o.fairResources = false;
+      notes.push('He quitado el reparto justo: no puede ir con la escasez.');
+    }
+  }
+  // Regiones ↔ límite de terrenos iguales juntos
+  if (o.terrainLayout === 'regiones' && o.maxTerrainGroup > 0) {
+    if (key === 'maxTerrainGroup') {
+      o.terrainLayout = 'normal';
+      notes.push('Terrenos repartidos de nuevo: las regiones no pueden tener límite de iguales juntos.');
+    } else {
+      o.maxTerrainGroup = 0;
+      notes.push('Con regiones los terrenos iguales van juntos: he quitado el límite.');
+    }
+  }
+  // Espiral oficial ↔ zona de 6/8 o escasez
+  if (o.numberMethod === 'espiral' && (o.scarceResource !== 'ninguno' || o.redsZone !== 'cualquiera')) {
+    if (key === 'numberMethod') {
+      o.scarceResource = 'ninguno';
+      o.redsZone = 'cualquiera';
+      notes.push('La espiral oficial tiene un orden fijo: he quitado la escasez y la zona de los 6 y 8.');
+    } else {
+      o.numberMethod = 'aleatorio';
+      notes.push('Números al azar: la espiral oficial no puede elegir dónde van.');
+    }
+  }
+  return { options: o, notes };
+}
