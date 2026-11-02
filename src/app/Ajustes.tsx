@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { useId } from 'react';
 import { isRed, pips } from '../game';
 import { BackIcon, Chips, IconButton, Switch } from '../components/ui';
+import { BOARD_BACKGROUNDS } from '../lib/background';
 import { ANIM_SPEEDS, APP_VERSION, BACKGROUNDS, QUALITIES } from '../lib/config';
 import { NUMBER_FONTS, NUMBER_SIZES, numberStyle, type NumberFont, type NumberSize, type NumberStyle } from '../lib/numberStyle';
 import { playSound, unlockAudio } from '../lib/sound';
@@ -52,6 +53,13 @@ export function Ajustes() {
 
         <h2 className="section-title">Tablero</h2>
         <div className="card settings-card">
+          <Chips
+            label="Fondo mientras ves el tablero"
+            value={settings.boardBackground}
+            options={BOARD_BACKGROUNDS}
+            onChange={(v) => updateSettings({ boardBackground: v })}
+          />
+          <p className="field-hint">Para que la isla sea la protagonista. Al volver al inicio regresa tu fondo.</p>
           <Chips label="Velocidad de animación" value={settings.animSpeed} options={ANIM_SPEEDS} onChange={(v) => updateSettings({ animSpeed: v })} />
           <Chips
             label="Calidad gráfica"

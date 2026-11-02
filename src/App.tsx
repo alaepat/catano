@@ -7,6 +7,7 @@ import { MisTableros } from './app/MisTableros';
 import { Personalizar } from './app/Personalizar';
 import { Tablero } from './app/Tablero';
 import { Background } from './components/Background';
+import { backgroundFor } from './lib/background';
 import { useApp, type Screen } from './store';
 import './styles/app.css';
 
@@ -27,7 +28,7 @@ export default function App() {
   useEffect(() => {
     previous.current = screen;
   }, [screen]);
-  const background = useApp((s) => s.settings.background);
+  const background = useApp((s) => backgroundFor(s.screen, s.settings));
   const setScreenFromHistory = useApp((s) => s.setScreenFromHistory);
 
   // El botón "atrás" del móvil vuelve a la pantalla anterior en vez de salir de la app.
@@ -47,7 +48,9 @@ export default function App() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <Background id={background} />
+      <AnimatePresence initial={false}>
+        <Background key={background} id={background} />
+      </AnimatePresence>
       <AnimatePresence mode="wait" initial={false} custom={direction}>
         <motion.main
           key={screen}

@@ -507,6 +507,9 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
   La isla está recortada aparte con transparencia (`mesa-espacio-isla.webp`, GrabCut con contorno a mano) y sube y baja
   despacio sobre el cielo (`mesa-espacio.webp`, con el hueco rellenado). Lámpara, luna, estrellas que parpadean y estrella fugaz.
   Miniatura para Ajustes: `mesa-espacio-mini.webp` (la imagen entera, pequeña).
+- [x] (v0.10) **Fondo del tablero**: en la pantalla del tablero la isla es la protagonista, así que el fondo pasa solo al
+  Espacio (con su "vuelo") y al volver al inicio regresa el elegido, con un fundido. Ajustes → Tablero → "Fondo mientras ves
+  el tablero": Espacio (por defecto) / Minimal / El mismo. `lib/background.ts` (`backgroundFor`), `settings.boardBackground`.
 
 **6.6 Iconos propios en vez de emojis**
 - [x] Juego de iconos SVG propio (trazo fino y redondeado, color crema): recursos, modos, acciones, puertos. `lib/glyphs.ts`.

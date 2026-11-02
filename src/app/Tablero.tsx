@@ -9,6 +9,7 @@ import { Glyph } from '../components/icons';
 import { Marcador } from '../components/Marcador';
 import { BackIcon, IconButton, Toast } from '../components/ui';
 import { PRESET_INFO, analyzeBoard, type Resource } from '../game';
+import { backgroundFor } from '../lib/background';
 import { loadBoard3D } from '../lib/board3d';
 import { comentario } from '../lib/comentario';
 import { FEATURES } from '../lib/config';
@@ -174,7 +175,7 @@ export function Tablero() {
                   numberStyle={numbers}
                   highlight={highlight}
                   quality={settings.quality === '2d' ? 'alta' : settings.quality}
-                  stars={settings.background === 'espacio'}
+                  stars={backgroundFor('tablero', settings) === 'espacio'}
                   sound={settings.sound}
                   focus={focus}
                   onPick={pick}

@@ -25,8 +25,12 @@ export type AnimSpeed = 'epica' | 'rapida' | 'sin';
 /** Calidad del tablero 3D. '2d' = tablero plano (para móviles lentos o si el 3D falla). */
 export type Quality = 'alta' | 'media' | 'baja' | '2d';
 
+/** Fondo de la pantalla del tablero: uno sencillo para que la isla destaque, o 'mismo' = el de siempre. */
+export type BoardBackground = 'espacio' | 'minimal' | 'mismo';
+
 export interface Settings {
   background: BackgroundId;
+  boardBackground: BoardBackground;
   animSpeed: AnimSpeed;
   showPips: boolean;
   quality: Quality;
@@ -83,6 +87,7 @@ interface State {
 
 const DEFAULT_SETTINGS: Settings = {
   background: 'espacio',
+  boardBackground: 'espacio',
   animSpeed: 'epica',
   showPips: true,
   quality: 'alta',
