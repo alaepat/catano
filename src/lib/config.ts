@@ -2,7 +2,18 @@ import type { AnimSpeed, BackgroundId, Quality } from '../store';
 
 /** Título provisional: el usuario aún no ha decidido el nombre de la app (PLAN_CATAN.md, sección 13). */
 export const APP_TITLE = 'Catan';
-export const APP_VERSION = '0.4.0';
+export const APP_VERSION = '0.5.0';
+
+/**
+ * Partes de la app escondidas (la app es para una sola persona). El código sigue ahí:
+ * para recuperarlas basta con poner true.
+ */
+export const FEATURES = {
+  /** Botón Foto del tablero (compartir imagen). */
+  foto: false,
+  /** Botón Guardar y la pantalla Mis tableros. */
+  guardar: false,
+};
 
 export const BACKGROUNDS: { id: BackgroundId; label: string; preview: string }[] = [
   { id: 'espacio', label: 'Espacio', preview: 'radial-gradient(circle at 30% 30%, #2b2350 0%, #0b0a14 70%)' },

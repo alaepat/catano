@@ -294,6 +294,33 @@ Velocidad medida (10.000 tableros por modo): todos por debajo de 0,5 ms por tabl
 
 ---
 
+### 5.6 Expansión: Navegantes de Catan (investigación, 2026-11-02)
+> Resumen de memoria; **comprobar con el reglamento de la caja** (cifras y nombres cambian entre ediciones).
+
+**Qué añade**
+- **Mar dentro del tablero**: el mapa es más grande y se juega con varias islas separadas por agua.
+- **Barcos** (15 por jugador): cuestan 1 madera + 1 lana. Van en lados que tocan el mar y deben enlazar con un pueblo, una ciudad
+  u otro barco propio. Carreteras y barcos solo se unen a través de un pueblo o una ciudad. Una vez por turno se puede mover
+  el último barco de una ruta abierta (no uno construido en ese turno).
+- **Ruta comercial más larga** (carreteras + barcos, mínimo 5): sustituye a la carretera más larga, 2 puntos.
+- **Campos de oro**: producen el recurso que el jugador elija.
+- **Pirata**: va por el mar. Con un 7 o un caballero se mueve el ladrón o el pirata. El pirata bloquea barcos a su alrededor
+  y roba a quien tenga barcos junto a él.
+- **Puntos por islas nuevas**: el primer pueblo en una isla nueva da 1-2 puntos extra (fichas de Catan), según el escenario.
+- **Escenarios** con mapa y meta de puntos propios (normalmente 12-14 puntos para 3-4 jugadores): Rumbo a nuevas costas,
+  Las cuatro islas, El mar de niebla (casillas tapadas que se descubren al explorar), A través del desierto, La tribu olvidada,
+  Telas para Catan, Las islas piratas, Las maravillas de Catan y **Nuevo mundo** (mapa aleatorio: el que mejor encaja con esta app).
+
+**Cómo meterlo en la app**
+1. Geometría flexible: hoy `board.ts` solo sabe hacer el hexágono de 19 casillas; hay que permitir mapas de cualquier forma.
+2. Terrenos nuevos: `mar` y `oro`. Puertos en cualquier costa.
+3. Escenarios como datos (JSON): casillas fijas, montones aleatorios, casillas ocultas, meta de puntos y bonus por isla.
+4. Generador de **Nuevo mundo**: 3-4 islas separadas por mar, oro, 6 y 8 separados, puertos repartidos (con tests, como el base).
+5. 3D: casillas de mar más bajas con olas, barcos de colores, barco pirata con velas negras.
+   En El mar de niebla, las casillas ocultas salen boca abajo y se descubren tocándolas durante la partida.
+6. En Personalizar: selector "Base / Navegantes" y, dentro, el escenario.
+7. El marcador de puntos usa la meta del escenario y añade "Isla nueva" y "Ruta comercial más larga".
+
 ## 6. Dato curioso del día
 
 - Lista en `src/data/datos-curiosos.json`, un array de textos (pueden llevar emoji).
@@ -419,7 +446,50 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 - [ ] Probada instalada en el iPhone 17 del usuario ("Compartir → Añadir a pantalla de inicio" en Safari)
 - [ ] Chequeo final (sección 10.3)
 
-### Fase 6+: Extras (ver Banco de ideas)
+### Fase 6: Peticiones del usuario (2026-11-02, en curso: hechos 6.1, 6.2 y 6.3)
+
+**6.1 Esconder lo que no hace falta** (la app la usa una sola persona)
+- [x] Ocultar 📷 Foto y ⭐ Guardar / Mis tableros con interruptores en `lib/config.ts` (`FEATURES = { foto: false, guardar: false }`).
+  No borrar el código: se puede volver a encender en el futuro.
+
+**6.2 Acercar la cámara (zoom)**
+- [x] Tocar un hexágono o su número → la cámara vuela hasta él y muestra una tarjeta: terreno, número,
+  puntitos y probabilidad (p. ej. "8 · 5 puntitos · 13,9 %"). Botón "Ver todo" o tocar fuera → vuelve.
+- [x] Pellizcar con dos dedos = zoom libre (con límites para no perder la isla). Con zoom, arrastrar mueve el mapa.
+  Tocar el mar o "Ver todo" vuelve a la vista completa. (El doble toque no hace falta: un toque ya acerca.)
+- [x] En modo 2D: tocar un hexágono lo amplía (zoom con CSS sobre el SVG) y muestra la misma tarjeta.
+
+**6.3 Marcador de puntos** (dentro del tablero)
+- [x] Jugadores guardados en el móvil (nombre + color de Catan; se reutilizan en cada partida). `marcadorStore.ts`, `lib/marcador.ts`.
+- [x] Tira de jugadores arriba del tablero (moneda del color con los puntos y el nombre debajo). Tocar uno → hoja con botones claros:
+  + Pueblo (1), Pueblo → Ciudad (+1, la ciudad vale 2 pero sustituye al pueblo), Carretera más larga (+2, se quita al anterior),
+  Gran ejército (+2, igual), Carta de punto de victoria (+1), Deshacer. Con Navegantes: isla nueva y ruta comercial más larga.
+- [x] Empieza con 2 pueblos por jugador (2 puntos). Límites del juego: 5 pueblos, 4 ciudades y 5 cartas de punto.
+- [x] Al llegar a 10: celebración con confeti y resumen (duración y clasificación). Pendiente: gráfico de puntos.
+- [x] Historial de ganadores (Salón de la fama), en la hoja "¿Quién juega?" y en el menú de la partida.
+
+**6.4 Pantalla de modos más bonita**
+- [ ] El usuario elige uno de los diseños propuestos el 2026-11-02 (carrusel de cartas, ruleta, mosaico o mazo).
+  Idea común a todos: cada modo muestra un minitablero de ejemplo generado con ese modo.
+  El 2026-11-02 se le enseñaron los 4 diseños en SVG; falta que elija.
+
+**6.5 Fondos nuevos**
+- [ ] Playa (arena, olas, palmeras al atardecer).
+- [ ] Canoa liderando los mares (canoa que se mece sobre olas animadas).
+- [ ] Espacio: con la isla ya generada, las estrellas pasan hacia abajo, como si la isla volara hacia arriba.
+- [ ] **Camping** (muy importante para el usuario): parque de acampada, 4 jugadores en sillas de playa y el tablero en el maletero
+  abierto de un Volkswagen Polo blanco de 2023. Opciones: ilustración plana en SVG hecha por Claude, o foto real del grupo.
+- [ ] **Mesa de noche**: la foto del usuario (`docs/referencias/fondo-mesa-noche.webp`: mesa de picnic con farolillo, ajedrez,
+  pueblo iluminado al fondo). Oscurecerla un poco, con un brillo suave del farolillo que parpadea.
+  OJO: la web y el repo son públicos; confirmar antes de publicar fotos personales.
+
+**6.6 Iconos propios en vez de emojis**
+- [ ] Juego de iconos SVG propio (trazo fino y redondeado, color crema): recursos, modos, acciones, puertos.
+  Sustituir los emojis de toda la app, también los del 2D y las etiquetas de los puertos en 3D.
+
+**6.7 Expansión Navegantes de Catan** (si el usuario la compra; ver sección 5.6)
+
+### Fase 7+: Extras (ver Banco de ideas)
 
 ---
 
@@ -518,7 +588,14 @@ Claude: añade aquí ideas nuevas. El usuario elegirá cuáles entran.
 - [ ] ¿Queréis sonido y música? → hay efectos (apagados por defecto, en Ajustes). ¿Encenderlos por defecto? ¿Música?
 - [ ] Bromas del grupo para los nombres de isla (`src/data/nombres-isla.json`, lista `bromas`)
 - [ ] ¿Qué edición del Catan tenéis? (afecta a los puertos: marco fijo o fichas sueltas)
-- [ ] ¿Cuándo llegará el diseño de Claude Design y en qué formato?
+- [ ] ¿Cuándo llegará el diseño de Claude Design y en qué formato? (El usuario preguntó qué es; explicado el 2026-11-02. ¿Lo usará o diseña Claude?)
+- [ ] Zoom: ¿tocar un hexágono para acercarse, pellizcar con dos dedos, o las dos cosas?
+- [ ] Marcador: nombres y colores de los 4 jugadores; ¿empezar con 2 puntos cada uno?; ¿cartas de punto de victoria visibles u ocultas hasta el final?
+- [ ] Pantalla de modos: ¿qué diseño (A carrusel, B ruleta, C mosaico, D mazo)?
+- [ ] Camping: ¿de día o de noche? ¿Ilustración o foto real del grupo con el Polo? ¿Cómo son los 4 (pelo, ropa...)?
+- [ ] Fotos personales como fondo: ¿OK con que estén en la web pública? (repo privado con Pages = GitHub Pro de pago)
+- [ ] Iconos: ¿iconos propios dibujados o sin iconos?
+- [ ] Navegantes: ¿qué escenarios primero? ¿Solo 3-4 jugadores?
 - [ ] Lista de bromas para el Dato curioso del día
 - [x] ¿Dónde publicarla? → GitHub Pages, https://alaepat.github.io/catano/ (repo público: todo lo que se suba se ve)
 - [x] ¿Móvil? → la usará una persona con un **iPhone 17** (402×874 puntos)

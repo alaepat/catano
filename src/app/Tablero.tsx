@@ -4,10 +4,13 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BoardSvg } from '../components/BoardSvg';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { HexCard } from '../components/HexCard';
+import { Marcador } from '../components/Marcador';
 import { BackIcon, IconButton, Toast } from '../components/ui';
 import { PRESET_INFO, analyzeBoard, type Resource } from '../game';
 import { loadBoard3D } from '../lib/board3d';
 import { comentario } from '../lib/comentario';
+import { FEATURES } from '../lib/config';
 import { capture2D, composePhoto, shareImage } from '../lib/photo';
 import { revealDuration } from '../lib/reveal';
 import { unlockAudio } from '../lib/sound';
@@ -32,6 +35,8 @@ export function Tablero() {
   const [busy, setBusy] = useState(false);
   // Generación cuya animación ya terminó (o se saltó tocando la pantalla).
   const [revealedId, setRevealedId] = useState<number | null>(null);
+  // Hexágono tocado (zoom), recordando de qué generación es para que se olvide al crear otra isla.
+  const [picked, setPicked] = useState<{ gen: number; hex: number } | null>(null);
   const capture3D = useRef<(() => HTMLCanvasElement) | null>(null);
   const wrap2D = useRef<HTMLDivElement>(null);
 
@@ -42,6 +47,8 @@ export function Tablero() {
   const revealed = speed === 0 || revealedId === genId;
   const reveal = () => setRevealedId(genId);
   const clearToast = useCallback(() => setToast([]), []);
+  const focus = revealed && picked && picked.gen === genId ? picked.hex : null;
+  const pick = useCallback((hex: number | null) => setPicked(hex === null || genId === null ? null : { gen: genId, hex }), [genId]);
 
   const board = generation?.result.ok ? generation.result.board : null;
   const analysis = useMemo(() => (board ? analyzeBoard(board) : null), [board]);
@@ -133,6 +140,9 @@ export function Tablero() {
           </motion.h2>
         )}
 
+        {/* Marcador de puntos: aparece con el nombre de la isla. */}
+        {board && <Marcador visible={revealed} />}
+
         {board && use3d ? (
           <div className="board-3d" role="img" aria-label={`Tablero de Catan en 3D: ${generation.name}`} onClick={reveal}>
             <ErrorBoundary fallback={null} onError={() => setFailed3d(true)}>
@@ -147,6 +157,8 @@ export function Tablero() {
                   quality={settings.quality === '2d' ? 'alta' : settings.quality}
                   stars={settings.background === 'espacio'}
                   sound={settings.sound}
+                  focus={focus}
+                  onPick={pick}
                   captureRef={capture3D}
                   onDone={reveal}
                   onFail={() => setFailed3d(true)}
@@ -168,7 +180,15 @@ export function Tablero() {
           </div>
         ) : board ? (
           <div className="board-wrap" ref={wrap2D} onClick={reveal}>
-            <BoardSvg key={generation.id} board={board} speed={speed} showPips={settings.showPips} highlight={highlight} />
+            <BoardSvg
+              key={generation.id}
+              board={board}
+              speed={speed}
+              showPips={settings.showPips}
+              highlight={highlight}
+              focus={focus}
+              onPickHex={revealed ? pick : undefined}
+            />
           </div>
         ) : (
           <div className="card error-card">
@@ -211,24 +231,30 @@ export function Tablero() {
         </AnimatePresence>
       </div>
 
+      <AnimatePresence>{board && focus !== null && <HexCard key={focus} board={board} hex={focus} onClose={() => pick(null)} />}</AnimatePresence>
+
       <Toast messages={toast} onDone={clearToast} />
 
-      <nav className="action-bar five" aria-label="Acciones del tablero">
+      <nav className={FEATURES.foto && FEATURES.guardar ? 'action-bar five' : 'action-bar'} aria-label="Acciones del tablero">
         <button type="button" className={showAnalysis ? 'action active' : 'action'} aria-pressed={showAnalysis} onClick={() => setShowAnalysis(!showAnalysis)} disabled={!board}>
           <span aria-hidden>📊</span>
           Análisis
         </button>
-        <button type="button" className={saved ? 'action active' : 'action'} aria-pressed={saved} onClick={guardar} disabled={!board}>
-          <span aria-hidden>{saved ? '★' : '☆'}</span>
-          {saved ? 'Guardada' : 'Guardar'}
-        </button>
+        {FEATURES.guardar && (
+          <button type="button" className={saved ? 'action active' : 'action'} aria-pressed={saved} onClick={guardar} disabled={!board}>
+            <span aria-hidden>{saved ? '★' : '☆'}</span>
+            {saved ? 'Guardada' : 'Guardar'}
+          </button>
+        )}
         <motion.button type="button" className="btn-primary action-main" whileTap={{ scale: 0.95 }} onClick={otraVez}>
           Otra vez
         </motion.button>
-        <button type="button" className="action" onClick={foto} disabled={!board || !revealed || busy}>
-          <span aria-hidden>📷</span>
-          Foto
-        </button>
+        {FEATURES.foto && (
+          <button type="button" className="action" onClick={foto} disabled={!board || !revealed || busy}>
+            <span aria-hidden>📷</span>
+            Foto
+          </button>
+        )}
         <button
           type="button"
           className={settings.showPips ? 'action active' : 'action'}

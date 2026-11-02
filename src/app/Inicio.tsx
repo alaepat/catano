@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { GearIcon, IconButton } from '../components/ui';
 import datos from '../data/datos-curiosos.json';
 import { datoDelDia } from '../lib/datoDelDia';
-import { APP_TITLE } from '../lib/config';
+import { APP_TITLE, FEATURES } from '../lib/config';
 import { useApp } from '../store';
 
 function saludo(date = new Date()): string {
@@ -54,10 +54,12 @@ export function Inicio() {
       </div>
 
       <motion.nav variants={item} className="inicio-bottom">
-        <button type="button" className="pill-button" onClick={() => goTo('tableros')}>
-          <span aria-hidden>📜</span> Mis tableros
-          {savedCount > 0 && <span className="pill-count">{savedCount}</span>}
-        </button>
+        {FEATURES.guardar && (
+          <button type="button" className="pill-button" onClick={() => goTo('tableros')}>
+            <span aria-hidden>📜</span> Mis tableros
+            {savedCount > 0 && <span className="pill-count">{savedCount}</span>}
+          </button>
+        )}
         <IconButton label="Ajustes" onClick={() => goTo('ajustes')}>
           <GearIcon />
         </IconButton>

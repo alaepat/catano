@@ -47,9 +47,15 @@ interface Props {
   highlight?: number[];
   /** 0 = sin animación; 1 = velocidad normal; menos de 1 = más rápido. */
   speed?: number;
+  /** Hexágono ampliado (zoom), o null para ver todo. */
+  focus?: number | null;
+  /** Al tocar: el hexágono tocado, o null si se toca fuera de la isla. */
+  onPickHex?: (hex: number | null) => void;
 }
 
-export function BoardSvg({ board, showPips = true, highlight = [], speed = 0 }: Props) {
+const ZOOM = 2.4;
+
+export function BoardSvg({ board, showPips = true, highlight = [], speed = 0, focus = null, onPickHex }: Props) {
   const animate = speed > 0;
   const d = (s: number) => s * speed;
   const enter = (delay: number, from: object) =>
@@ -58,7 +64,41 @@ export function BoardSvg({ board, showPips = true, highlight = [], speed = 0 }: 
       : { initial: false as const };
 
   return (
-    <svg viewBox={VIEWBOX} role="img" aria-label="Tablero de Catan" style={{ width: '100%', height: 'auto', display: 'block', overflow: 'visible' }}>
+    <svg
+      viewBox={VIEWBOX}
+      role="img"
+      aria-label="Tablero de Catan"
+      style={{ width: '100%', height: 'auto', display: 'block', overflow: focus === null ? 'visible' : 'hidden' }}
+      onClick={(e) => {
+        if (!onPickHex) return;
+        // Del punto tocado (en píxeles) a coordenadas del tablero, deshaciendo el zoom.
+        const svg = e.currentTarget;
+        const m = svg.getScreenCTM();
+        if (!m) return;
+        const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(m.inverse());
+        const k = focus === null ? 1 : ZOOM;
+        const fx = focus === null ? 0 : HEXES[focus].x * S;
+        const fy = focus === null ? 0 : HEXES[focus].y * S;
+        const x = p.x / k + fx;
+        const y = p.y / k + fy;
+        let hex: number | null = null;
+        let best = S * 0.95;
+        for (const h of HEXES) {
+          const d = Math.hypot(h.x * S - x, h.y * S - y);
+          if (d < best) {
+            best = d;
+            hex = h.id;
+          }
+        }
+        onPickHex(hex === focus ? null : hex);
+      }}
+    >
+      <g
+        style={{
+          transform: focus === null ? 'none' : `scale(${ZOOM}) translate(${-HEXES[focus].x * S}px, ${-HEXES[focus].y * S}px)`,
+          transition: 'transform 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
+      >
       {/* Mar */}
       <motion.circle
         cx={0}
@@ -156,6 +196,7 @@ export function BoardSvg({ board, showPips = true, highlight = [], speed = 0 }: 
       {highlight.map((v) => (
         <circle key={v} cx={VERTICES[v].x * S} cy={VERTICES[v].y * S} r={7} fill="var(--acento)" stroke="var(--tinta)" strokeWidth={2} />
       ))}
+      </g>
     </svg>
   );
 }

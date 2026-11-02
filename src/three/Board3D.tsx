@@ -1,13 +1,14 @@
 // Escena 3D del tablero: la isla aparece en el espacio con la secuencia "épica" (timeline.ts).
 // Se carga aparte (lazy) para que la app arranque rápido; si falla, Tablero muestra el 2D.
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
-import { MathUtils, Vector2, Vector3, type Group, type PerspectiveCamera } from 'three';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { MathUtils, Plane, Raycaster, Vector2, Vector3, type Group, type PerspectiveCamera } from 'three';
+import { HEXES } from '../game';
 import type { Board } from '../game';
 import { playSequence, playSound } from '../lib/sound';
 import type { Quality } from '../store';
 import { ClockContext, useClock, type Clock } from './clock';
-import { SEA_R } from './coords';
+import { SEA_R, TOP } from './coords';
 import { Island } from './Island';
 import { Ports, Robber } from './Pieces';
 import { Aura, Burst, Sea, Stars } from './Space';
@@ -22,6 +23,38 @@ const QUALITY: Record<Quality3D, { dpr: [number, number]; antialias: boolean; sh
 };
 
 const FOV = 32;
+
+/** Zoom: 1 = se ve toda la isla; cuanto más pequeño, más cerca. */
+const ZOOM_MIN = 0.3;
+const ZOOM_HEX = 0.42;
+const PAN_MAX = 4;
+
+/** Hacia dónde mira la cámara y lo cerca que está. `t*` es el objetivo; el resto se acerca a él poco a poco. */
+interface View {
+  x: number;
+  z: number;
+  zoom: number;
+  tx: number;
+  tz: number;
+  tzoom: number;
+  /** Distancia real de la cámara (para convertir píxeles en distancia al arrastrar). */
+  dist: number;
+}
+
+const ViewContext = createContext<RefObject<View> | null>(null);
+const useView = () => useContext(ViewContext)!;
+
+function flyTo(v: View, hex: number | null) {
+  if (hex === null) {
+    v.tx = v.tz = 0;
+    v.tzoom = 1;
+  } else {
+    v.tx = HEXES[hex].x;
+    // Un poco por debajo del hexágono: así queda más arriba en pantalla, lejos de la tarjeta.
+    v.tz = HEXES[hex].y + 0.5;
+    v.tzoom = ZOOM_HEX;
+  }
+}
 
 export interface Board3DProps {
   board: Board;
@@ -38,6 +71,10 @@ export interface Board3DProps {
   stars: boolean;
   /** Efectos de sonido. */
   sound: boolean;
+  /** Hexágono al que se ha acercado la cámara (null = vista completa). */
+  focus: number | null;
+  /** Se toca un hexágono (su id) o fuera de la isla (null). */
+  onPick: (hex: number | null) => void;
   /** Aquí la escena deja una función que hace una foto del tablero tal como se ve. */
   captureRef?: RefObject<(() => HTMLCanvasElement) | null>;
   onDone: () => void;
@@ -90,16 +127,22 @@ export default function Board3D(props: Board3DProps) {
   );
 }
 
-function Scene({ board, speed, skip, showPips, highlight, quality, stars, sound, captureRef, onDone, fontsVersion }: Board3DProps & { fontsVersion: number }) {
+function Scene({ board, speed, skip, showPips, highlight, quality, stars, sound, captureRef, onDone, focus, onPick, fontsVersion }: Board3DProps & { fontsVersion: number }) {
   const q = QUALITY[quality];
   const clock = useRef<Clock>({ t: speed > 0 ? 0 : SEQ.end, doneAt: null });
   const done = useRef(speed <= 0);
   const skipping = useRef(skip);
   const onDoneRef = useRef(onDone);
+  const onPickRef = useRef(onPick);
   useEffect(() => {
     skipping.current = skip;
     onDoneRef.current = onDone;
+    onPickRef.current = onPick;
   });
+
+  // Cámara: se acerca al hexágono elegido o vuelve a la vista completa.
+  const view = useRef<View>({ x: 0, z: 0, zoom: 1, tx: 0, tz: 0, tzoom: 1, dist: 0 });
+  useEffect(() => flyTo(view.current, focus), [focus]);
 
   // Sonidos: se programan todos al empezar; si se salta la animación, se cortan y suena el acorde final.
   const stopSound = useRef<() => void>(() => {});
@@ -175,6 +218,7 @@ function Scene({ board, speed, skip, showPips, highlight, quality, stars, sound,
 
   return (
     <ClockContext.Provider value={clock}>
+      <ViewContext.Provider value={view}>
       <CameraRig />
       <hemisphereLight args={['#dfe9ff', '#2a1f2e', 1.15]} />
       <directionalLight
@@ -195,13 +239,14 @@ function Scene({ board, speed, skip, showPips, highlight, quality, stars, sound,
 
       {stars && <Stars count={q.stars} />}
       <Burst />
-      <DragTilt>
+      <Controls onPick={(hex) => onPickRef.current(hex)}>
         <Aura />
         <Sea shadows={q.shadows} />
         <Island board={board} showPips={showPips} highlight={highlight} decor={q.decor} shadows={q.shadows} fontsVersion={fontsVersion} />
         <Ports ports={board.ports} fontsVersion={fontsVersion} shadows={q.shadows} />
         {board.robber !== null && <Robber hex={board.robber} shadows={q.shadows} />}
-      </DragTilt>
+      </Controls>
+      </ViewContext.Provider>
     </ClockContext.Provider>
   );
 }
@@ -212,7 +257,8 @@ function Scene({ board, speed, skip, showPips, highlight, quality, stars, sound,
  */
 function CameraRig() {
   const clock = useClock();
-  useFrame(({ camera, size, clock: real }) => {
+  const view = useView();
+  useFrame(({ camera, size, clock: real }, dt) => {
     const { t, doneAt } = clock.current;
     const cam = camera as PerspectiveCamera;
     const aspect = size.width / Math.max(size.height, 1);
@@ -228,43 +274,139 @@ function CameraRig() {
     // Ya quieta, la cámara se balancea muy poco para que la escena no parezca una foto.
     const idle = doneAt === null ? 0 : 0.035 * Math.sin((real.elapsedTime - doneAt) * 0.25);
 
-    const dist = lerp(fit * 4.5, fit, approach);
+    // Zoom y desplazamiento, suaves (como un vuelo corto).
+    const v = view.current;
+    const k = 1 - Math.exp(-Math.min(dt, 0.1) * 4.5);
+    v.x += (v.tx - v.x) * k;
+    v.z += (v.tz - v.z) * k;
+    v.zoom += (v.tzoom - v.zoom) * k;
+
+    const dist = lerp(fit * 4.5, fit, approach) * v.zoom;
+    v.dist = dist;
     const elev = MathUtils.degToRad(lerp(84, 54, tilt));
     const azim = lerp(-1.1, 0, swing) + idle;
+    // De cerca se mira a la cara de arriba de las fichas, no a la base.
+    const lookY = TOP * (1 - v.zoom);
+    const lx = v.x;
+    const lz = v.z + 0.25 * v.zoom;
 
-    cam.position.set(dist * Math.cos(elev) * Math.sin(azim), dist * Math.sin(elev), dist * Math.cos(elev) * Math.cos(azim));
-    cam.lookAt(0, 0, 0.25);
+    cam.position.set(lx + dist * Math.cos(elev) * Math.sin(azim), lookY + dist * Math.sin(elev), lz + dist * Math.cos(elev) * Math.cos(azim));
+    cam.lookAt(lx, lookY, lz);
   });
   return null;
 }
 
 /**
- * Al terminar la animación se puede girar un poco la isla con el dedo;
- * al soltar vuelve suavemente a su sitio (como en las fichas de producto de Apple).
+ * Gestos, cuando ya ha terminado la animación:
+ * - Tocar un hexágono: la cámara vuela hasta él. Tocar el mar: vuelve a la vista completa.
+ * - Pellizcar con dos dedos: zoom libre.
+ * - Arrastrar: con zoom, mueve el mapa; sin zoom, gira un poco la isla y al soltar vuelve a su sitio.
  */
-function DragTilt({ children }: { children: ReactNode }) {
+function Controls({ children, onPick }: { children: ReactNode; onPick: (hex: number | null) => void }) {
   const clock = useClock();
+  const view = useView();
   const ref = useRef<Group>(null);
-  const gl = useThree((s) => s.gl);
+  const { gl, camera } = useThree();
   const target = useRef({ x: 0, y: 0 });
-  const drag = useRef<{ x: number; y: number } | null>(null);
+  const onPickRef = useRef(onPick);
+  useEffect(() => {
+    onPickRef.current = onPick;
+  });
 
   useEffect(() => {
     const el = gl.domElement;
+    const pointers = new Map<number, { x: number; y: number }>();
+    // Gesto de un dedo: dónde empezó, si se ha movido y desde dónde se arrastra el mapa.
+    let one: { x: number; y: number; time: number; moved: boolean; tx: number; tz: number } | null = null;
+    let pinch: { d: number; zoom: number } | null = null;
+    const ray = new Raycaster();
+    const ground = new Plane(new Vector3(0, 1, 0), -TOP);
+    const hit = new Vector3();
+
+    const spread = () => {
+      const [a, b] = [...pointers.values()];
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    };
+
+    const pick = (e: PointerEvent) => {
+      const r = el.getBoundingClientRect();
+      ray.setFromCamera(new Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera);
+      let hex: number | null = null;
+      if (ray.ray.intersectPlane(ground, hit)) {
+        let best = 0.95;
+        HEXES.forEach((h, id) => {
+          const d = Math.hypot(h.x - hit.x, h.y - hit.z);
+          if (d < best) {
+            best = d;
+            hex = id;
+          }
+        });
+      }
+      flyTo(view.current, hex);
+      onPickRef.current(hex);
+    };
+
     const down = (e: PointerEvent) => {
       if (clock.current.doneAt === null) return;
-      drag.current = { x: e.clientX, y: e.clientY };
-      el.setPointerCapture?.(e.pointerId);
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      try {
+        el.setPointerCapture?.(e.pointerId);
+      } catch {
+        // Sin captura, el gesto funciona igual mientras el dedo siga sobre el tablero.
+      }
+      if (pointers.size === 1) {
+        one = { x: e.clientX, y: e.clientY, time: performance.now(), moved: false, tx: view.current.tx, tz: view.current.tz };
+      } else if (pointers.size === 2) {
+        one = null;
+        target.current = { x: 0, y: 0 };
+        pinch = { d: spread(), zoom: view.current.tzoom };
+      }
     };
+
     const move = (e: PointerEvent) => {
-      if (!drag.current) return;
-      target.current.y = MathUtils.clamp((e.clientX - drag.current.x) * 0.006, -0.7, 0.7);
-      target.current.x = MathUtils.clamp((e.clientY - drag.current.y) * 0.004, -0.25, 0.35);
+      if (!pointers.has(e.pointerId)) return;
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      const v = view.current;
+      if (pinch && pointers.size >= 2) {
+        v.tzoom = MathUtils.clamp((pinch.zoom * pinch.d) / Math.max(spread(), 1), ZOOM_MIN, 1);
+        return;
+      }
+      if (!one) return;
+      const dx = e.clientX - one.x;
+      const dy = e.clientY - one.y;
+      if (!one.moved && Math.hypot(dx, dy) < 8) return;
+      one.moved = true;
+      if (v.tzoom < 0.95) {
+        // Con zoom: el mapa sigue al dedo.
+        const perPx = (2 * v.dist * Math.tan(MathUtils.degToRad(FOV / 2))) / Math.max(el.clientHeight, 1);
+        const nx = one.tx - dx * perPx;
+        const nz = one.tz - (dy * perPx) / Math.sin(MathUtils.degToRad(54));
+        const len = Math.hypot(nx, nz);
+        const k = len > PAN_MAX ? PAN_MAX / len : 1;
+        v.tx = nx * k;
+        v.tz = nz * k;
+      } else {
+        target.current.y = MathUtils.clamp(dx * 0.006, -0.7, 0.7);
+        target.current.x = MathUtils.clamp(dy * 0.004, -0.25, 0.35);
+      }
     };
-    const up = () => {
-      drag.current = null;
-      target.current = { x: 0, y: 0 };
+
+    const up = (e: PointerEvent) => {
+      if (!pointers.has(e.pointerId)) return;
+      pointers.delete(e.pointerId);
+      if (one && !one.moved && performance.now() - one.time < 400 && e.type === 'pointerup') pick(e);
+      if (pinch && pointers.size < 2) {
+        pinch = null;
+        // Si se aleja del todo, vuelve a la vista completa (y se cierra la tarjeta del hexágono).
+        if (view.current.tzoom > 0.92) {
+          flyTo(view.current, null);
+          onPickRef.current(null);
+        }
+      }
+      one = null;
+      if (pointers.size === 0) target.current = { x: 0, y: 0 };
     };
+
     el.addEventListener('pointerdown', down);
     el.addEventListener('pointermove', move);
     el.addEventListener('pointerup', up);
@@ -275,12 +417,12 @@ function DragTilt({ children }: { children: ReactNode }) {
       el.removeEventListener('pointerup', up);
       el.removeEventListener('pointercancel', up);
     };
-  }, [gl, clock]);
+  }, [gl, camera, clock, view]);
 
   useFrame(({ clock: real }, dt) => {
     const g = ref.current;
     if (!g) return;
-    const k = 1 - Math.exp(-dt * (drag.current ? 14 : 5));
+    const k = 1 - Math.exp(-dt * 7);
     g.rotation.x += (target.current.x - g.rotation.x) * k;
     g.rotation.y += (target.current.y - g.rotation.y) * k;
     // Ya quieta, flota muy despacio, como si respirase.
