@@ -2,7 +2,8 @@
 import { motion } from 'motion/react';
 import { useEffect, useRef } from 'react';
 import { useApp, type BackgroundId } from '../store';
-import { Beach, Camping, Canoe } from './Scenes';
+import { NightTable, Park } from './PaintedScenes';
+import { Beach, Canoe } from './Scenes';
 
 export function Background({ id }: { id: BackgroundId }) {
   return (
@@ -18,12 +19,8 @@ export function Background({ id }: { id: BackgroundId }) {
       {id === 'oceano' && <Waves />}
       {id === 'playa' && <Beach />}
       {id === 'canoa' && <Canoe />}
-      {id === 'camping' && (
-        <>
-          <Stars />
-          <Camping />
-        </>
-      )}
+      {id === 'parque' && <Park />}
+      {id === 'mesa' && <NightTable />}
       {id === 'pergamino' && <Compass />}
       {id === 'bosque' && (
         <>

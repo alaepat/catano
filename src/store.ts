@@ -13,7 +13,14 @@ import { safeStorage } from './lib/storage';
 
 export type Screen = 'inicio' | 'personalizar' | 'tablero' | 'ajustes' | 'tableros';
 export type ModeChoice = PresetId | 'personalizado' | 'sorpresa';
-export type BackgroundId = 'espacio' | 'oceano' | 'playa' | 'canoa' | 'camping' | 'pergamino' | 'atardecer' | 'bosque' | 'minimal';
+export type BackgroundId = 'espacio' | 'oceano' | 'playa' | 'canoa' | 'parque' | 'mesa' | 'pergamino' | 'atardecer' | 'bosque' | 'minimal';
+const BACKGROUND_IDS: BackgroundId[] = ['espacio', 'oceano', 'playa', 'canoa', 'parque', 'mesa', 'pergamino', 'atardecer', 'bosque', 'minimal'];
+
+/** Fondo guardado de una versión anterior: el Camping pasó a ser el Parque; uno que ya no existe vuelve al Espacio. */
+function migrateBackground(id: unknown): BackgroundId {
+  if (id === 'camping') return 'parque';
+  return BACKGROUND_IDS.includes(id as BackgroundId) ? (id as BackgroundId) : 'espacio';
+}
 export type AnimSpeed = 'epica' | 'rapida' | 'sin';
 /** Calidad del tablero 3D. '2d' = tablero plano (para móviles lentos o si el 3D falla). */
 export type Quality = 'alta' | 'media' | 'baja' | '2d';
@@ -208,7 +215,7 @@ export const useApp = create<State>()(
           ...current,
           choice: s.choice ?? current.choice,
           options: { ...current.options, ...s.options },
-          settings: { ...current.settings, ...s.settings },
+          settings: { ...current.settings, ...s.settings, background: migrateBackground(s.settings?.background ?? current.settings.background) },
           saved: Array.isArray(s.saved) ? s.saved.filter(isSavedBoard) : [],
         };
       },

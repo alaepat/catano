@@ -446,7 +446,7 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 - [ ] Probada instalada en el iPhone 17 del usuario ("Compartir → Añadir a pantalla de inicio" en Safari)
 - [ ] Chequeo final (sección 10.3)
 
-### Fase 6: Peticiones del usuario (2026-11-02, en curso: hechos 6.1 a 6.4, 6.6, 6.8 y casi todo 6.5)
+### Fase 6: Peticiones del usuario (2026-11-02, en curso: hechos 6.1 a 6.6 y 6.8; falta 6.7)
 
 **6.1 Esconder lo que no hace falta** (la app la usa una sola persona)
 - [x] Ocultar 📷 Foto y ⭐ Guardar / Mis tableros con interruptores en `lib/config.ts` (`FEATURES = { foto: false, guardar: false }`).
@@ -482,12 +482,17 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 - [x] Canoa liderando los mares (canoa con remero que se mece sobre olas animadas, al amanecer).
 - [x] Espacio: con la isla ya generada, las estrellas pasan hacia abajo con estela, como si la isla volara hacia arriba
   (las estrellas 3D se apagan al terminar y toman el relevo las del fondo; `flying` en el store).
-- [x] **Camping** (muy importante para el usuario): parque de acampada, 4 jugadores en sillas de playa y el tablero en el maletero
-  abierto de un Volkswagen Polo blanco de 2023. Hecha como ilustración plana nocturna en SVG (Polo visto desde atrás con el
-  portón abierto e iluminado, tablero dentro, 4 jugadores en sillas, guirnalda de bombillas). Si prefiere foto real, cambiar.
-- [ ] **Mesa de noche**: la foto del usuario (`docs/referencias/fondo-mesa-noche.webp`: mesa de picnic con farolillo, ajedrez,
-  pueblo iluminado al fondo). Oscurecerla un poco, con un brillo suave del farolillo que parpadea.
-  OJO: la web y el repo son públicos; confirmar antes de publicar fotos personales.
+- [x] ~~Camping~~ (v0.7, ilustración nocturna con el Polo por detrás): **no gustó** (2026-11-02). Sustituido por el Parque.
+  Quien lo tenía elegido pasa al Parque solo (`migrateBackground` en `store.ts`).
+- [x] **Parque** (v0.8, muy importante para el usuario): parque verde con el sol poniéndose; a media distancia 4 personas
+  jugando al Catan en sillas de playa sobre una manta de cuadros (cada una distinta: pelo, ropa, postura, latas, cartas,
+  un perro), y aparcado al lado un **Volkswagen Polo blanco 2023** calcado de fotos reales (Wikimedia Commons, Polo VI
+  restyling: pilotos de dos piezas, pilar C ancho, llantas de radios dobles). Estilo pintado a mano, con imperfecciones a propósito.
+- [x] **Mesa de noche** (v0.8): ilustración pintada *inspirada* en la foto del usuario (pérgola con lámpara, mesa con el
+  Catan, zumo, ajedrez, pueblo blanco iluminado al fondo, 4 jugadores). La foto **no** se publica (sigue solo en `docs/`, sin subir).
+- Cómo están hechos: SVG fijos en `public/fondos/` (`parque.svg`, `mesa-noche.svg`), generados con scripts de Python
+  (no están en el repo) y pintados una vez como `<img>`; encima, `PaintedScenes.tsx` anima lo poco que se mueve
+  (pájaros; lámpara que respira, polillas y luces del pueblo). Mismo lienzo 1080×1920 y encuadre `xMidYMax slice`.
 
 **6.6 Iconos propios en vez de emojis**
 - [x] Juego de iconos SVG propio (trazo fino y redondeado, color crema): recursos, modos, acciones, puertos. `lib/glyphs.ts`.
@@ -602,8 +607,8 @@ Claude: añade aquí ideas nuevas. El usuario elegirá cuáles entran.
 - [ ] Zoom: ¿tocar un hexágono para acercarse, pellizcar con dos dedos, o las dos cosas?
 - [ ] Marcador: nombres y colores de los 4 jugadores; ¿empezar con 2 puntos cada uno?; ¿cartas de punto de victoria visibles u ocultas hasta el final?
 - [ ] Pantalla de modos: ¿qué diseño (A carrusel, B ruleta, C mosaico, D mazo)?
-- [ ] Camping: ¿de día o de noche? ¿Ilustración o foto real del grupo con el Polo? ¿Cómo son los 4 (pelo, ropa...)?
-- [ ] Fotos personales como fondo: ¿OK con que estén en la web pública? (repo privado con Pages = GitHub Pro de pago)
+- [x] Camping → Parque al atardecer, ilustración, 4 personas inventadas (respondido 2026-11-02)
+- [ ] Fotos personales como fondo: ¿OK con que estén en la web pública? (por ahora: ilustración inspirada, la foto no se sube)
 - [ ] Iconos: ¿iconos propios dibujados o sin iconos?
 - [ ] Navegantes: ¿qué escenarios primero? ¿Solo 3-4 jugadores?
 - [ ] Lista de bromas para el Dato curioso del día
