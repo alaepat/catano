@@ -3,11 +3,11 @@ import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import {
   AdditiveBlending, BoxGeometry, CircleGeometry, ConeGeometry, CylinderGeometry, ExtrudeGeometry, IcosahedronGeometry,
-  MeshStandardMaterial, MeshBasicMaterial, PlaneGeometry, Shape, SphereGeometry, type Group, type Mesh,
+  MeshStandardMaterial, MeshBasicMaterial, PlaneGeometry, RingGeometry, Shape, SphereGeometry, type Group, type Mesh,
 } from 'three';
-import { HEXES, isRed, type Board, type Terrain } from '../game';
+import { isRed, type Board, type Terrain } from '../game';
 import { useClock } from './clock';
-import { BASE_H, BEVEL, TERRAIN_COLOR, TILE_H, TILE_R, TOP, hexWorld, jitter, vertexWorld } from './coords';
+import { BASE_H, BEVEL, TERRAIN_COLOR, TILE_H, TILE_R, TOP, hexWorld, jitter, useGeo, vertexWorld } from './coords';
 import type { NumberStyle } from '../lib/numberStyle';
 import { glowTexture, tokenTexture } from './textures';
 import { ease, hexWindow, landingFlash, lerp, progress, tokenWindow } from './timeline';
@@ -152,6 +152,8 @@ function Decor({ terrain, id, shadows }: { terrain: Terrain; id: number; shadows
           ))}
         </group>
       );
+    case 'mar':
+      return null;
     case 'desierto':
       return (
         <group>
@@ -180,8 +182,11 @@ function Tile({ id, terrain, decor, shadows }: { id: number; terrain: Terrain; d
   }, [terrain]);
   useEffect(() => () => material.dispose(), [material]);
 
-  const w = hexWindow(id);
-  const [tx, tz] = hexWorld(id);
+  const geo = useGeo();
+  const w = hexWindow(id, geo);
+  const [tx, tz] = hexWorld(geo, id);
+  // Los hexágonos de Navegantes tienen un lado plano arriba: la pieza (hecha "de punta") gira 30°.
+  const yaw = geo.flat ? Math.PI / 6 : 0;
   const r1 = Math.hypot(tx, tz);
   const a1 = r1 > 0 ? Math.atan2(tz, tx) : 0;
 
@@ -197,7 +202,7 @@ function Tile({ id, terrain, decor, shadows }: { id: number; terrain: Terrain; d
     const a = lerp(a1 + 1.8, a1, e);
     const r = lerp(9, r1, e);
     g.position.set(r * Math.cos(a), 5 * (1 - e), r * Math.sin(a));
-    g.rotation.set((1 - e) * 0.9, (1 - e) * Math.PI * 1.5, 0);
+    g.rotation.set((1 - e) * 0.9, (1 - e) * Math.PI * 1.5 + yaw, 0);
     g.scale.setScalar(lerp(0.35, 1, ease.outBack(p)));
     material.emissiveIntensity = landingFlash(t, w) * 0.9;
   });
@@ -212,6 +217,44 @@ function Tile({ id, terrain, decor, shadows }: { id: number; terrain: Terrain; d
           <Decor terrain={terrain} id={id} shadows={shadows} />
         </group>
       )}
+    </group>
+  );
+}
+
+// ---------- Hexágono de mar (Navegantes) ----------
+
+// Un hexágono plano y algo más claro que el mar, con su borde: se ve el marco sin tapar los barcos.
+const SEA_HEX_GEO = new CircleGeometry(0.97, 6).rotateX(-Math.PI / 2);
+const SEA_EDGE_GEO = new RingGeometry(0.93, 0.99, 6, 1).rotateX(-Math.PI / 2);
+const SEA_EDGE_MAT = new MeshBasicMaterial({ color: '#d6ecf7', transparent: true, opacity: 0.28, depthWrite: false });
+
+function SeaTile({ id }: { id: number }) {
+  const clock = useClock();
+  const geo = useGeo();
+  const group = useRef<Group>(null);
+  const material = useMemo(
+    () => new MeshStandardMaterial({ color: TERRAIN_COLOR.mar, roughness: 0.25, metalness: 0.1, transparent: true, opacity: 0, depthWrite: false }),
+    [],
+  );
+  useEffect(() => () => material.dispose(), [material]);
+  const w = hexWindow(id, geo);
+  const [x, z] = hexWorld(geo, id);
+
+  useFrame(({ clock: real }) => {
+    const g = group.current;
+    if (!g) return;
+    const p = progress(clock.current.t, w);
+    g.visible = p > 0;
+    if (!g.visible) return;
+    // Se extiende desde el centro del hexágono, como una ola; luego brilla muy poco.
+    g.scale.setScalar(Math.max(0.001, ease.outCubic(p)));
+    material.opacity = (0.42 + 0.06 * Math.sin(real.elapsedTime * 0.9 + id)) * p;
+  });
+
+  return (
+    <group ref={group} position={[x, 0.008, z]} visible={false}>
+      <mesh geometry={SEA_HEX_GEO} material={material} />
+      <mesh geometry={SEA_EDGE_GEO} material={SEA_EDGE_MAT} position={[0, 0.002, 0]} />
     </group>
   );
 }
@@ -241,8 +284,9 @@ function Token({ id, n, showPips, numberStyle, fontsVersion, shadows }: { id: nu
   useEffect(() => () => face.dispose(), [face]);
   useEffect(() => () => glowMat.dispose(), [glowMat]);
 
-  const w = tokenWindow(id);
-  const [x, z] = hexWorld(id);
+  const geo = useGeo();
+  const w = tokenWindow(id, geo);
+  const [x, z] = hexWorld(geo, id);
 
   useFrame(({ clock: real }) => {
     const g = group.current;
@@ -281,7 +325,7 @@ const HALO_GEO = new PlaneGeometry(1.3, 1.3).rotateX(-Math.PI / 2);
 
 function Highlight({ vertex, index }: { vertex: number; index: number }) {
   const ref = useRef<Group>(null);
-  const [x, z] = vertexWorld(vertex);
+  const [x, z] = vertexWorld(useGeo(), vertex);
   useFrame(({ clock }) => {
     if (ref.current) ref.current.scale.setScalar(1 + 0.12 * Math.sin(clock.elapsedTime * 3 + index));
   });
@@ -298,12 +342,17 @@ function Highlight({ vertex, index }: { vertex: number; index: number }) {
 export function Island({
   board, showPips, numberStyle, highlight, decor, shadows, fontsVersion,
 }: { board: Board; showPips: boolean; numberStyle: NumberStyle; highlight: number[]; decor: boolean; shadows: boolean; fontsVersion: number }) {
+  const geo = useGeo();
   return (
     <group>
-      {HEXES.map((h) => (
-        <Tile key={h.id} id={h.id} terrain={board.terrains[h.id]} decor={decor} shadows={shadows} />
-      ))}
-      {HEXES.map((h) => {
+      {geo.hexes.map((h) =>
+        board.terrains[h.id] === 'mar' ? (
+          <SeaTile key={h.id} id={h.id} />
+        ) : (
+          <Tile key={h.id} id={h.id} terrain={board.terrains[h.id]} decor={decor} shadows={shadows} />
+        ),
+      )}
+      {geo.hexes.map((h) => {
         const n = board.numbers[h.id];
         return n == null ? null : <Token key={h.id} id={h.id} n={n} showPips={showPips} numberStyle={numberStyle} fontsVersion={fontsVersion} shadows={shadows} />;
       })}

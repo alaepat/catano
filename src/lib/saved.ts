@@ -1,5 +1,5 @@
 // "Mis tableros": islas guardadas en el móvil.
-import { HEXES, PRESET_IDS, type Board, type PresetId } from '../game';
+import { PRESET_IDS, geometryOf, type Board, type GenMode, type PresetId } from '../game';
 
 export const MAX_SAVED = 60;
 
@@ -8,7 +8,7 @@ export interface SavedBoard {
   name: string;
   /** Fecha de guardado (ISO). */
   date: string;
-  mode: PresetId | 'personalizado';
+  mode: GenMode;
   seed: number;
   score: number;
   board: Board;
@@ -25,14 +25,15 @@ export function isSavedBoard(x: unknown): x is SavedBoard {
     typeof s.id === 'string' &&
     typeof s.name === 'string' &&
     typeof s.date === 'string' &&
-    (s.mode === 'personalizado' || PRESET_IDS.includes(s.mode as PresetId)) &&
+    (s.mode === 'personalizado' || s.mode === 'nuevo-mundo' || PRESET_IDS.includes(s.mode as PresetId)) &&
     isNum(s.seed) &&
     isNum(s.score) &&
     !!b &&
+    (b.map === undefined || b.map === 'base' || b.map === 'nuevo-mundo') &&
     Array.isArray(b.terrains) &&
-    b.terrains.length === HEXES.length &&
+    b.terrains.length === geometryOf(b).hexes.length &&
     Array.isArray(b.numbers) &&
-    b.numbers.length === HEXES.length &&
+    b.numbers.length === geometryOf(b).hexes.length &&
     Array.isArray(b.ports) &&
     (b.robber === null || isNum(b.robber))
   );

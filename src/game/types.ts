@@ -1,4 +1,7 @@
-export type Terrain = 'bosque' | 'pasto' | 'cereal' | 'colinas' | 'montanas' | 'desierto';
+export type Terrain = 'bosque' | 'pasto' | 'cereal' | 'colinas' | 'montanas' | 'desierto' | 'mar';
+
+/** Forma del tablero: la isla del Catan base o el marco de 42 hexágonos de Navegantes (Nuevo mundo). */
+export type MapId = 'base' | 'nuevo-mundo';
 export type Resource = 'madera' | 'lana' | 'trigo' | 'arcilla' | 'mineral';
 export type PortType = 'generico' | Resource;
 
@@ -10,7 +13,7 @@ export interface Hex {
   /** Centro en pantalla, en unidades de "radio de hexágono" (la y crece hacia abajo). */
   x: number;
   y: number;
-  /** 0 = centro, 1 = anillo medio, 2 = costa. */
+  /** Catan base: 0 = centro, 1 = anillo medio, 2 = costa. En Navegantes, la distancia al centro. */
   ring: number;
   neighbors: number[];
   vertices: number[];
@@ -33,7 +36,10 @@ export interface Edge {
 }
 
 export interface Port {
-  /** Posición en COAST_EDGES (0-29, en orden alrededor de la isla). */
+  /**
+   * Catan base: posición en COAST_EDGES (0-29, en orden alrededor de la isla).
+   * Navegantes: id del lado (en su geometría) entre tierra y mar o marco.
+   */
   coast: number;
   type: PortType;
 }
@@ -47,4 +53,6 @@ export interface Board {
   ports: Port[];
   /** Hexágono donde empieza el ladrón, o null si empieza fuera. */
   robber: number | null;
+  /** Forma del tablero (si falta, el Catan base: así se leen los tableros guardados antes de Navegantes). */
+  map?: MapId;
 }

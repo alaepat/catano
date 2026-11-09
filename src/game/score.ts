@@ -1,4 +1,5 @@
 // Puntuación de equilibrio (0-100) y análisis del tablero.
+import { geometryOf } from './board';
 import { RESOURCES, isRed } from './catan';
 import { countAdjacentPairs, resourceSpread, resourceStats, vertexPips } from './rules';
 import type { Board, Resource } from './types';
@@ -12,12 +13,13 @@ import type { Board, Resource } from './types';
  * - parejas de terrenos iguales juntos por encima de 3 (-2 cada una)
  */
 export function balanceScore(board: Board): number {
+  const geo = geometryOf(board);
   let score = 100;
-  score -= 15 * countAdjacentPairs(board.numbers, (a, b) => isRed(a) && isRed(b));
-  score -= 5 * countAdjacentPairs(board.numbers, (a, b) => a === b);
-  score -= 6 * Math.max(0, Math.max(...vertexPips(board.numbers)) - 11);
+  score -= 15 * countAdjacentPairs(board.numbers, (a, b) => isRed(a) && isRed(b), geo);
+  score -= 5 * countAdjacentPairs(board.numbers, (a, b) => a === b, geo);
+  score -= 6 * Math.max(0, Math.max(...vertexPips(board.numbers, geo)) - 11);
   score -= 12 * Math.max(0, resourceSpread(board.terrains, board.numbers) - 0.5);
-  const sameTerrain = countAdjacentPairs(board.terrains, (a, b) => a === b && a !== 'desierto');
+  const sameTerrain = countAdjacentPairs(board.terrains, (a, b) => a === b && a !== 'desierto' && a !== 'mar', geo);
   score -= 2 * Math.max(0, sameTerrain - 3);
   return Math.max(0, Math.min(100, Math.round(score)));
 }
@@ -33,7 +35,7 @@ export interface BoardAnalysis {
 }
 
 export function analyzeBoard(board: Board, topVertices = 3): BoardAnalysis {
-  const vp = vertexPips(board.numbers);
+  const vp = vertexPips(board.numbers, geometryOf(board));
   const bestVertices = vp
     .map((pips, vertex) => ({ vertex, pips }))
     .sort((a, b) => b.pips - a.pips)

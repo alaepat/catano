@@ -1,6 +1,7 @@
 // Datos del Catan base (3-4 jugadores). Ver PLAN_CATAN.md, sección 5.
 import type { PortType, Resource, Terrain } from './types';
 
+/** Terrenos del Catan base (el mar solo está en Navegantes). */
 export const TERRAINS: Terrain[] = ['bosque', 'pasto', 'cereal', 'colinas', 'montanas', 'desierto'];
 
 export const TERRAIN_COUNTS: Record<Terrain, number> = {
@@ -10,6 +11,7 @@ export const TERRAIN_COUNTS: Record<Terrain, number> = {
   colinas: 3,
   montanas: 3,
   desierto: 1,
+  mar: 0,
 };
 
 export const TERRAIN_RESOURCE: Record<Terrain, Resource | null> = {
@@ -19,6 +21,7 @@ export const TERRAIN_RESOURCE: Record<Terrain, Resource | null> = {
   colinas: 'arcilla',
   montanas: 'mineral',
   desierto: null,
+  mar: null,
 };
 
 export const RESOURCES: Resource[] = ['madera', 'lana', 'trigo', 'arcilla', 'mineral'];

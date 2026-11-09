@@ -3,17 +3,20 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import {
-  PRESETS, balanceScore, generateBoard, matchPreset, setOptionResolving, surprisePreset,
-  type GenOptions, type GenResult, type PresetId,
+  PRESETS, balanceScore, generateBoard, generateNuevoMundo, matchPreset, setOptionResolving, surprisePreset,
+  type GenMode, type GenOptions, type GenResult, type NuevoMundoStyle,
 } from './game';
 import { islandName } from './lib/islandName';
 import type { NumberFont, NumberSize } from './lib/numberStyle';
 import { MAX_SAVED, cleanName, isSavedBoard, newSavedId, type SavedBoard } from './lib/saved';
 import { safeStorage } from './lib/storage';
 import { useLogros } from './logrosStore';
+import type { PresetId } from './game';
 
 export type Screen = 'inicio' | 'personalizar' | 'tablero' | 'ajustes' | 'tableros' | 'logros';
 export type ModeChoice = PresetId | 'personalizado' | 'sorpresa';
+/** Juego: el Catan base o la expansión Navegantes. */
+export type GameId = 'base' | 'navegantes';
 export type BackgroundId = 'espacio' | 'oceano' | 'playa' | 'canoa' | 'parque' | 'mesa' | 'flotante' | 'pergamino' | 'atardecer' | 'bosque' | 'minimal';
 const BACKGROUND_IDS: BackgroundId[] = ['espacio', 'oceano', 'playa', 'canoa', 'parque', 'mesa', 'flotante', 'pergamino', 'atardecer', 'bosque', 'minimal'];
 
@@ -45,7 +48,7 @@ export interface Settings {
 
 export interface Generation {
   /** Modo con el que se generó (en Sorpresa, el que tocó). */
-  mode: PresetId | 'personalizado';
+  mode: GenMode;
   result: GenResult;
   /** Cambia en cada generación, para repetir la animación. */
   id: number;
@@ -57,6 +60,10 @@ export interface Generation {
 
 interface State {
   screen: Screen;
+  /** Juego elegido en "Tu isla". */
+  game: GameId;
+  /** Navegantes: islas equilibradas o reparto tal cual. */
+  nmStyle: NuevoMundoStyle;
   choice: ModeChoice;
   options: GenOptions;
   generation: Generation | null;
@@ -72,6 +79,8 @@ interface State {
   goTo: (screen: Screen) => void;
   /** Cambia de pantalla sin añadir entrada al historial (para el botón atrás del móvil). */
   setScreenFromHistory: (screen: Screen) => void;
+  setGame: (game: GameId) => void;
+  setNmStyle: (style: NuevoMundoStyle) => void;
   selectMode: (choice: ModeChoice) => void;
   setOption: <K extends keyof GenOptions>(key: K, value: GenOptions[K]) => void;
   clearNotes: () => void;
@@ -104,6 +113,8 @@ export const useApp = create<State>()(
   persist(
     (set, get) => ({
       screen: 'inicio',
+      game: 'base',
+      nmStyle: 'equilibrado',
       choice: 'equilibrado',
       options: PRESETS.equilibrado,
       generation: null,
@@ -126,6 +137,9 @@ export const useApp = create<State>()(
       },
       setScreenFromHistory: (screen) => set({ screen }),
 
+      setGame: (game) => set({ game }),
+      setNmStyle: (nmStyle) => set({ nmStyle }),
+
       selectMode: (choice) => {
         if (choice === 'sorpresa' || choice === 'personalizado') set({ choice });
         else set({ choice, options: PRESETS[choice] });
@@ -138,10 +152,17 @@ export const useApp = create<State>()(
       clearNotes: () => set({ notes: [] }),
 
       generate: () => {
-        const { choice, options, generation } = get();
-        const mode = choice === 'sorpresa' ? surprisePreset() : choice;
-        const opts = mode === 'personalizado' ? options : PRESETS[mode];
-        const result = generateBoard(opts);
+        const { game, nmStyle, choice, options, generation } = get();
+        let mode: GenMode;
+        let result: GenResult;
+        if (game === 'navegantes') {
+          mode = 'nuevo-mundo';
+          result = generateNuevoMundo(nmStyle);
+        } else {
+          const preset = choice === 'sorpresa' ? surprisePreset() : choice;
+          mode = preset;
+          result = generateBoard(preset === 'personalizado' ? options : PRESETS[preset]);
+        }
         const name = result.ok ? islandName(result.board, result.seed) : '';
         set({ generation: { mode, result, id: (generation?.id ?? 0) + 1, name } });
         if (result.ok) useLogros.getState().track({ type: 'generar', mode, score: balanceScore(result.board), hour: new Date().getHours() });
@@ -154,7 +175,7 @@ export const useApp = create<State>()(
 
       resetAll: () => {
         safeStorage.removeItem('catan-app');
-        set({ choice: 'equilibrado', options: PRESETS.equilibrado, settings: DEFAULT_SETTINGS, generation: null, notes: [], saved: [] });
+        set({ game: 'base', nmStyle: 'equilibrado', choice: 'equilibrado', options: PRESETS.equilibrado, settings: DEFAULT_SETTINGS, generation: null, notes: [], saved: [] });
       },
 
       toggleSaveCurrent: () => {
@@ -217,12 +238,14 @@ export const useApp = create<State>()(
       name: 'catan-app',
       version: 1,
       storage: createJSONStorage(() => safeStorage),
-      partialize: (s) => ({ choice: s.choice, options: s.options, settings: s.settings, saved: s.saved }),
+      partialize: (s) => ({ game: s.game, nmStyle: s.nmStyle, choice: s.choice, options: s.options, settings: s.settings, saved: s.saved }),
       // Si en el futuro se añaden opciones nuevas, las que falten toman su valor por defecto.
       merge: (saved, current) => {
         const s = (saved ?? {}) as Partial<State>;
         return {
           ...current,
+          game: s.game === 'navegantes' ? 'navegantes' : 'base',
+          nmStyle: s.nmStyle === 'azar' ? 'azar' : 'equilibrado',
           choice: s.choice ?? current.choice,
           options: { ...current.options, ...s.options },
           settings: { ...current.settings, ...s.settings, background: migrateBackground(s.settings?.background ?? current.settings.background) },

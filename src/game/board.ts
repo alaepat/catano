@@ -1,6 +1,8 @@
-// Geometría fija del tablero base: 19 hexágonos (filas 3-4-5-4-3), 54 cruces y 72 caminos.
-// Hexágonos "de punta" (pointy-top) en coordenadas axiales (q, r).
-import type { Edge, Hex, Vertex } from './types';
+// Geometría de los tableros, en coordenadas axiales (q, r):
+// - Catan base: 19 hexágonos "de punta" (filas 3-4-5-4-3), 54 cruces y 72 caminos.
+// - Navegantes (Nuevo mundo): el marco de 42 hexágonos "de lado plano arriba", en columnas 5-6-7-6-7-6-5,
+//   como en el dibujo del libro de reglas.
+import type { Edge, Hex, MapId, Vertex } from './types';
 
 const SQRT3 = Math.sqrt(3);
 
@@ -11,13 +13,35 @@ export const AXIAL_DIRS: ReadonlyArray<readonly [number, number]> = [
 
 const pointKey = (x: number, y: number) => `${Math.round(x * 1000)},${Math.round(y * 1000)}`;
 
-function build() {
+function baseCoords(): [number, number][] {
   const coords: [number, number][] = [];
   for (let r = -2; r <= 2; r++) {
     for (let q = -2; q <= 2; q++) {
       if (Math.abs(q + r) <= 2) coords.push([q, r]);
     }
   }
+  return coords;
+}
+
+/** Marco de Navegantes: 7 columnas de 5-6-7-6-7-6-5 hexágonos (42), de izquierda a derecha y de arriba abajo. */
+const SEA_COLUMNS = [5, 6, 7, 6, 7, 6, 5];
+function seaCoords(): [number, number][] {
+  const coords: [number, number][] = [];
+  SEA_COLUMNS.forEach((n, c) => {
+    const q = c - 3;
+    for (let j = 0; j < n; j++) coords.push([q, j - (n - 1) / 2 - q / 2 + 1 / 2]);
+  });
+  return coords;
+}
+
+/** `flat` = hexágonos con un lado plano arriba (si no, con una punta arriba). */
+function build(coords: [number, number][], flat: boolean) {
+  const center = (q: number, r: number): [number, number] => (flat ? [1.5 * q, SQRT3 * (r + q / 2)] : [SQRT3 * (q + r / 2), 1.5 * r]);
+  // Centra el tablero en (0, 0).
+  const cs = coords.map(([q, r]) => center(q, r));
+  const mid = (k: 0 | 1) => (Math.min(...cs.map((c) => c[k])) + Math.max(...cs.map((c) => c[k]))) / 2;
+  const ox = mid(0);
+  const oy = mid(1);
   const index = new Map<string, number>();
   coords.forEach(([q, r], i) => index.set(`${q},${r}`, i));
 
@@ -28,8 +52,8 @@ function build() {
   const edgeIndex = new Map<string, number>();
 
   coords.forEach(([q, r], id) => {
-    const x = SQRT3 * (q + r / 2);
-    const y = 1.5 * r;
+    const x = cs[id][0] - ox;
+    const y = cs[id][1] - oy;
 
     const neighbors: number[] = [];
     for (const [dq, dr] of AXIAL_DIRS) {
@@ -39,7 +63,7 @@ function build() {
 
     const vids: number[] = [];
     for (let i = 0; i < 6; i++) {
-      const angle = (Math.PI / 180) * (60 * i - 30);
+      const angle = (Math.PI / 180) * (60 * i - (flat ? 0 : 30));
       const vx = x + Math.cos(angle);
       const vy = y + Math.sin(angle);
       const key = pointKey(vx, vy);
@@ -66,7 +90,7 @@ function build() {
       edges[e].hexes.push(id);
     }
 
-    const ring = Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r));
+    const ring = flat ? Math.round(Math.hypot(x, y) / SQRT3) : Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r));
     hexes.push({ id, q, r, x, y, ring, neighbors, vertices: vids });
   });
 
@@ -81,10 +105,49 @@ function build() {
     .sort((p, q) => p.angle - q.angle)
     .map((p) => p.id);
 
-  return { hexes, vertices, edges, coast, index };
+  const radius = Math.max(...vertices.map((v) => Math.hypot(v.x, v.y)));
+  // Orden de aparición: del centro hacia fuera, girando.
+  const revealIndex: number[] = [];
+  hexes
+    .slice()
+    .sort((a, b) => a.ring - b.ring || Math.atan2(a.y, a.x) - Math.atan2(b.y, b.x))
+    .forEach((h, i) => (revealIndex[h.id] = i));
+
+  return { hexes, vertices, edges, coast, index, radius, revealIndex };
 }
 
-const built = build();
+export interface Geometry {
+  id: MapId;
+  hexes: readonly Hex[];
+  vertices: readonly Vertex[];
+  edges: readonly Edge[];
+  /** Hexágonos con un lado plano arriba (Navegantes) o con una punta arriba (base). */
+  flat: boolean;
+  /** Distancia del centro al cruce más lejano (en radios de hexágono). */
+  radius: number;
+  /** Orden de aparición de cada hexágono en la animación (por id). */
+  revealIndex: readonly number[];
+}
+
+const built = build(baseCoords(), false);
+const sea = build(seaCoords(), true);
+
+export const BASE_GEOMETRY: Geometry = {
+  id: 'base', hexes: built.hexes, vertices: built.vertices, edges: built.edges, flat: false, radius: built.radius, revealIndex: built.revealIndex,
+};
+export const SEA_GEOMETRY: Geometry = {
+  id: 'nuevo-mundo', hexes: sea.hexes, vertices: sea.vertices, edges: sea.edges, flat: true, radius: sea.radius, revealIndex: sea.revealIndex,
+};
+
+/** Geometría de un tablero (los guardados antes de Navegantes no dicen nada: son del base). */
+export function geometryOf(board: { map?: MapId }): Geometry {
+  return board.map === 'nuevo-mundo' ? SEA_GEOMETRY : BASE_GEOMETRY;
+}
+
+/** Lado donde está un puerto: en el base, `coast` es la posición en la costa; en Navegantes, el id del lado. */
+export function portEdge(geo: Geometry, coast: number): Edge {
+  return geo.id === 'base' ? built.edges[built.coast[coast]] : geo.edges[coast];
+}
 
 export const HEXES: readonly Hex[] = built.hexes;
 export const VERTICES: readonly Vertex[] = built.vertices;

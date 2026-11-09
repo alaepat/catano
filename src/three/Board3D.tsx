@@ -3,13 +3,12 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { MathUtils, Plane, Raycaster, Vector2, Vector3, type Group, type PerspectiveCamera } from 'three';
-import { HEXES } from '../game';
-import type { Board } from '../game';
+import { geometryOf, type Board, type Geometry } from '../game';
 import { firstFamily, type NumberStyle } from '../lib/numberStyle';
 import { playSequence, playSound } from '../lib/sound';
 import type { Quality } from '../store';
 import { ClockContext, useClock, type Clock } from './clock';
-import { SEA_R, TOP } from './coords';
+import { GeoContext, TOP, boardHalf, seaRadius, useGeo } from './coords';
 import { Island } from './Island';
 import { Ports, Robber } from './Pieces';
 import { Aura, Burst, Sea, Stars } from './Space';
@@ -62,14 +61,14 @@ function placeCamera(cam: PerspectiveCamera, x: number, z: number, zoom: number,
 const ViewContext = createContext<RefObject<View> | null>(null);
 const useView = () => useContext(ViewContext)!;
 
-function flyTo(v: View, hex: number | null) {
+function flyTo(v: View, hex: number | null, geo: Geometry) {
   if (hex === null) {
     v.tx = v.tz = 0;
     v.tzoom = 1;
   } else {
-    v.tx = HEXES[hex].x;
+    v.tx = geo.hexes[hex].x;
     // Un poco por debajo del hexágono: así queda más arriba en pantalla, lejos de la tarjeta.
-    v.tz = HEXES[hex].y + 0.5;
+    v.tz = geo.hexes[hex].y + 0.5;
     v.tzoom = ZOOM_HEX;
   }
 }
@@ -168,7 +167,8 @@ function Scene({ board, speed, skip, showPips, numberStyle, highlight, quality, 
 
   // Cámara: se acerca al hexágono elegido o vuelve a la vista completa.
   const view = useRef<View>({ x: 0, z: 0, zoom: 1, tx: 0, tz: 0, tzoom: 1, dist: 0, fit: 1, live: false });
-  useEffect(() => flyTo(view.current, focus), [focus]);
+  const geo = geometryOf(board);
+  useEffect(() => flyTo(view.current, focus, geo), [focus, geo]);
 
   // Sonidos: se programan todos al empezar; si se salta la animación, se cortan y suena el acorde final.
   const stopSound = useRef<() => void>(() => {});
@@ -179,7 +179,7 @@ function Scene({ board, speed, skip, showPips, numberStyle, highlight, quality, 
       return;
     }
     const numbered = board.numbers.flatMap((n, id) => (n == null ? [] : [id]));
-    stopSound.current = playSequence(soundTimeline(numbered, board.ports.length, board.robber !== null, speed));
+    stopSound.current = playSequence(soundTimeline(numbered, board.ports.length, board.robber !== null, speed, geo));
     return () => stopSound.current();
     // Solo al aparecer la escena (cada generación monta una escena nueva).
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -202,7 +202,7 @@ function Scene({ board, speed, skip, showPips, numberStyle, highlight, quality, 
       const shot = view.clone();
       shot.clearViewOffset();
       shot.aspect = 1;
-      const reach = SEA_R * 1.45;
+      const reach = seaRadius(geo) * 1.45;
       const dir = view.position.clone().normalize();
       shot.position.copy(dir.multiplyScalar(reach / Math.sin(MathUtils.degToRad(FOV / 2))));
       shot.lookAt(new Vector3(0, 0, 0.25));
@@ -227,7 +227,7 @@ function Scene({ board, speed, skip, showPips, numberStyle, highlight, quality, 
     return () => {
       captureRef.current = null;
     };
-  }, [captureRef, gl, scene, camera]);
+  }, [captureRef, gl, scene, camera, geo]);
 
   useFrame(({ clock: real }, dt) => {
     const c = clock.current;
@@ -245,6 +245,7 @@ function Scene({ board, speed, skip, showPips, numberStyle, highlight, quality, 
 
   return (
     <ClockContext.Provider value={clock}>
+      <GeoContext.Provider value={geo}>
       <ViewContext.Provider value={view}>
       <CameraRig slot={slotRef} />
       <hemisphereLight args={['#dfe9ff', '#2a1f2e', 1.15]} />
@@ -267,13 +268,14 @@ function Scene({ board, speed, skip, showPips, numberStyle, highlight, quality, 
       {stars && <Stars count={q.stars} />}
       <Burst />
       <Controls onPick={(hex) => onPickRef.current(hex)}>
-        <Aura />
-        <Sea shadows={q.shadows} />
+        <Aura radius={seaRadius(geo)} />
+        <Sea shadows={q.shadows} radius={seaRadius(geo)} />
         <Island board={board} showPips={showPips} numberStyle={numberStyle} highlight={highlight} decor={q.decor} shadows={q.shadows} fontsVersion={fontsVersion} />
-        <Ports ports={board.ports} fontsVersion={fontsVersion} shadows={q.shadows} />
+        <Ports board={board} fontsVersion={fontsVersion} shadows={q.shadows} />
         {board.robber !== null && <Robber hex={board.robber} shadows={q.shadows} />}
       </Controls>
       </ViewContext.Provider>
+      </GeoContext.Provider>
     </ClockContext.Provider>
   );
 }
@@ -286,6 +288,7 @@ function Scene({ board, speed, skip, showPips, numberStyle, highlight, quality, 
 function CameraRig({ slot }: { slot?: RefObject<HTMLElement | null> }) {
   const clock = useClock();
   const view = useView();
+  const half = boardHalf(useGeo());
   const frame = useRef<{ cy: number; w: number; h: number } | null>(null);
   useFrame(({ camera, size, clock: real }, dt) => {
     const { t, doneAt } = clock.current;
@@ -309,9 +312,8 @@ function CameraRig({ slot }: { slot?: RefObject<HTMLElement | null> }) {
     const tanV = Math.tan(MathUtils.degToRad(FOV / 2));
     const vHalf = Math.atan((tanV * f.h) / H);
     const hHalf = Math.atan((tanV * f.w) / H);
-    const R = SEA_R + 0.15;
-    // Distancia para que quepa todo el mar a lo ancho y a lo alto del hueco.
-    const fit = Math.max(R / Math.sin(hHalf), (R * 0.8) / Math.sin(vHalf));
+    // Distancia para que quepa todo el tablero a lo ancho y a lo alto del hueco.
+    const fit = Math.max(half.w / Math.sin(hHalf), half.h / Math.sin(vHalf));
 
     const approach = ease.outQuart(progress(t, SEQ.approach));
     const tilt = ease.inOutCubic(progress(t, SEQ.tilt));
@@ -343,6 +345,7 @@ function CameraRig({ slot }: { slot?: RefObject<HTMLElement | null> }) {
 function Controls({ children, onPick }: { children: ReactNode; onPick: (hex: number | null) => void }) {
   const clock = useClock();
   const view = useView();
+  const geo = useGeo();
   const ref = useRef<Group>(null);
   const { gl, camera } = useThree();
   const target = useRef({ x: 0, y: 0 });
@@ -417,7 +420,7 @@ function Controls({ children, onPick }: { children: ReactNode; onPick: (hex: num
       let hex: number | null = null;
       if (hit) {
         let best = 0.95;
-        HEXES.forEach((h, id) => {
+        geo.hexes.forEach((h, id) => {
           const d = Math.hypot(h.x - hit.x, h.y - hit.z);
           if (d < best) {
             best = d;
@@ -425,7 +428,7 @@ function Controls({ children, onPick }: { children: ReactNode; onPick: (hex: num
           }
         });
       }
-      flyTo(view.current, hex);
+      flyTo(view.current, hex, geo);
       onPickRef.current(hex);
     };
 
@@ -481,7 +484,7 @@ function Controls({ children, onPick }: { children: ReactNode; onPick: (hex: num
         pinch = null;
         if (view.current.tzoom > 0.92) {
           // Si se aleja del todo, vuelve a la vista completa (y se cierra la tarjeta del hexágono).
-          flyTo(view.current, null);
+          flyTo(view.current, null, geo);
           onPickRef.current(null);
         } else if (pointers.size === 1) {
           // Queda un dedo: sigue moviendo el mapa desde donde está.
@@ -507,7 +510,7 @@ function Controls({ children, onPick }: { children: ReactNode; onPick: (hex: num
       el.removeEventListener('pointerup', up);
       el.removeEventListener('pointercancel', up);
     };
-  }, [gl, camera, clock, view]);
+  }, [gl, camera, clock, view, geo]);
 
   useFrame(({ clock: real }, dt) => {
     const g = ref.current;

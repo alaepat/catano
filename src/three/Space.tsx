@@ -20,7 +20,8 @@ const SEA_MATS = [SEA_SIDE, SEA_TOP, SEA_SIDE];
 const FOAM_GEO = new RingGeometry(SEA_R - 0.22, SEA_R, 72).rotateX(-Math.PI / 2);
 const FOAM = new MeshBasicMaterial({ color: '#cfe8ff', transparent: true, opacity: 0.22, depthWrite: false });
 
-export function Sea({ shadows }: { shadows: boolean }) {
+/** `radius`: radio del mar (el disco está hecho para SEA_R y se escala). */
+export function Sea({ shadows, radius = SEA_R }: { shadows: boolean; radius?: number }) {
   const clock = useClock();
   const ref = useRef<Group>(null);
   useFrame(() => {
@@ -28,7 +29,8 @@ export function Sea({ shadows }: { shadows: boolean }) {
     if (!g) return;
     const p = progress(clock.current.t, SEQ.sea);
     g.visible = p > 0;
-    g.scale.setScalar(Math.max(0.001, ease.outBack(p)));
+    const s = Math.max(0.001, ease.outBack(p));
+    g.scale.set(s * (radius / SEA_R), s, s * (radius / SEA_R));
   });
   return (
     <group ref={ref} visible={false}>
@@ -43,7 +45,7 @@ export function Sea({ shadows }: { shadows: boolean }) {
 const AURA_SIZE = SEA_R * 1.75;
 const AURA_GEO = new PlaneGeometry(AURA_SIZE * 2, AURA_SIZE * 2).rotateX(-Math.PI / 2);
 
-export function Aura() {
+export function Aura({ radius = SEA_R }: { radius?: number }) {
   const clock = useClock();
   const ref = useRef<Mesh>(null);
   const material = useMemo(
@@ -56,7 +58,7 @@ export function Aura() {
     if (!m) return;
     const p = ease.outCubic(progress(clock.current.t, SEQ.sea));
     m.visible = p > 0;
-    m.scale.setScalar(lerp(0.6, 1, p));
+    m.scale.setScalar(lerp(0.6, 1, p) * (radius / SEA_R));
     material.opacity = p * (0.8 + 0.12 * Math.sin(real.elapsedTime * 0.8));
   });
   return <mesh ref={ref} geometry={AURA_GEO} material={material} position={[0, -0.3, 0]} visible={false} />;

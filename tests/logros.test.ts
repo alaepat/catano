@@ -3,7 +3,7 @@ import type { PresetId } from '../src/game';
 import { EMPTY_PROGRESS, LOGROS, applyEvent, cleanProgress, doneIds, type LogroEvent, type Progress } from '../src/lib/logros';
 
 const run = (events: LogroEvent[], from: Progress = EMPTY_PROGRESS) => events.reduce(applyEvent, from);
-const gen = (mode: PresetId | 'personalizado', score = 80, hour = 18): LogroEvent => ({ type: 'generar', mode, score, hour });
+const gen = (mode: PresetId | 'personalizado' | 'nuevo-mundo', score = 80, hour = 18): LogroEvent => ({ type: 'generar', mode, score, hour });
 
 describe('logros', () => {
   it('al principio no hay ninguno', () => {
@@ -39,6 +39,13 @@ describe('logros', () => {
     const p = run(terrains.map((terrain) => ({ type: 'tocar', terrain }) as LogroEvent));
     expect(p.terrains).toHaveLength(5);
     expect(doneIds(run([{ type: 'tocar', terrain: 'desierto' }], p))).toContain('geologo');
+  });
+
+  it('Navegantes: da su logro y no cuenta como modo del base; el mar no cuenta para el Geólogo', () => {
+    const p = run([gen('nuevo-mundo'), { type: 'tocar', terrain: 'mar' }]);
+    expect(doneIds(p)).toContain('navegante');
+    expect(p.modes).toEqual([]);
+    expect(p.terrains).toEqual([]);
   });
 
   it('partidas terminadas', () => {

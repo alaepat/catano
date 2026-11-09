@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { BoardSvg } from '../components/BoardSvg';
 import { BackIcon, IconButton } from '../components/ui';
 import { Glyph } from '../components/icons';
-import { PRESET_INFO } from '../game';
+import { modeLabel } from '../game';
 import { unlockAudio } from '../lib/sound';
 import type { SavedBoard } from '../lib/saved';
 import { useApp } from '../store';
@@ -57,7 +57,7 @@ function SavedItem({ entry }: { entry: SavedBoard }) {
   const { openSaved, renameSaved, deleteSaved, settings } = useApp();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(entry.name);
-  const mode = entry.mode === 'personalizado' ? 'Personalizado' : PRESET_INFO[entry.mode].label;
+  const mode = modeLabel(entry.mode);
 
   const open = () => {
     if (editing) return;

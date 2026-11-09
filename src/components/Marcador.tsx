@@ -1,5 +1,5 @@
 // Marcador de puntos dentro del tablero: tira de jugadores, hoja para sumar puntos,
-// preparación de la partida, celebración al llegar a 10 y salón de la fama.
+// preparación de la partida, celebración al llegar a la meta (10, o 12 en Navegantes) y salón de la fama.
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
@@ -8,11 +8,14 @@ import {
   minutesBetween, points, ranking, type Action, type Match, type PlayerColor,
 } from '../lib/marcador';
 import { useMarcador } from '../marcadorStore';
+import { Glyph } from './icons';
+import { Ruleta } from './Ruleta';
 import { CardIcon, CheckIcon, CityIcon, CloseIcon, CrownIcon, HouseIcon, MoreIcon, PlusIcon, RoadIcon, ScoreIcon, ShieldIcon, UndoIcon } from './icons';
 
-type Open = { kind: 'setup' } | { kind: 'menu' } | { kind: 'player'; id: string } | null;
+type Open = { kind: 'setup' } | { kind: 'menu' } | { kind: 'ruleta' } | { kind: 'player'; id: string } | null;
 
-export function Marcador({ visible }: { visible: boolean }) {
+/** `seafarers`: el tablero es de Navegantes (las partidas nuevas van a 12 y tienen islas nuevas). */
+export function Marcador({ visible, seafarers = false }: { visible: boolean; seafarers?: boolean }) {
   const match = useMarcador((s) => s.match);
   const [open, setOpen] = useState<Open>(null);
   // La celebración sale una vez por ganador (si se deshace y se vuelve a ganar, sale otra vez).
@@ -82,10 +85,13 @@ export function Marcador({ visible }: { visible: boolean }) {
       </div>
 
       <Sheet open={open?.kind === 'setup'} onClose={() => setOpen(null)} title="¿Quién juega?">
-        <Setup onStart={() => setOpen(null)} />
+        <Setup seafarers={seafarers} onStart={() => setOpen({ kind: 'ruleta' })} />
       </Sheet>
       <Sheet open={open?.kind === 'menu'} onClose={() => setOpen(null)} title="Partida">
-        {match && <MatchMenu match={match} onClose={() => setOpen(null)} />}
+        {match && <MatchMenu match={match} onClose={() => setOpen(null)} onRuleta={() => setOpen({ kind: 'ruleta' })} />}
+      </Sheet>
+      <Sheet open={open?.kind === 'ruleta'} onClose={() => setOpen(null)} title="¿Quién empieza?">
+        {match && <Ruleta players={match.players} />}
       </Sheet>
       <Sheet open={open?.kind === 'player'} onClose={() => setOpen(null)}>
         {match && open?.kind === 'player' && <PlayerPanel match={match} id={open.id} onClose={() => setOpen(null)} />}
@@ -146,7 +152,7 @@ function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () 
   );
 }
 
-function Setup({ onStart }: { onStart: () => void }) {
+function Setup({ onStart, seafarers }: { onStart: () => void; seafarers: boolean }) {
   const { roster, wins, addPlayer, removePlayer, startMatch } = useMarcador();
   const [chosen, setChosen] = useState<string[]>(() => roster.slice(0, 4).map((p) => p.id));
   const [name, setName] = useState('');
@@ -230,7 +236,7 @@ function Setup({ onStart }: { onStart: () => void }) {
         className="btn-primary setup-start"
         disabled={chosen.length < MIN_PLAYERS}
         onClick={() => {
-          startMatch(roster.filter((p) => chosen.includes(p.id)).map((p) => p.id));
+          startMatch(roster.filter((p) => chosen.includes(p.id)).map((p) => p.id), seafarers);
           onStart();
         }}
       >
@@ -269,6 +275,7 @@ const ACTIONS: { action: Action; label: string; icon: ReactNode }[] = [
   { action: 'carretera', label: 'Carretera más larga', icon: <RoadIcon size={26} /> },
   { action: 'ejercito', label: 'Gran ejército', icon: <ShieldIcon size={26} /> },
   { action: 'carta', label: 'Carta de punto', icon: <CardIcon size={26} /> },
+  { action: 'isla', label: 'Isla nueva', icon: <Glyph name="nuevo-mundo" size={26} /> },
 ];
 
 function PlayerPanel({ match, id, onClose }: { match: Match; id: string; onClose: () => void }) {
@@ -290,6 +297,8 @@ function PlayerPanel({ match, id, onClose }: { match: Match; id: string; onClose
         return match.army === id ? 'Lo tiene · tocar para quitar' : match.army ? `+2 · se lo quitas a ${holder(match.army)}` : '+2';
       case 'carta':
         return `+1 · tiene ${p.cartas}`;
+      case 'isla':
+        return `+1 · construyó en ${p.islas ?? 0} ${p.islas === 1 ? 'isla nueva' : 'islas nuevas'}`;
     }
   };
 
@@ -304,7 +313,8 @@ function PlayerPanel({ match, id, onClose }: { match: Match; id: string; onClose
         </motion.span>
       </header>
       <div className="action-grid">
-        {ACTIONS.map(({ action, label, icon }) => {
+        {ACTIONS.filter((a) => a.action !== 'isla' || match.seafarers).map(({ action, label: base, icon }) => {
+          const label = action === 'carretera' && match.seafarers ? 'Ruta comercial más larga' : base;
           const why = blocked(match, id, action);
           const active = (action === 'carretera' && match.road === id) || (action === 'ejercito' && match.army === id);
           return (
@@ -336,7 +346,7 @@ function PlayerPanel({ match, id, onClose }: { match: Match; id: string; onClose
   );
 }
 
-function MatchMenu({ match, onClose }: { match: Match; onClose: () => void }) {
+function MatchMenu({ match, onClose, onRuleta }: { match: Match; onClose: () => void; onRuleta: () => void }) {
   const { undo, past, finishMatch, wins } = useMarcador();
   const [confirm, setConfirm] = useState(false);
   const fame = useMemo(() => fameTable(wins).slice(0, 5), [wins]);
@@ -347,6 +357,9 @@ function MatchMenu({ match, onClose }: { match: Match; onClose: () => void }) {
       <p className="muted">
         {match.players.length} jugadores · jugando desde hace {durationLabel(minutes)} · gana quien llegue a {match.goal}
       </p>
+      <button type="button" className="btn-secondary" onClick={onRuleta}>
+        ¿Quién empieza? Girar la ruleta
+      </button>
       <button type="button" className="btn-secondary" disabled={!past.length} onClick={undo}>
         <UndoIcon size={18} /> Deshacer el último cambio
       </button>

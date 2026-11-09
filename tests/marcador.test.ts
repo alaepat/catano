@@ -81,3 +81,36 @@ describe('marcador', () => {
     expect(isMatch({ players: 'x' })).toBe(false);
   });
 });
+
+describe('marcador de Navegantes', () => {
+  it('va a 12 puntos y cada isla nueva da 1 punto', () => {
+    let m = newMatch([ana, luis], 0, 12, true);
+    expect(m.goal).toBe(12);
+    m = run(m, ['a', 'isla'], ['a', 'isla']);
+    expect(points(m, 'a')).toBe(4);
+    expect(m.players[0].islas).toBe(2);
+  });
+
+  it('en el Catan base no hay islas nuevas', () => {
+    const m = newMatch([ana, luis], 0);
+    expect(blocked(m, 'a', 'isla')).not.toBeNull();
+    expect(apply(m, 'a', 'isla')).toBe(m);
+  });
+
+  it('las partidas de antes (sin islas) se siguen leyendo y contando', () => {
+    const old = newMatch([ana, luis], 0);
+    expect(isMatch(old)).toBe(true);
+    expect(points(old, 'a')).toBe(2);
+  });
+
+  it('gana al llegar a 12, no a 10', () => {
+    let m = newMatch([ana, luis], 0, 12, true);
+    m = run(m, ['a', 'pueblo'], ['a', 'pueblo'], ['a', 'pueblo'], ['a', 'ciudad'], ['a', 'ciudad'], ['a', 'ciudad']);
+    expect(points(m, 'a')).toBe(8);
+    m = run(m, ['a', 'carretera'], ['a', 'isla']);
+    expect(points(m, 'a')).toBe(11);
+    expect(m.winner).toBeNull();
+    m = run(m, ['a', 'isla']);
+    expect(m.winner).toBe('a');
+  });
+});

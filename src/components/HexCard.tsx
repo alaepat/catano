@@ -9,6 +9,7 @@ const TERRAIN_NAME: Record<Terrain, string> = {
   colinas: 'Colinas',
   montanas: 'Montañas',
   desierto: 'Desierto',
+  mar: 'Mar',
 };
 
 const pct = (n: number) => n.toLocaleString('es-ES', { maximumFractionDigits: 1 });
@@ -33,7 +34,7 @@ export function HexCard({ board, hex, onClose }: { board: Board; hex: number; on
       <div className="hex-info">
         <b>{TERRAIN_NAME[terrain]}</b>
         <small>
-          {resource ? `Da ${resource}` : 'No da nada'}
+          {resource ? `Da ${resource}` : terrain === 'mar' ? 'Aquí solo navegan los barcos' : 'No da nada'}
           {robber && ' · aquí empieza el ladrón'}
         </small>
         {n != null && (

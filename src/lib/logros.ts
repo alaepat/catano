@@ -1,6 +1,6 @@
 // Logros: lo que se cuenta, qué hace falta para cada uno y cuáles están conseguidos.
 // Todo es puro (sin estado): el almacén `logrosStore.ts` guarda el progreso y avisa de los nuevos.
-import type { PresetId, Terrain } from '../game';
+import type { GenMode, PresetId, Terrain } from '../game';
 
 /** Lo que se va contando mientras se usa la app. */
 export interface Progress {
@@ -21,10 +21,12 @@ export interface Progress {
   backgrounds: string[];
   /** Partidas terminadas con ganador en el marcador. */
   games: number;
+  /** Mapas de Navegantes generados. */
+  seas: number;
 }
 
 export type LogroEvent =
-  | { type: 'generar'; mode: PresetId | 'personalizado'; score: number; hour: number }
+  | { type: 'generar'; mode: GenMode; score: number; hour: number }
   | { type: 'tocar'; terrain: Terrain }
   | { type: 'fondo'; id: string }
   | { type: 'partida' };
@@ -39,6 +41,7 @@ export const EMPTY_PROGRESS: Progress = {
   terrains: [],
   backgrounds: [],
   games: 0,
+  seas: 0,
 };
 
 const ALL_MODES = 9;
@@ -67,6 +70,7 @@ export const LOGROS: Logro[] = [
   { id: 'noctambulo', title: 'Noctámbulo', description: 'Genera un tablero entre la 1 y las 5 de la madrugada.', value: (p) => flag(p.night), goal: 1 },
   { id: 'geologo', title: 'Geólogo', description: 'Toca un hexágono de cada terreno, desierto incluido.', value: (p) => p.terrains.length, goal: ALL_TERRAINS },
   { id: 'decorador', title: 'Decorador', description: 'Prueba 5 fondos distintos.', value: (p) => p.backgrounds.length, goal: 5 },
+  { id: 'navegante', title: 'Rumbo al Nuevo mundo', description: 'Genera un mapa de Navegantes.', value: (p) => p.seas, goal: 1 },
   { id: 'a-la-mesa', title: 'A la mesa', description: 'Termina una partida con el marcador.', value: (p) => p.games, goal: 1 },
   { id: 'veterano', title: 'Veterano', description: 'Termina 10 partidas con el marcador.', value: (p) => p.games, goal: 10 },
 ];
@@ -79,14 +83,16 @@ export function applyEvent(p: Progress, e: LogroEvent): Progress {
       return {
         ...p,
         generated: p.generated + 1,
-        modes: e.mode === 'personalizado' ? p.modes : addOnce(p.modes, e.mode),
+        modes: e.mode === 'personalizado' || e.mode === 'nuevo-mundo' ? p.modes : addOnce(p.modes, e.mode),
+        seas: p.seas + (e.mode === 'nuevo-mundo' ? 1 : 0),
         chaos: p.chaos + (e.mode === 'caos' ? 1 : 0),
         bestScore: Math.max(p.bestScore, e.score),
         worstScore: Math.min(p.worstScore, e.score),
         night: p.night || (e.hour >= 1 && e.hour < 5),
       };
     case 'tocar':
-      return { ...p, terrains: addOnce(p.terrains, e.terrain) };
+      // El mar de Navegantes no cuenta para el Geólogo (son los 6 terrenos del Catan base).
+      return e.terrain === 'mar' ? p : { ...p, terrains: addOnce(p.terrains, e.terrain) };
     case 'fondo':
       return { ...p, backgrounds: addOnce(p.backgrounds, e.id) };
     case 'partida':
@@ -118,5 +124,6 @@ export function cleanProgress(raw: unknown): Progress {
     terrains: list<Terrain>(r.terrains),
     backgrounds: list<string>(r.backgrounds),
     games: num(r.games, 0),
+    seas: num(r.seas, 0),
   };
 }

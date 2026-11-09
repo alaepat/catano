@@ -8,7 +8,7 @@ import { HexCard } from '../components/HexCard';
 import { Glyph } from '../components/icons';
 import { Marcador } from '../components/Marcador';
 import { BackIcon, IconButton, Toast } from '../components/ui';
-import { PRESET_INFO, analyzeBoard, type Resource, type Terrain } from '../game';
+import { analyzeBoard, modeLabel as labelOf, type Resource, type Terrain } from '../game';
 import { backgroundFor } from '../lib/background';
 import { loadBoard3D } from '../lib/board3d';
 import { comentario } from '../lib/comentario';
@@ -40,6 +40,7 @@ const TERRAIN_SOUND: Record<Terrain, SoundKind> = {
   colinas: 'ladrillo',
   montanas: 'pico',
   desierto: 'viento',
+  mar: 'whoosh',
 };
 
 export function Tablero() {
@@ -106,7 +107,7 @@ export function Tablero() {
 
   if (!generation) return null;
 
-  const modeLabel = generation.mode === 'personalizado' ? 'Personalizado' : PRESET_INFO[generation.mode].label;
+  const modeLabel = labelOf(generation.mode);
   const saved = Boolean(generation.savedId);
 
   const otraVez = () => {
@@ -183,7 +184,7 @@ export function Tablero() {
         )}
 
         {/* Marcador de puntos: aparece con el nombre de la isla. */}
-        {board && <Marcador visible={revealed} />}
+        {board && <Marcador visible={revealed} seafarers={board.map === 'nuevo-mundo'} />}
 
         {board && use3d ? (
           // El hueco marca dónde se encaja la isla; el lienzo 3D va detrás de todo, a pantalla completa.

@@ -1,5 +1,5 @@
 // Comprobaciones de las reglas de montaje. Cada regla dice si el tablero la incumple.
-import { CENTER_HEX, COAST_EDGES, HEXES, VERTICES, coastHexOf } from './board';
+import { BASE_GEOMETRY, CENTER_HEX, COAST_EDGES, HEXES, coastHexOf, type Geometry } from './board';
 import { NUMBER_TOKENS, PORT_TYPES, RESOURCES, TERRAINS, TERRAIN_COUNTS, TERRAIN_RESOURCE, isRed, pips } from './catan';
 import type { GenOptions } from './options';
 import type { Board, Resource, Terrain } from './types';
@@ -39,14 +39,14 @@ export const RULE_LABELS: Record<RuleId, string> = {
 type Cell<T> = readonly (T | null)[];
 
 /** Tamaño del grupo de terrenos iguales conectados que incluye este hexágono. */
-export function groupSize(terrains: Cell<Terrain>, start: number): number {
+export function groupSize(terrains: Cell<Terrain>, start: number, geo: Geometry = BASE_GEOMETRY): number {
   const t = terrains[start];
   if (t == null) return 0;
   const seen = new Set([start]);
   const stack = [start];
   while (stack.length) {
     const h = stack.pop()!;
-    for (const n of HEXES[h].neighbors) {
+    for (const n of geo.hexes[h].neighbors) {
       if (!seen.has(n) && terrains[n] === t) {
         seen.add(n);
         stack.push(n);
@@ -66,9 +66,9 @@ export function largestTerrainGroup(terrains: Cell<Terrain>): number {
 }
 
 /** Cuántas parejas de hexágonos vecinos cumplen la condición (ambos con valor). */
-export function countAdjacentPairs<T>(values: Cell<T>, match: (a: T, b: T) => boolean): number {
+export function countAdjacentPairs<T>(values: Cell<T>, match: (a: T, b: T) => boolean, geo: Geometry = BASE_GEOMETRY): number {
   let count = 0;
-  for (const hex of HEXES) {
+  for (const hex of geo.hexes) {
     const a = values[hex.id];
     if (a == null) continue;
     for (const n of hex.neighbors) {
@@ -80,8 +80,8 @@ export function countAdjacentPairs<T>(values: Cell<T>, match: (a: T, b: T) => bo
 }
 
 /** Puntitos de cada cruce. */
-export function vertexPips(numbers: Cell<number>): number[] {
-  return VERTICES.map((v) => v.hexes.reduce((sum, h) => sum + pips(numbers[h]), 0));
+export function vertexPips(numbers: Cell<number>, geo: Geometry = BASE_GEOMETRY): number[] {
+  return geo.vertices.map((v) => v.hexes.reduce((sum, h) => sum + pips(numbers[h]), 0));
 }
 
 export interface ResourceStat {

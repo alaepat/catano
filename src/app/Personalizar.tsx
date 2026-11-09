@@ -1,14 +1,14 @@
-// Personalizar la generación: elegir un modo de un toque y, si se quiere, retocar opciones.
+// Personalizar la generación: elegir juego (Catan o Navegantes), un modo de un toque y, si se quiere, retocar opciones.
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect } from 'react';
 import { Glyph } from '../components/icons';
 import { ModeWheel } from '../components/ModeWheel';
 import { BackIcon, Chips, Collapsible, IconButton, Switch, Toast } from '../components/ui';
-import { PRESET_IDS, PRESET_INFO, type GenOptions } from '../game';
+import { NM_GOAL, NM_INFO, PRESET_IDS, PRESET_INFO, type GenOptions } from '../game';
 import { loadBoard3D } from '../lib/board3d';
 import { unlockAudio } from '../lib/sound';
 import { hasWebGL } from '../lib/webgl';
-import { useApp, type ModeChoice } from '../store';
+import { useApp, type GameId, type ModeChoice } from '../store';
 
 const MODE_CHOICES: ModeChoice[] = [...PRESET_IDS, 'sorpresa'];
 
@@ -21,7 +21,8 @@ function modeInfo(choice: ModeChoice) {
 const LABELS = Object.fromEntries([...MODE_CHOICES, 'personalizado' as const].map((m) => [m, modeInfo(m).label]));
 
 export function Personalizar() {
-  const { choice, options, notes, goTo, selectMode, setOption, clearNotes, generate, settings } = useApp();
+  const { game, setGame, nmStyle, setNmStyle, choice, options, notes, goTo, selectMode, setOption, clearNotes, generate, settings } = useApp();
+  const sea = game === 'navegantes';
   const info = modeInfo(choice);
 
   // Descarga la escena 3D mientras se eligen opciones, para que la isla salga sin esperas.
@@ -46,6 +47,12 @@ export function Personalizar() {
       </header>
 
       <div className="scroll">
+        <GamePicker game={game} onChange={setGame} />
+
+        {sea ? (
+          <NavegantesInfo style={nmStyle} onStyle={setNmStyle} />
+        ) : (
+        <>
         <ModeWheel
           modes={MODE_CHOICES}
           choice={choice}
@@ -76,16 +83,74 @@ export function Personalizar() {
         ) : (
           <AdvancedOptions options={options} setOption={setOption} />
         )}
+        </>
+        )}
       </div>
 
       <div className="bottom-cta">
         <motion.button type="button" className="btn-primary btn-xl" whileTap={{ scale: 0.96 }} onClick={crear}>
-          ¡Crear isla!
+          {sea ? '¡Crear mapa!' : '¡Crear isla!'}
         </motion.button>
       </div>
 
       <Toast messages={notes} onDone={clearNotes} />
     </div>
+  );
+}
+
+/** Elegir juego: el Catan de siempre o la expansión Navegantes. */
+function GamePicker({ game, onChange }: { game: GameId; onChange: (g: GameId) => void }) {
+  const items: [GameId, string][] = [
+    ['base', 'Catan'],
+    ['navegantes', 'Navegantes'],
+  ];
+  return (
+    <div className="game-picker" role="radiogroup" aria-label="Juego">
+      {items.map(([id, label]) => (
+        <button key={id} type="button" role="radio" aria-checked={game === id} className={game === id ? 'game-opt on' : 'game-opt'} onClick={() => onChange(id)}>
+          {game === id && <motion.span layoutId="game-pill" className="game-pill" transition={{ type: 'spring', stiffness: 420, damping: 34 }} />}
+          <span className="game-label">
+            <Glyph name={id === 'base' ? 'isla' : 'nuevo-mundo'} size={17} /> {label}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Navegantes · Nuevo mundo: qué es, lo que trae y cómo se reparten las islas. */
+function NavegantesInfo({ style, onStyle }: { style: 'equilibrado' | 'azar'; onStyle: (s: 'equilibrado' | 'azar') => void }) {
+  return (
+    <motion.div className="nm-info" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+      <div className="card nm-card">
+        <Glyph name="nuevo-mundo" size={34} className="nm-glyph" />
+        <h3 className="mode-name">{NM_INFO.label}</h3>
+        <p className="mode-description">El escenario de mapa al azar de Navegantes, para 3 o 4 jugadores.</p>
+        <ul className="nm-facts">
+          <li>Marco de 42 hexágonos: 19 de mar y 23 de tierra (sin desierto)</li>
+          <li>23 fichas de número y 9 puertos entre tierra y mar</li>
+          <li>Gana quien llegue a <b>{NM_GOAL} puntos</b></li>
+          <li>+1 punto la primera vez que construyes en cada isla nueva</li>
+          <li>El ladrón y el pirata empiezan fuera del tablero</li>
+          <li>Barco: 1 madera + 1 lana</li>
+        </ul>
+      </div>
+      <h2 className="section-title">Islas</h2>
+      <Chips
+        label="Cómo se reparten"
+        value={style}
+        onChange={onStyle}
+        options={[
+          ['equilibrado', 'Equilibradas'],
+          ['azar', 'Al azar (reglas)'],
+        ]}
+      />
+      <p className="muted nm-hint">
+        {style === 'equilibrado'
+          ? 'De 3 a 6 islas, ninguna gigante, cada recurso en al menos dos islas y números bien repartidos.'
+          : 'Tal cual dice el libro: todo al azar, solo con el 6 y el 8 separados.'}
+      </p>
+    </motion.div>
   );
 }
 

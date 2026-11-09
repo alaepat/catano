@@ -1,10 +1,10 @@
 // Tablero en 2D (SVG). Es el modo 2D de Ajustes y el respaldo si el móvil no puede con el 3D.
 // Con `speed` > 0, el tablero aparece animado: hexágonos del centro hacia fuera, números, puertos y ladrón.
 import { motion } from 'motion/react';
-import { COAST_EDGES, EDGES, HEXES, VERTICES, pips, isRed, type Board, type Terrain } from '../game';
+import { geometryOf, pips, isRed, portEdge, portLandHex, type Board, type Geometry, type Port, type Terrain } from '../game';
 import { GLYPHS, type GlyphName } from '../lib/glyphs';
 import { DEFAULT_NUMBER_STYLE, type NumberStyle } from '../lib/numberStyle';
-import { REVEAL_INDEX, REVEAL_TIMING as T } from '../lib/reveal';
+import { REVEAL_TIMING as T } from '../lib/reveal';
 
 const S = 50; // radio de un hexágono en píxeles del SVG
 
@@ -15,6 +15,7 @@ const TERRAIN_FILL: Record<Terrain, string> = {
   colinas: 'var(--colinas)',
   montanas: 'var(--montanas)',
   desierto: 'var(--desierto)',
+  mar: '#2f76a0',
 };
 
 const TERRAIN_ICON: Record<Terrain, GlyphName> = {
@@ -24,6 +25,7 @@ const TERRAIN_ICON: Record<Terrain, GlyphName> = {
   colinas: 'arcilla',
   montanas: 'mineral',
   desierto: 'desierto',
+  mar: 'ola',
 };
 
 /** Color del icono sobre cada terreno: claro sobre los oscuros, oscuro sobre los claros. */
@@ -34,6 +36,7 @@ const TERRAIN_INK: Record<Terrain, string> = {
   colinas: 'var(--marfil)',
   montanas: 'var(--marfil)',
   desierto: 'var(--tinta)',
+  mar: '#cfe6f2',
 };
 
 /** Icono (24 × 24) centrado en (x, y) con el tamaño dado. */
@@ -52,10 +55,39 @@ function SvgGlyph({ name, x, y, size, color, opacity = 1 }: { name: GlyphName; x
   );
 }
 
-// Vista cuadrada que deja sitio al mar y a los puertos.
+// Catan base: vista cuadrada que deja sitio al mar y a los puertos.
 const SEA_R = S * 5.3;
 const HALF = S * 5.6;
-const VIEWBOX = `${-HALF} ${-HALF} ${HALF * 2} ${HALF * 2}`;
+
+/** Vista del SVG: en Navegantes, ajustada al marco (los puertos caen dentro, sobre el mar). */
+function viewBoxOf(geo: Geometry): string {
+  if (geo.id === 'base') return `${-HALF} ${-HALF} ${HALF * 2} ${HALF * 2}`;
+  const pad = S * 0.62;
+  const w = Math.max(...geo.vertices.map((v) => Math.abs(v.x))) * S + pad;
+  const h = Math.max(...geo.vertices.map((v) => Math.abs(v.y))) * S + pad;
+  return `${-w} ${-h} ${w * 2} ${h * 2}`;
+}
+
+/** Dónde va la ficha de un puerto (px, py) y los dos cruces de su lado. */
+function portSpot(geo: Geometry, board: Board, port: Port) {
+  const edge = portEdge(geo, port.coast);
+  const a = geo.vertices[edge.a];
+  const b = geo.vertices[edge.b];
+  const mx = ((a.x + b.x) / 2) * S;
+  const my = ((a.y + b.y) / 2) * S;
+  if (geo.id === 'base') {
+    const len = Math.hypot(mx, my);
+    return { a, b, px: mx + (mx / len) * S * 0.75, py: my + (my / len) * S * 0.75 };
+  }
+  // Navegantes: hacia fuera de su hexágono de tierra, sobre el mar.
+  const land = geo.hexes[portLandHex(port.coast, board.terrains, geo)];
+  const dx = mx - land.x * S;
+  const dy = my - land.y * S;
+  const len = Math.hypot(dx, dy);
+  // Sobre el marco (lado sin vecino) queda algo más pegado, para no salirse.
+  const k = portEdge(geo, port.coast).hexes.length === 1 ? 0.34 : 0.42;
+  return { a, b, px: mx + (dx / len) * S * k, py: my + (dy / len) * S * k };
+}
 
 const fromCenter = { transformBox: 'fill-box' as const, transformOrigin: 'center' };
 
@@ -77,6 +109,14 @@ interface Props {
 const ZOOM = 2.4;
 
 export function BoardSvg({ board, showPips = true, numberStyle = DEFAULT_NUMBER_STYLE, highlight = [], speed = 0, focus = null, onPickHex }: Props) {
+  const geo = geometryOf(board);
+  const HEXES = geo.hexes;
+  const VERTICES = geo.vertices;
+  const REVEAL_INDEX = geo.revealIndex;
+  const sea = geo.id !== 'base';
+  // En Navegantes hay más del doble de hexágonos: aparecen más deprisa para acabar a la vez.
+  const step = sea ? T.hex * 0.45 : T.hex;
+  const numberStep = sea ? T.number * 0.75 : T.number;
   const animate = speed > 0;
   const d = (s: number) => s * speed;
   const enter = (delay: number, from: object) =>
@@ -84,11 +124,33 @@ export function BoardSvg({ board, showPips = true, numberStyle = DEFAULT_NUMBER_
       ? { initial: { opacity: 0, ...from }, animate: { opacity: 1, scale: 1, y: 0, rotate: 0 }, transition: { delay: d(delay), type: 'spring' as const, stiffness: 260, damping: 18 } }
       : { initial: false as const };
 
+  // Puertos.
+  const portsLayer = board.ports.map((port, j) => {
+    const { a, b, px, py } = portSpot(geo, board, port);
+    return (
+      <motion.g key={port.coast} style={fromCenter} {...enter(T.portsStart + j * T.port, { scale: 0.3 })}>
+        <line x1={a.x * S} y1={a.y * S} x2={px} y2={py} stroke="var(--crema-suave)" strokeWidth={3} strokeLinecap="round" opacity={0.7} />
+        <line x1={b.x * S} y1={b.y * S} x2={px} y2={py} stroke="var(--crema-suave)" strokeWidth={3} strokeLinecap="round" opacity={0.7} />
+        <circle cx={px} cy={py} r={S * 0.34} fill="var(--marfil)" />
+        {port.type === 'generico' ? (
+          <text x={px} y={py - 3} textAnchor="middle" fontSize={12} fontWeight={700} fill="var(--tinta)" dominantBaseline="middle">
+            ?
+          </text>
+        ) : (
+          <SvgGlyph name={port.type} x={px} y={py - 4} size={13} color="var(--tinta)" />
+        )}
+        <text x={px} y={py + 10} textAnchor="middle" fontSize={9} fontWeight={700} fill="var(--tinta)" dominantBaseline="middle">
+          {port.type === 'generico' ? '3:1' : '2:1'}
+        </text>
+      </motion.g>
+    );
+  });
+
   return (
     <svg
-      viewBox={VIEWBOX}
+      viewBox={viewBoxOf(geo)}
       role="img"
-      aria-label="Tablero de Catan"
+      aria-label={sea ? 'Mapa de Navegantes: Nuevo mundo' : 'Tablero de Catan'}
       style={{ width: '100%', height: 'auto', display: 'block', overflow: focus === null ? 'visible' : 'hidden' }}
       onClick={(e) => {
         if (!onPickHex) return;
@@ -120,7 +182,21 @@ export function BoardSvg({ board, showPips = true, numberStyle = DEFAULT_NUMBER_
           transition: 'transform 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
         }}
       >
-      {/* Mar */}
+      {/* Mar: el disco del Catan base, o el marco de Navegantes (todos los hexágonos con un borde grueso). */}
+      {sea ? (
+        <motion.g initial={animate ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: d(0.9) }}>
+          {HEXES.map((hex) => (
+            <polygon
+              key={hex.id}
+              points={hex.vertices.map((v) => `${VERTICES[v].x * S},${VERTICES[v].y * S}`).join(' ')}
+              fill="var(--mar)"
+              stroke="var(--mar)"
+              strokeWidth={S * 0.9}
+              strokeLinejoin="round"
+            />
+          ))}
+        </motion.g>
+      ) : (
       <motion.circle
         cx={0}
         cy={0}
@@ -131,47 +207,37 @@ export function BoardSvg({ board, showPips = true, numberStyle = DEFAULT_NUMBER_
         animate={{ opacity: 0.55, scale: 1 }}
         transition={{ duration: d(0.9), ease: [0.22, 1, 0.36, 1] }}
       />
+      )}
 
-      {/* Puertos */}
-      {board.ports.map((port, j) => {
-        const edge = EDGES[COAST_EDGES[port.coast]];
-        const a = VERTICES[edge.a];
-        const b = VERTICES[edge.b];
-        const mx = ((a.x + b.x) / 2) * S;
-        const my = ((a.y + b.y) / 2) * S;
-        const len = Math.hypot(mx, my);
-        const px = mx + (mx / len) * S * 0.75;
-        const py = my + (my / len) * S * 0.75;
-        return (
-          <motion.g key={port.coast} style={fromCenter} {...enter(T.portsStart + j * T.port, { scale: 0.3 })}>
-            <line x1={a.x * S} y1={a.y * S} x2={px} y2={py} stroke="var(--crema-suave)" strokeWidth={3} strokeLinecap="round" opacity={0.7} />
-            <line x1={b.x * S} y1={b.y * S} x2={px} y2={py} stroke="var(--crema-suave)" strokeWidth={3} strokeLinecap="round" opacity={0.7} />
-            <circle cx={px} cy={py} r={S * 0.34} fill="var(--marfil)" />
-            {port.type === 'generico' ? (
-              <text x={px} y={py - 3} textAnchor="middle" fontSize={12} fontWeight={700} fill="var(--tinta)" dominantBaseline="middle">
-                ?
-              </text>
-            ) : (
-              <SvgGlyph name={port.type} x={px} y={py - 4} size={13} color="var(--tinta)" />
-            )}
-            <text x={px} y={py + 10} textAnchor="middle" fontSize={9} fontWeight={700} fill="var(--tinta)" dominantBaseline="middle">
-              {port.type === 'generico' ? '3:1' : '2:1'}
-            </text>
-          </motion.g>
-        );
-      })}
+      {!sea && portsLayer}
 
       {/* Hexágonos */}
       {HEXES.map((hex) => {
         const terrain = board.terrains[hex.id];
         const points = hex.vertices.map((v) => `${VERTICES[v].x * S},${VERTICES[v].y * S}`).join(' ');
         return (
-          <motion.g key={hex.id} style={fromCenter} {...enter(REVEAL_INDEX[hex.id] * T.hex, { scale: 0.2, rotate: -40 })}>
-            <polygon points={points} fill={TERRAIN_FILL[terrain]} stroke="var(--tinta)" strokeWidth={3} strokeLinejoin="round" />
-            <SvgGlyph name={TERRAIN_ICON[terrain]} x={hex.x * S} y={hex.y * S - S * 0.58} size={15} color={TERRAIN_INK[terrain]} opacity={0.8} />
+          <motion.g key={hex.id} style={fromCenter} {...enter(REVEAL_INDEX[hex.id] * step, { scale: 0.2, rotate: -40 })}>
+            <polygon
+              points={points}
+              fill={TERRAIN_FILL[terrain]}
+              stroke={terrain === 'mar' ? 'rgba(10,30,45,0.55)' : 'var(--tinta)'}
+              strokeWidth={terrain === 'mar' ? 1.5 : 3}
+              strokeLinejoin="round"
+            />
+            <SvgGlyph
+              name={TERRAIN_ICON[terrain]}
+              x={hex.x * S}
+              y={terrain === 'mar' ? hex.y * S : hex.y * S - S * 0.58}
+              size={terrain === 'mar' ? 22 : 15}
+              color={TERRAIN_INK[terrain]}
+              opacity={terrain === 'mar' ? 0.35 : 0.8}
+            />
           </motion.g>
         );
       })}
+
+      {/* En Navegantes los puertos van encima del mar. */}
+      {sea && portsLayer}
 
       {/* Números */}
       {HEXES.map((hex) => {
@@ -181,7 +247,7 @@ export function BoardSvg({ board, showPips = true, numberStyle = DEFAULT_NUMBER_
         const cy = hex.y * S;
         const red = isRed(n) && numberStyle.red;
         return (
-          <motion.g key={hex.id} style={fromCenter} {...enter(T.numbersStart + REVEAL_INDEX[hex.id] * T.number, { y: -40, scale: 1.4 })}>
+          <motion.g key={hex.id} style={fromCenter} {...enter(T.numbersStart + REVEAL_INDEX[hex.id] * numberStep, { y: -40, scale: 1.4 })}>
             <circle cx={cx} cy={cy + 2} r={S * 0.36 * numberStyle.disc} fill="var(--marfil)" stroke="rgba(0,0,0,0.15)" />
             <text
               x={cx}

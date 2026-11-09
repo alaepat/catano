@@ -38,6 +38,8 @@ export interface MatchPlayer extends Player {
   pueblos: number;
   ciudades: number;
   cartas: number;
+  /** Navegantes: puntos por construir en islas nuevas (falta en las partidas de antes). */
+  islas?: number;
 }
 
 export interface Match {
@@ -50,9 +52,14 @@ export interface Match {
   /** Quién ha llegado a la meta (se fija al llegar y ya no cambia, salvo con Deshacer). */
   winner: string | null;
   endedAt: number | null;
+  /** Partida de Navegantes: hay "Isla nueva" y la carretera es la "Ruta comercial más larga". */
+  seafarers?: boolean;
 }
 
-export type Action = 'pueblo' | 'ciudad' | 'carretera' | 'ejercito' | 'carta';
+export type Action = 'pueblo' | 'ciudad' | 'carretera' | 'ejercito' | 'carta' | 'isla';
+
+/** Islas nuevas que se pueden apuntar como mucho (en Nuevo mundo no suele haber más de 6 islas). */
+export const MAX_ISLAS = 8;
 
 export interface Win {
   name: string;
@@ -64,8 +71,9 @@ export interface Win {
   players: number;
 }
 
-export function newMatch(players: Player[], now = Date.now(), goal = GOAL): Match {
+export function newMatch(players: Player[], now = Date.now(), goal = GOAL, seafarers = false): Match {
   return {
+    ...(seafarers ? { seafarers: true } : {}),
     // Se empieza con 2 pueblos colocados.
     players: players.map((p) => ({ ...p, pueblos: 2, ciudades: 0, cartas: 0 })),
     road: null,
@@ -80,7 +88,7 @@ export function newMatch(players: Player[], now = Date.now(), goal = GOAL): Matc
 export function points(m: Match, id: string): number {
   const p = m.players.find((x) => x.id === id);
   if (!p) return 0;
-  return p.pueblos + p.ciudades * 2 + p.cartas + (m.road === id ? 2 : 0) + (m.army === id ? 2 : 0);
+  return p.pueblos + p.ciudades * 2 + p.cartas + (p.islas ?? 0) + (m.road === id ? 2 : 0) + (m.army === id ? 2 : 0);
 }
 
 /** Por qué no se puede hacer una acción (o null si se puede). */
@@ -95,6 +103,9 @@ export function blocked(m: Match, id: string, action: Action): string | null {
       return p.pueblos === 0 ? 'Necesita un pueblo para convertirlo en ciudad' : null;
     case 'carta':
       return p.cartas >= MAX_CARTAS ? `Solo hay ${MAX_CARTAS} cartas de punto en el mazo` : null;
+    case 'isla':
+      if (!m.seafarers) return 'Solo en Navegantes';
+      return (p.islas ?? 0) >= MAX_ISLAS ? `Ya tiene ${MAX_ISLAS} islas` : null;
     default:
       return null;
   }
@@ -114,6 +125,9 @@ export function apply(m: Match, id: string, action: Action, now = Date.now()): M
       break;
     case 'carta':
       next = edit((p) => ({ ...p, cartas: p.cartas + 1 }));
+      break;
+    case 'isla':
+      next = edit((p) => ({ ...p, islas: (p.islas ?? 0) + 1 }));
       break;
     case 'carretera':
       next = { ...m, road: m.road === id ? null : id };

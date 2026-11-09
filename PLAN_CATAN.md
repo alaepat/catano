@@ -296,6 +296,13 @@ Velocidad medida (10.000 tableros por modo): todos por debajo de 0,5 ms por tabl
 
 ### 5.6 Expansión: Navegantes de Catan (investigación, 2026-11-02)
 > Resumen de memoria; **comprobar con el reglamento de la caja** (cifras y nombres cambian entre ediciones).
+> **Nuevo mundo** ya está comprobado con el libro oficial (Catan: Seafarers, edición 2021, escenario 9, págs. 30-31):
+> marco de **42 hexágonos** con el lado plano arriba, en columnas **5-6-7-6-7-6-5**; **19 de mar + 23 de tierra**
+> (5 campos, 4 colinas, 4 montañas, 5 pastos, 5 bosques; **sin desierto ni oro**); **23 fichas** (2, 3×3, 4×3, 5×3, 6×2,
+> 8×2, 9×3, 10×3, 11×2, 12); un 6 y un 8 nunca juntos; **9 puertos** (5 de 2:1 y 4 de 3:1) en lados entre tierra y mar
+> (o tierra y marco), los colocan los jugadores; ladrón y pirata empiezan **fuera**; los pueblos iniciales en cualquier isla;
+> **+1 punto** por construir en cada isla "extranjera" (una vez por isla); se gana con **12 puntos**. El libro permite
+> rehacer el mapa si sale feo (muchas islas pequeñas o una isla enorme).
 
 **Qué añade**
 - **Mar dentro del tablero**: el mapa es más grande y se juega con varias islas separadas por agua.
@@ -446,7 +453,7 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 - [ ] Probada instalada en el iPhone 17 del usuario ("Compartir → Añadir a pantalla de inicio" en Safari)
 - [ ] Chequeo final (sección 10.3)
 
-### Fase 6: Peticiones del usuario (2026-11-02, en curso: hechos 6.1 a 6.6 y 6.8; falta 6.7)
+### Fase 6: Peticiones del usuario (2026-11-02: hechos 6.1 a 6.8; en 6.7 falta el resto de escenarios)
 
 **6.1 Esconder lo que no hace falta** (la app la usa una sola persona)
 - [x] Ocultar 📷 Foto y ⭐ Guardar / Mis tableros con interruptores en `lib/config.ts` (`FEATURES = { foto: false, guardar: false }`).
@@ -515,7 +522,29 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 - [x] Juego de iconos SVG propio (trazo fino y redondeado, color crema): recursos, modos, acciones, puertos. `lib/glyphs.ts`.
   Sustituidos los emojis de toda la app, también los del 2D y las etiquetas de los puertos en 3D.
 
-**6.7 Expansión Navegantes de Catan** (si el usuario la compra; ver sección 5.6)
+**6.7 Expansión Navegantes de Catan** (v0.12, 2026-11-09; ver sección 5.6)
+- [x] Geometría flexible: `board.ts` construye tableros de cualquier forma (`Geometry`: hexágonos, cruces, caminos,
+  "de punta" o "de lado plano"). `BASE_GEOMETRY` (el de siempre) y `SEA_GEOMETRY` (marco de 42 de Nuevo mundo).
+  `Board.map` dice cuál es (si falta, es el base: los tableros guardados antes siguen valiendo). `geometryOf(board)`.
+- [x] Terreno `mar`. Puertos de Navegantes: `Port.coast` = id del lado entre tierra y mar/marco.
+- [x] `game/navegantes.ts`: `generateNuevoMundo('equilibrado' | 'azar')` con las piezas oficiales. "Equilibradas":
+  3-6 islas, la grande de 6-11 hexágonos con 4 de los 5 recursos, cada recurso en 2 islas o más, números sin iguales
+  juntos, 2 y 12 separados, tope 12 puntitos por cruce, reparto justo, puertos repartidos por islas (uno por casilla
+  de mar). "Al azar (reglas)": solo el 6 y el 8 separados. Tarda menos de 1 ms. Tests en `tests/navegantes.test.ts`.
+- [x] 2D y 3D: casillas de mar (en 3D, hexágonos de agua sobre un mar más grande), piezas giradas 30° (lado plano
+  arriba), puertos sobre el mar, animación del mismo largo que el base, cámara encajada al marco.
+- [x] "Tu isla": selector **Catan / Navegantes** arriba; en Navegantes, ficha de Nuevo mundo y "Islas: Equilibradas /
+  Al azar (reglas)". Botón "¡Crear mapa!".
+- [x] Marcador: con un mapa de Navegantes, las partidas nuevas van a **12**, con "Isla nueva" (+1) y "Ruta comercial más
+  larga". Logro nuevo "Rumbo al Nuevo mundo". El mar no cuenta para el Geólogo ni Nuevo mundo para los 9 modos.
+- [ ] Más adelante, si se pide: otros escenarios (Rumbo a nuevas costas, Las cuatro islas, Niebla...), oro y desierto
+  opcionales (la caja trae 2 de cada), barcos de colores y pirata en 3D.
+
+**6.9 Ruleta "¿Quién empieza?"** (v0.12)
+- [x] Rueda con los jugadores de la partida (sus colores y nombres). Sale sola al empezar una partida en el marcador y
+  desde el menú "···" → "¿Quién empieza? Girar la ruleta". Gira 5-6 vueltas, "tic" (o vibración) en cada separación,
+  acorde al parar; atenúa a los demás y dice "Empieza X · luego se sigue hacia su izquierda". `lib/ruleta.ts` (con tests)
+  y `components/Ruleta.tsx`.
 
 **6.8 Números de las fichas a gusto** (Ajustes → "Números de las fichas", v0.7)
 - [x] Tamaño (pequeños / normales / grandes: cambia la cifra y un poco la ficha), letra (Clásica, Redonda, Moderna, Romana
@@ -580,7 +609,7 @@ Claude: añade aquí ideas nuevas. El usuario elegirá cuáles entran.
 - ~~🎲 Dados virtuales~~ (descartado por el usuario, 2026-11-02)
 - 🏆 **Marcador** de puntos con aviso de victoria a los 10 puntos y confeti.
 - 👑 **Salón de la fama**: quién ha ganado más partidas del grupo.
-- 🎡 **Ruleta "¿Quién empieza?"** con los nombres del grupo.
+- ✅ 🎡 **Ruleta "¿Quién empieza?"** (hecho, Fase 6.9)
 - 🧠 **Comentario gracioso del análisis**: "Este mapa es más justo que un juez" / "Alguien va a llorar por la arcilla".
 - ✅ 🐑 **Sonidos al tocar hexágonos** (hecho, Fase 7.2; sin sonido, vibra)
 - ~~🥚 Easter eggs~~ (descartado)
@@ -588,7 +617,7 @@ Claude: añade aquí ideas nuevas. El usuario elegirá cuáles entran.
 - ~~📅 Eventos por fecha~~ (descartado)
 - ~~📋 Chuleta de reglas~~ (descartado)
 - ~~⏱️ Temporizador de turno~~ (descartado)
-- 🌍 Más adelante: **expansión 5-6 jugadores** (30 hexágonos) y Navegantes.
+- 🌍 Más adelante: **expansión 5-6 jugadores** (30 hexágonos). ✅ Navegantes · Nuevo mundo hecho (Fase 6.7).
 
 ---
 

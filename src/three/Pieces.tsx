@@ -5,9 +5,9 @@ import {
   BoxGeometry, CylinderGeometry, DoubleSide, ExtrudeGeometry, IcosahedronGeometry, LatheGeometry, MeshStandardMaterial,
   Shape, ShapeGeometry, SphereGeometry, SpriteMaterial, Vector2, type Group, type Sprite,
 } from 'three';
-import type { Port as PortData } from '../game';
+import type { Board, Port as PortData } from '../game';
 import { useClock } from './clock';
-import { TOP, hexWorld, portPlacement, yawTowards } from './coords';
+import { TOP, hexWorld, portPlacement, useGeo, yawTowards } from './coords';
 import { portTexture } from './textures';
 import { SEQ, clamp01, ease, lerp, portWindow, progress } from './timeline';
 
@@ -41,12 +41,13 @@ const WOOD = new MeshStandardMaterial({ color: '#7b5534', roughness: 0.8, flatSh
 const PIER = new MeshStandardMaterial({ color: '#9a7650', roughness: 0.9 });
 const SAIL = new MeshStandardMaterial({ color: '#fff3dd', roughness: 0.7, side: DoubleSide });
 
-function Port({ port, order, fontsVersion, shadows }: { port: PortData; order: number; fontsVersion: number; shadows: boolean }) {
+function Port({ board, port, order, fontsVersion, shadows }: { board: Board; port: PortData; order: number; fontsVersion: number; shadows: boolean }) {
+  const geo = useGeo();
   const clock = useClock();
   const boat = useRef<Group>(null);
   const label = useRef<Sprite>(null);
   const piers = useRef<Group>(null);
-  const place = useMemo(() => portPlacement(port.coast), [port.coast]);
+  const place = useMemo(() => portPlacement(geo, board, port.coast), [geo, board, port.coast]);
   const labelMat = useMemo(() => new SpriteMaterial({ map: portTexture(port.type, fontsVersion), depthWrite: false }), [port.type, fontsVersion]);
   useEffect(() => () => labelMat.dispose(), [labelMat]);
 
@@ -99,13 +100,18 @@ function Port({ port, order, fontsVersion, shadows }: { port: PortData; order: n
   );
 }
 
-export function Ports({ ports, fontsVersion, shadows }: { ports: PortData[]; fontsVersion: number; shadows: boolean }) {
-  // Aparecen en orden alrededor de la isla.
-  const sorted = ports.slice().sort((a, b) => a.coast - b.coast);
+export function Ports({ board, fontsVersion, shadows }: { board: Board; fontsVersion: number; shadows: boolean }) {
+  const geo = useGeo();
+  // Aparecen en orden alrededor de la isla (en Navegantes, girando alrededor del centro).
+  const angle = (p: PortData) => {
+    const [x, z] = portPlacement(geo, board, p.coast).boat;
+    return Math.atan2(-z, x);
+  };
+  const sorted = geo.id === 'base' ? board.ports.slice().sort((a, b) => a.coast - b.coast) : board.ports.slice().sort((a, b) => angle(a) - angle(b));
   return (
     <group>
       {sorted.map((p, i) => (
-        <Port key={p.coast} port={p} order={i} fontsVersion={fontsVersion} shadows={shadows} />
+        <Port key={p.coast} board={board} port={p} order={i} fontsVersion={fontsVersion} shadows={shadows} />
       ))}
     </group>
   );
@@ -133,7 +139,7 @@ export function Robber({ hex, shadows }: { hex: number; shadows: boolean }) {
     [],
   );
   useEffect(() => () => smokeMat.dispose(), [smokeMat]);
-  const [x, z] = hexWorld(hex);
+  const [x, z] = hexWorld(useGeo(), hex);
 
   useFrame(() => {
     const t = clock.current.t;

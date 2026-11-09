@@ -1,6 +1,6 @@
 // Guion de la animación 3D: cuándo empieza y cuánto dura cada parte (segundos, a velocidad "épica").
 // No usa Three.js, así que se puede probar con tests.
-import { REVEAL_INDEX } from '../lib/reveal';
+import { BASE_GEOMETRY, type Geometry } from '../game';
 import type { SoundEvent } from '../lib/sound';
 
 export const SEQ = {
@@ -62,12 +62,15 @@ export const ease = {
   },
 };
 
-export function hexWindow(hexId: number): Window {
-  return { start: SEQ.hex.start + REVEAL_INDEX[hexId] * SEQ.hex.step, dur: SEQ.hex.dur };
+/** Con más hexágonos (Navegantes), cada uno sale antes, para que todo dure lo mismo que en el base. */
+const stepScale = (geo: Geometry) => 18 / Math.max(1, geo.hexes.length - 1);
+
+export function hexWindow(hexId: number, geo: Geometry = BASE_GEOMETRY): Window {
+  return { start: SEQ.hex.start + geo.revealIndex[hexId] * SEQ.hex.step * stepScale(geo), dur: SEQ.hex.dur };
 }
 
-export function tokenWindow(hexId: number): Window {
-  return { start: SEQ.token.start + REVEAL_INDEX[hexId] * SEQ.token.step, dur: SEQ.token.dur };
+export function tokenWindow(hexId: number, geo: Geometry = BASE_GEOMETRY): Window {
+  return { start: SEQ.token.start + geo.revealIndex[hexId] * SEQ.token.step * stepScale(geo), dur: SEQ.token.dur };
 }
 
 export function portWindow(order: number): Window {
@@ -89,14 +92,17 @@ export function sequenceDuration(speed: number): number {
  * Sonidos de la animación, en segundos reales (ya multiplicados por la velocidad).
  * `numbered` = ids de los hexágonos con ficha.
  */
-export function soundTimeline(numbered: number[], ports: number, robber: boolean, speed: number): SoundEvent[] {
+export function soundTimeline(numbered: number[], ports: number, robber: boolean, speed: number, geo: Geometry = BASE_GEOMETRY): SoundEvent[] {
   const events: SoundEvent[] = [{ at: 0, kind: 'swell' }];
-  for (let id = 0; id < REVEAL_INDEX.length; id++) {
-    const w = hexWindow(id);
-    events.push({ at: w.start + w.dur, kind: 'tock', pitch: REVEAL_INDEX[id] / (REVEAL_INDEX.length - 1) });
+  const order = geo.revealIndex;
+  // En Navegantes solo suenan las tierras (el mar se posa en silencio).
+  const tocks = geo.id === 'base' ? order.map((_, id) => id) : numbered;
+  for (const id of tocks) {
+    const w = hexWindow(id, geo);
+    events.push({ at: w.start + w.dur, kind: 'tock', pitch: order[id] / (order.length - 1) });
   }
   for (const id of numbered) {
-    const w = tokenWindow(id);
+    const w = tokenWindow(id, geo);
     // Primer bote de la ficha al caer (la curva outBounce toca el suelo al 36 %).
     events.push({ at: w.start + w.dur * 0.364, kind: 'clink', pitch: (id * 7) % 10 / 10 });
   }
