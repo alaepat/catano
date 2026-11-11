@@ -9,7 +9,7 @@ import { Glyph } from '../components/icons';
 import { modeGlyph } from '../lib/glyphs';
 import { Marcador } from '../components/Marcador';
 import { BackIcon, IconButton, Toast } from '../components/ui';
-import { LETTER_PRESETS, analyzeBoard, geometryOf, isPreset, letterLabels, modeGoal, modeLabel as labelOf, type Resource, type Terrain } from '../game';
+import { analyzeBoard, geometryOf, letterLabels, modeGoal, modeLabel as labelOf, type Resource, type Terrain } from '../game';
 import { backgroundFor } from '../lib/background';
 import { loadBoard3D } from '../lib/board3d';
 import { comentario } from '../lib/comentario';
@@ -96,8 +96,7 @@ export function Tablero() {
   const analysis = useMemo(() => (board ? analyzeBoard(board) : null), [board]);
   // Caos total: las fichas salen con su letra. Hasta darles la vuelta, ni números ni análisis
   // (que delataría los mejores sitios).
-  const lettersMode = Boolean(generation && isPreset(generation.mode) && LETTER_PRESETS.includes(generation.mode));
-  const lettersOn = lettersMode && Boolean(board) && flippedId !== genId;
+  const lettersOn = Boolean(generation?.letters) && Boolean(board) && flippedId !== genId;
   const labels = useMemo(() => (lettersOn && board ? letterLabels(board) : null), [lettersOn, board]);
   const analysisOn = showAnalysis && !lettersOn;
   const highlight = useMemo(

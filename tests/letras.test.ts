@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PRESETS, SPIRAL_TOKENS, generateBoard, generateCincoSeis, generateNavegantes, letterLabels } from '../src/game';
+import { PRESETS, SPIRAL_TOKENS, generateBoard, generateCincoSeis, generateNavegantes, letterLabels, usesLetters } from '../src/game';
 
 describe('Letras de las fichas', () => {
   it('Catan base: cada ficha lleva la letra de verdad (A-R, sin repetir)', () => {
@@ -29,5 +29,17 @@ describe('Letras de las fichas', () => {
       expect(used).toHaveLength(r.board.numbers.filter((n) => n != null).length);
       expect(new Set(used).size).toBe(used.length);
     }
+  });
+});
+
+describe('Qué tableros van con letras', () => {
+  it('Caos total sí, aunque se retoque (Personalizado a partir de Caos total)', () => {
+    expect(usesLetters('caos', 'caos')).toBe(true);
+    expect(usesLetters('personalizado', 'caos')).toBe(true);
+  });
+  it('los demás modos no', () => {
+    expect(usesLetters('equilibrado', 'equilibrado')).toBe(false);
+    expect(usesLetters('personalizado', 'equilibrado')).toBe(false);
+    expect(usesLetters('equilibrado', 'caos')).toBe(false);
   });
 });

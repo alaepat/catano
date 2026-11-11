@@ -227,3 +227,7 @@ export const FAVORITE_PRESETS: readonly PresetId[] = ['equilibrado', 'caos'];
 
 /** En Caos total las fichas salen con su letra: se ponen los primeros poblados sin saber los números. */
 export const LETTER_PRESETS: readonly PresetId[] = ['caos'];
+
+/** ¿Va con letras un tablero de este modo? (Personalizado hereda del modo del que se partió). */
+export const usesLetters = (mode: PresetId | 'personalizado', base: PresetId): boolean =>
+  LETTER_PRESETS.includes(mode === 'personalizado' ? base : mode);

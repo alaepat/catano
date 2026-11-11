@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { Glyph } from '../components/icons';
 import { ModeWheel } from '../components/ModeWheel';
 import { BackIcon, Chips, Collapsible, IconButton, Switch, Toast } from '../components/ui';
-import { CS_INFO, FAVORITE_PRESETS, PRESET_IDS, PRESET_INFO, isPreset, SCENARIOS, scenarioInfo, type CincoSeisStyle, type GenOptions, type SeaOptions } from '../game';
+import { CS_INFO, FAVORITE_PRESETS, PRESET_IDS, PRESET_INFO, isPreset, usesLetters, SCENARIOS, scenarioInfo, type CincoSeisStyle, type GenOptions, type SeaOptions } from '../game';
 import type { GlyphName } from '../lib/glyphs';
 import { loadBoard3D } from '../lib/board3d';
 import { unlockAudio } from '../lib/sound';
@@ -22,7 +22,7 @@ function modeInfo(choice: ModeChoice) {
 const LABELS = Object.fromEntries([...MODE_CHOICES, 'personalizado' as const].map((m) => [m, modeInfo(m).label]));
 
 export function Personalizar() {
-  const { game, setGame, sea, setSea, csStyle, setCsStyle, choice, options, notes, goTo, selectMode, setOption, clearNotes, generate, settings } = useApp();
+  const { game, setGame, sea, setSea, csStyle, setCsStyle, choice, basePreset, options, notes, goTo, selectMode, setOption, clearNotes, generate, settings } = useApp();
   const info = modeInfo(choice);
 
   // Descarga la escena 3D mientras se eligen opciones, para que la isla salga sin esperas.
@@ -78,7 +78,11 @@ export function Personalizar() {
               {info.label}
               {isPreset(choice) && FAVORITE_PRESETS.includes(choice) && <span className="fav-chip">★ Favorito</span>}
             </h3>
-            <p className="mode-description">{info.description}</p>
+            <p className="mode-description">
+              {choice === 'personalizado' && usesLetters('personalizado', basePreset)
+                ? `Tus propias reglas a partir de ${PRESET_INFO[basePreset].label}: las fichas siguen saliendo con letras.`
+                : info.description}
+            </p>
           </motion.div>
         </AnimatePresence>
 

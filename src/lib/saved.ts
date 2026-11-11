@@ -12,6 +12,8 @@ export interface SavedBoard {
   seed: number;
   score: number;
   board: Board;
+  /** Si se generó con letras (Caos total, aunque se retocara). */
+  letters?: boolean;
 }
 
 const isNum = (x: unknown): x is number => typeof x === 'number' && Number.isFinite(x);

@@ -569,6 +569,9 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
   pueblos, pillín!!??" (Todavía no / ¡Sí, dale la vuelta!) y solo entonces se ven los números.
 - [x] **Equilibrado** y **Caos total** resaltados como favoritos (`FAVORITE_PRESETS`): estrellita y borde dorado en la
   rueda, y etiqueta "★ Favorito" junto al nombre del modo.
+- [x] (v0.17.1) Si se parte de Caos total y se retoca un ajuste (pasa a Personalizado), las letras se mantienen: la app
+  recuerda el último modo de la rueda (`basePreset`) y cada tablero guarda si va con letras (`letters`, también en Mis
+  tableros). La tarjeta del modo lo dice: "Tus propias reglas a partir de Caos total...".
 
 **6.9 Ruleta "¿Quién empieza?"** (v0.12)
 - [x] Rueda con los jugadores de la partida (sus colores y nombres). Sale sola al empezar una partida en el marcador y
