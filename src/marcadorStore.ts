@@ -24,7 +24,8 @@ interface MarcadorState {
   addPlayer: (name: string, color: PlayerColor) => void;
   removePlayer: (id: string) => void;
   /** Empieza una partida. Navegantes: meta 12 e islas nuevas. */
-  startMatch: (ids: string[], seafarers?: boolean) => void;
+  /** `goal`: puntos para ganar (10 si no se dice; 12 en Nuevo mundo...). */
+  startMatch: (ids: string[], seafarers?: boolean, goal?: number) => void;
   act: (playerId: string, action: Action) => void;
   undo: () => void;
   /** Termina la partida; si hay ganador, entra en el salón de la fama. */
@@ -50,10 +51,10 @@ export const useMarcador = create<MarcadorState>()(
 
       removePlayer: (id) => set({ roster: get().roster.filter((p) => p.id !== id) }),
 
-      startMatch: (ids, seafarers = false) => {
+      startMatch: (ids, seafarers = false, goal) => {
         const players = ids.map((id) => get().roster.find((p) => p.id === id)).filter((p): p is Player => Boolean(p));
         if (players.length < 2) return;
-        set({ match: newMatch(players.slice(0, MAX_PLAYERS), Date.now(), seafarers ? NM_GOAL : GOAL, seafarers), past: [] });
+        set({ match: newMatch(players.slice(0, MAX_PLAYERS), Date.now(), goal ?? (seafarers ? NM_GOAL : GOAL), seafarers), past: [] });
       },
 
       act: (playerId, action) => {

@@ -537,14 +537,28 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
   Al azar (reglas)". Botón "¡Crear mapa!".
 - [x] Marcador: con un mapa de Navegantes, las partidas nuevas van a **12**, con "Isla nueva" (+1) y "Ruta comercial más
   larga". Logro nuevo "Rumbo al Nuevo mundo". El mar no cuenta para el Geólogo ni Nuevo mundo para los 9 modos.
-- [ ] Más adelante, si se pide: otros escenarios (Rumbo a nuevas costas, Las cuatro islas, Niebla...), oro y desierto
-  opcionales (la caja trae 2 de cada), barcos de colores y pirata en 3D.
+- [x] Oro y desierto opcionales en Nuevo mundo (v0.13, variante de la casa: el libro no los usa en este escenario).
+  2 ríos de oro y/o 2 desiertos en lugar de casillas de mar. El oro lleva 3, 4, 10 u 11 y, en "Equilibradas", va en
+  islas pequeñas y no juntos. Terreno nuevo `oro` (2D, 3D con arroyo y pepitas, tarjeta "Da el recurso que elijas").
+- [ ] Otros escenarios del libro con su silueta y reparto variable (`game/escenarios.ts`) y pirata en 3D (en curso).
 
 **6.9 Ruleta "¿Quién empieza?"** (v0.12)
 - [x] Rueda con los jugadores de la partida (sus colores y nombres). Sale sola al empezar una partida en el marcador y
   desde el menú "···" → "¿Quién empieza? Girar la ruleta". Gira 5-6 vueltas, "tic" (o vibración) en cada separación,
   acorde al parar; atenúa a los demás y dice "Empieza X · luego se sigue hacia su izquierda". `lib/ruleta.ts` (con tests)
   y `components/Ruleta.tsx`.
+
+**6.10 Nombre, partidas jugadas y ampliación 5-6 jugadores** (v0.13, 2026-11-11, víspera del cumple)
+- [x] La app se llama **Cataniciño** (portada, pestaña, icono del iPhone y manifest). Título algo más pequeño para que quepa.
+- [x] "Partidas jugadas" empieza en **45** (las que el grupo ya llevaba): `PARTIDAS_PREVIAS` en `lib/logros.ts`; se ve en
+  Logros y sube con cada partida terminada en el marcador. Veterano = 50 partidas jugadas; logro nuevo Centenario = 100.
+- [x] **Ampliación 5-6 jugadores**: tercera opción en "Tu isla" (Catan / 5-6 / Navegantes). 30 hexágonos en filas
+  3-4-5-6-5-4-3 (6 bosque, 6 pasto, 6 cereal, 5 colinas, 5 montañas, 2 desiertos), 28 fichas, 11 puertos (5 de 3:1 y
+  6 de 2:1, dos de lana) repartidos por la costa, ladrón en un desierto. Equilibrado (sin 3 iguales juntos, desiertos
+  separados, números sin iguales juntos, 2-12 separados, tope 12 por cruce, reparto justo) o Al azar (solo 6/8
+  separados). `game/cincoSeis.ts` (con tests) y `game/reparto.ts` (reparto común de números y puertos).
+- [x] Geometría: `Geometry.kind` ('isla' con disco de mar / 'mar' con marco) y `Geometry.coast`; `makeGeometry` registra
+  cada forma para `geometryOf`. Mar y cámara se ajustan al tamaño de la isla.
 
 **6.8 Números de las fichas a gusto** (Ajustes → "Números de las fichas", v0.7)
 - [x] Tamaño (pequeños / normales / grandes: cambia la cifra y un poco la ficha), letra (Clásica, Redonda, Moderna, Romana
@@ -660,7 +674,7 @@ Claude: añade aquí ideas nuevas. El usuario elegirá cuáles entran.
 
 ## 13. Preguntas abiertas para el usuario
 
-- [ ] ¿Cómo se llama la app? (título de la pantalla de inicio)
+- [x] ¿Cómo se llama la app? → **Cataniciño** (2026-11-11)
 - [ ] ¿Nombres y colores de los amigos del grupo?
 - [ ] ¿Se usará sobre todo en móvil? ¿Android o iPhone?
 - [ ] ¿Queréis sonido y música? → hay efectos (apagados por defecto, en Ajustes). ¿Encenderlos por defecto? ¿Música?

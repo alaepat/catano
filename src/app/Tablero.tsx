@@ -6,9 +6,10 @@ import { BoardSvg } from '../components/BoardSvg';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { HexCard } from '../components/HexCard';
 import { Glyph } from '../components/icons';
+import { modeGlyph } from '../lib/glyphs';
 import { Marcador } from '../components/Marcador';
 import { BackIcon, IconButton, Toast } from '../components/ui';
-import { analyzeBoard, modeLabel as labelOf, type Resource, type Terrain } from '../game';
+import { analyzeBoard, geometryOf, modeGoal, modeLabel as labelOf, type Resource, type Terrain } from '../game';
 import { backgroundFor } from '../lib/background';
 import { loadBoard3D } from '../lib/board3d';
 import { comentario } from '../lib/comentario';
@@ -41,6 +42,7 @@ const TERRAIN_SOUND: Record<Terrain, SoundKind> = {
   montanas: 'pico',
   desierto: 'viento',
   mar: 'whoosh',
+  oro: 'clink',
 };
 
 export function Tablero() {
@@ -155,7 +157,7 @@ export function Tablero() {
         </IconButton>
         <div className="topbar-title tablero-title">
           <span>
-            <Glyph name={generation.mode} size={18} className="title-glyph" />
+            <Glyph name={modeGlyph(generation.mode)} size={18} className="title-glyph" />
             {modeLabel}
           </span>
           {choice === 'sorpresa' && !saved && <small>Sorpresa</small>}
@@ -184,7 +186,7 @@ export function Tablero() {
         )}
 
         {/* Marcador de puntos: aparece con el nombre de la isla. */}
-        {board && <Marcador visible={revealed} seafarers={board.map === 'nuevo-mundo'} />}
+        {board && <Marcador visible={revealed} seafarers={geometryOf(board).kind === 'mar'} goal={modeGoal(generation.mode)} />}
 
         {board && use3d ? (
           // El hueco marca dónde se encaja la isla; el lienzo 3D va detrás de todo, a pantalla completa.

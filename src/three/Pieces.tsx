@@ -107,7 +107,7 @@ export function Ports({ board, fontsVersion, shadows }: { board: Board; fontsVer
     const [x, z] = portPlacement(geo, board, p.coast).boat;
     return Math.atan2(-z, x);
   };
-  const sorted = geo.id === 'base' ? board.ports.slice().sort((a, b) => a.coast - b.coast) : board.ports.slice().sort((a, b) => angle(a) - angle(b));
+  const sorted = geo.kind === 'isla' ? board.ports.slice().sort((a, b) => a.coast - b.coast) : board.ports.slice().sort((a, b) => angle(a) - angle(b));
   return (
     <group>
       {sorted.map((p, i) => (

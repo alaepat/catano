@@ -14,8 +14,8 @@ import { CardIcon, CheckIcon, CityIcon, CloseIcon, CrownIcon, HouseIcon, MoreIco
 
 type Open = { kind: 'setup' } | { kind: 'menu' } | { kind: 'ruleta' } | { kind: 'player'; id: string } | null;
 
-/** `seafarers`: el tablero es de Navegantes (las partidas nuevas van a 12 y tienen islas nuevas). */
-export function Marcador({ visible, seafarers = false }: { visible: boolean; seafarers?: boolean }) {
+/** `seafarers`: el tablero es de Navegantes (hay islas nuevas). `goal`: puntos para ganar las partidas nuevas. */
+export function Marcador({ visible, seafarers = false, goal }: { visible: boolean; seafarers?: boolean; goal?: number }) {
   const match = useMarcador((s) => s.match);
   const [open, setOpen] = useState<Open>(null);
   // La celebración sale una vez por ganador (si se deshace y se vuelve a ganar, sale otra vez).
@@ -85,7 +85,7 @@ export function Marcador({ visible, seafarers = false }: { visible: boolean; sea
       </div>
 
       <Sheet open={open?.kind === 'setup'} onClose={() => setOpen(null)} title="¿Quién juega?">
-        <Setup seafarers={seafarers} onStart={() => setOpen({ kind: 'ruleta' })} />
+        <Setup seafarers={seafarers} goal={goal} onStart={() => setOpen({ kind: 'ruleta' })} />
       </Sheet>
       <Sheet open={open?.kind === 'menu'} onClose={() => setOpen(null)} title="Partida">
         {match && <MatchMenu match={match} onClose={() => setOpen(null)} onRuleta={() => setOpen({ kind: 'ruleta' })} />}
@@ -152,7 +152,7 @@ function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () 
   );
 }
 
-function Setup({ onStart, seafarers }: { onStart: () => void; seafarers: boolean }) {
+function Setup({ onStart, seafarers, goal }: { onStart: () => void; seafarers: boolean; goal?: number }) {
   const { roster, wins, addPlayer, removePlayer, startMatch } = useMarcador();
   const [chosen, setChosen] = useState<string[]>(() => roster.slice(0, 4).map((p) => p.id));
   const [name, setName] = useState('');
@@ -236,7 +236,7 @@ function Setup({ onStart, seafarers }: { onStart: () => void; seafarers: boolean
         className="btn-primary setup-start"
         disabled={chosen.length < MIN_PLAYERS}
         onClick={() => {
-          startMatch(roster.filter((p) => chosen.includes(p.id)).map((p) => p.id), seafarers);
+          startMatch(roster.filter((p) => chosen.includes(p.id)).map((p) => p.id), seafarers, goal);
           onStart();
         }}
       >

@@ -1,6 +1,6 @@
 // Logros: lo que se cuenta, qué hace falta para cada uno y cuáles están conseguidos.
 // Todo es puro (sin estado): el almacén `logrosStore.ts` guarda el progreso y avisa de los nuevos.
-import type { GenMode, PresetId, Terrain } from '../game';
+import { isPreset, isSeaScenario, type GenMode, type PresetId, type Terrain } from '../game';
 
 /** Lo que se va contando mientras se usa la app. */
 export interface Progress {
@@ -45,6 +45,12 @@ export const EMPTY_PROGRESS: Progress = {
 };
 
 const ALL_MODES = 9;
+
+/** Partidas que el grupo ya había jugado antes de usar la app (las cuenta el usuario: 45). */
+export const PARTIDAS_PREVIAS = 45;
+
+/** Partidas jugadas en total: las de antes de la app más las terminadas con el marcador. */
+export const partidasJugadas = (p: Progress) => PARTIDAS_PREVIAS + p.games;
 const ALL_TERRAINS = 6;
 
 export interface Logro {
@@ -72,7 +78,8 @@ export const LOGROS: Logro[] = [
   { id: 'decorador', title: 'Decorador', description: 'Prueba 5 fondos distintos.', value: (p) => p.backgrounds.length, goal: 5 },
   { id: 'navegante', title: 'Rumbo al Nuevo mundo', description: 'Genera un mapa de Navegantes.', value: (p) => p.seas, goal: 1 },
   { id: 'a-la-mesa', title: 'A la mesa', description: 'Termina una partida con el marcador.', value: (p) => p.games, goal: 1 },
-  { id: 'veterano', title: 'Veterano', description: 'Termina 10 partidas con el marcador.', value: (p) => p.games, goal: 10 },
+  { id: 'veterano', title: 'Veterano', description: 'Llega a 50 partidas jugadas.', value: partidasJugadas, goal: 50 },
+  { id: 'centenario', title: 'Centenario', description: 'Llega a 100 partidas jugadas.', value: partidasJugadas, goal: 100 },
 ];
 
 const addOnce = <T,>(list: T[], item: T): T[] => (list.includes(item) ? list : [...list, item]);
@@ -83,16 +90,16 @@ export function applyEvent(p: Progress, e: LogroEvent): Progress {
       return {
         ...p,
         generated: p.generated + 1,
-        modes: e.mode === 'personalizado' || e.mode === 'nuevo-mundo' ? p.modes : addOnce(p.modes, e.mode),
-        seas: p.seas + (e.mode === 'nuevo-mundo' ? 1 : 0),
+        modes: isPreset(e.mode) ? addOnce(p.modes, e.mode) : p.modes,
+        seas: p.seas + (isSeaScenario(e.mode) ? 1 : 0),
         chaos: p.chaos + (e.mode === 'caos' ? 1 : 0),
         bestScore: Math.max(p.bestScore, e.score),
         worstScore: Math.min(p.worstScore, e.score),
         night: p.night || (e.hour >= 1 && e.hour < 5),
       };
     case 'tocar':
-      // El mar de Navegantes no cuenta para el Geólogo (son los 6 terrenos del Catan base).
-      return e.terrain === 'mar' ? p : { ...p, terrains: addOnce(p.terrains, e.terrain) };
+      // El mar y el oro de Navegantes no cuentan para el Geólogo (son los 6 terrenos del Catan base).
+      return e.terrain === 'mar' || e.terrain === 'oro' ? p : { ...p, terrains: addOnce(p.terrains, e.terrain) };
     case 'fondo':
       return { ...p, backgrounds: addOnce(p.backgrounds, e.id) };
     case 'partida':

@@ -7,3 +7,6 @@ export * from './rules';
 export * from './generator';
 export * from './score';
 export * from './navegantes';
+export * from './reparto';
+export * from './cincoSeis';
+export * from './escenarios';

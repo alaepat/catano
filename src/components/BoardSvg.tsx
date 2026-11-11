@@ -1,7 +1,7 @@
 // Tablero en 2D (SVG). Es el modo 2D de Ajustes y el respaldo si el móvil no puede con el 3D.
 // Con `speed` > 0, el tablero aparece animado: hexágonos del centro hacia fuera, números, puertos y ladrón.
 import { motion } from 'motion/react';
-import { geometryOf, pips, isRed, portEdge, portLandHex, type Board, type Geometry, type Port, type Terrain } from '../game';
+import { geometryOf, islandSeaRadius, pips, isRed, portEdge, portLandHex, type Board, type Geometry, type Port, type Terrain } from '../game';
 import { GLYPHS, type GlyphName } from '../lib/glyphs';
 import { DEFAULT_NUMBER_STYLE, type NumberStyle } from '../lib/numberStyle';
 import { REVEAL_TIMING as T } from '../lib/reveal';
@@ -16,6 +16,7 @@ const TERRAIN_FILL: Record<Terrain, string> = {
   montanas: 'var(--montanas)',
   desierto: 'var(--desierto)',
   mar: '#2f76a0',
+  oro: 'var(--oro)',
 };
 
 const TERRAIN_ICON: Record<Terrain, GlyphName> = {
@@ -26,6 +27,7 @@ const TERRAIN_ICON: Record<Terrain, GlyphName> = {
   montanas: 'mineral',
   desierto: 'desierto',
   mar: 'ola',
+  oro: 'oro',
 };
 
 /** Color del icono sobre cada terreno: claro sobre los oscuros, oscuro sobre los claros. */
@@ -37,6 +39,7 @@ const TERRAIN_INK: Record<Terrain, string> = {
   montanas: 'var(--marfil)',
   desierto: 'var(--tinta)',
   mar: '#cfe6f2',
+  oro: 'var(--tinta)',
 };
 
 /** Icono (24 × 24) centrado en (x, y) con el tamaño dado. */
@@ -55,13 +58,12 @@ function SvgGlyph({ name, x, y, size, color, opacity = 1 }: { name: GlyphName; x
   );
 }
 
-// Catan base: vista cuadrada que deja sitio al mar y a los puertos.
-const SEA_R = S * 5.3;
-const HALF = S * 5.6;
-
-/** Vista del SVG: en Navegantes, ajustada al marco (los puertos caen dentro, sobre el mar). */
+/** Vista del SVG: en una isla, cuadrada con sitio para el mar y los puertos; en Navegantes, ajustada al marco. */
 function viewBoxOf(geo: Geometry): string {
-  if (geo.id === 'base') return `${-HALF} ${-HALF} ${HALF * 2} ${HALF * 2}`;
+  if (geo.kind === 'isla') {
+    const half = (islandSeaRadius(geo) + 0.3) * S;
+    return `${-half} ${-half} ${half * 2} ${half * 2}`;
+  }
   const pad = S * 0.62;
   const w = Math.max(...geo.vertices.map((v) => Math.abs(v.x))) * S + pad;
   const h = Math.max(...geo.vertices.map((v) => Math.abs(v.y))) * S + pad;
@@ -75,7 +77,7 @@ function portSpot(geo: Geometry, board: Board, port: Port) {
   const b = geo.vertices[edge.b];
   const mx = ((a.x + b.x) / 2) * S;
   const my = ((a.y + b.y) / 2) * S;
-  if (geo.id === 'base') {
+  if (geo.kind === 'isla') {
     const len = Math.hypot(mx, my);
     return { a, b, px: mx + (mx / len) * S * 0.75, py: my + (my / len) * S * 0.75 };
   }
@@ -113,10 +115,10 @@ export function BoardSvg({ board, showPips = true, numberStyle = DEFAULT_NUMBER_
   const HEXES = geo.hexes;
   const VERTICES = geo.vertices;
   const REVEAL_INDEX = geo.revealIndex;
-  const sea = geo.id !== 'base';
-  // En Navegantes hay más del doble de hexágonos: aparecen más deprisa para acabar a la vez.
-  const step = sea ? T.hex * 0.45 : T.hex;
-  const numberStep = sea ? T.number * 0.75 : T.number;
+  const sea = geo.kind === 'mar';
+  // Con más hexágonos que el base, aparecen más deprisa para acabar a la vez.
+  const step = T.hex * Math.min(1, 19 / HEXES.length);
+  const numberStep = T.number * Math.min(1, 18 / Math.max(1, board.numbers.filter((n) => n != null).length));
   const animate = speed > 0;
   const d = (s: number) => s * speed;
   const enter = (delay: number, from: object) =>
@@ -200,7 +202,7 @@ export function BoardSvg({ board, showPips = true, numberStyle = DEFAULT_NUMBER_
       <motion.circle
         cx={0}
         cy={0}
-        r={SEA_R}
+        r={islandSeaRadius(geo) * S}
         fill="var(--mar)"
         style={fromCenter}
         initial={animate ? { opacity: 0, scale: 0.6 } : false}

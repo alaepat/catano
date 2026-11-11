@@ -1,7 +1,14 @@
-export type Terrain = 'bosque' | 'pasto' | 'cereal' | 'colinas' | 'montanas' | 'desierto' | 'mar';
+/** `oro` = río de oro de Navegantes (da el recurso que quieras). `mar` solo en Navegantes. */
+export type Terrain = 'bosque' | 'pasto' | 'cereal' | 'colinas' | 'montanas' | 'desierto' | 'mar' | 'oro';
 
-/** Forma del tablero: la isla del Catan base o el marco de 42 hexágonos de Navegantes (Nuevo mundo). */
-export type MapId = 'base' | 'nuevo-mundo';
+/** Escenarios de Navegantes con mapa fijo (su silueta) y reparto al azar dentro de ella. */
+export type ScenarioId = 'nuevas-costas' | 'cuatro-islas' | 'niebla' | 'desierto' | 'tribu' | 'tela' | 'piratas' | 'maravillas';
+
+/**
+ * Forma del tablero: la isla del Catan base, la de 5-6 jugadores, el marco de Nuevo mundo o la silueta de un
+ * escenario de Navegantes (con el número de jugadores si cambia: "cuatro-islas-3", "cuatro-islas-4"...).
+ */
+export type MapId = 'base' | 'cinco-seis' | 'nuevo-mundo' | ScenarioId | `${ScenarioId}-${3 | 4}`;
 export type Resource = 'madera' | 'lana' | 'trigo' | 'arcilla' | 'mineral';
 export type PortType = 'generico' | Resource;
 
@@ -37,7 +44,7 @@ export interface Edge {
 
 export interface Port {
   /**
-   * Catan base: posición en COAST_EDGES (0-29, en orden alrededor de la isla).
+   * Catan base y 5-6: posición en la costa de su geometría (en orden alrededor de la isla).
    * Navegantes: id del lado (en su geometría) entre tierra y mar o marco.
    */
   coast: number;
@@ -53,6 +60,10 @@ export interface Board {
   ports: Port[];
   /** Hexágono donde empieza el ladrón, o null si empieza fuera. */
   robber: number | null;
+  /** Navegantes: hexágono de mar donde empieza el pirata (null o sin poner: empieza fuera). */
+  pirate?: number | null;
+  /** Escenarios: hexágonos que empiezan boca abajo (niebla) o con algo encima (fichas del escenario). */
+  marks?: { hex: number; kind: 'niebla' | 'ficha' | 'fortaleza' | 'aldea' | 'maravilla' }[];
   /** Forma del tablero (si falta, el Catan base: así se leen los tableros guardados antes de Navegantes). */
   map?: MapId;
 }

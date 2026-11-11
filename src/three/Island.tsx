@@ -51,6 +51,13 @@ const M = {
   snow: mat('#f5f3ee'),
   dune: mat('#e4cf9f'),
   cactus: mat('#5d8c4b'),
+  gold: (() => {
+    const m = mat('#f2c230', { metalness: 0.75, roughness: 0.28 });
+    m.emissive.set('#5a3d00');
+    return m;
+  })(),
+  goldRock: mat('#8a6a3c'),
+  river: mat('#4aa3c9', { roughness: 0.2 }),
 };
 
 const G = {
@@ -154,6 +161,19 @@ function Decor({ terrain, id, shadows }: { terrain: Terrain; id: number; shadows
       );
     case 'mar':
       return null;
+    case 'oro':
+      // Río de oro: un arroyo, rocas y pepitas brillantes.
+      return (
+        <group>
+          <mesh geometry={G.brick} material={M.river} position={at(base, 0.05, 0.005)} scale={[7, 0.12, 1.4]} rotation={[0, (-base * Math.PI) / 180, 0]} />
+          {[60, 180, 300].map((deg, i) => (
+            <mesh key={i} geometry={G.peak} material={M.goldRock} position={at(base + deg, 0.6)} scale={0.5 + j(i) * 0.15} castShadow={cast} />
+          ))}
+          {[100, 140, 220, 260, 20].map((deg, i) => (
+            <mesh key={`n${i}`} geometry={G.bush} material={M.gold} position={at(base + deg, 0.35 + j(i + 3) * 0.2, 0.03)} scale={0.8 + j(i + 5) * 0.5} castShadow={cast} />
+          ))}
+        </group>
+      );
     case 'desierto':
       return (
         <group>

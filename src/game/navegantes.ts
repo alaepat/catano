@@ -8,29 +8,33 @@
 //
 // El libro dice que, si el mapa sale feo (muchas islas pequeñas, o una isla enorme), se puede cambiar:
 // el estilo "equilibrado" hace eso solo. El estilo "azar" es el reparto tal cual, con solo la regla del 6 y el 8.
+//
+// Variante de la casa (no está en el libro): meter los 2 ríos de oro y/o 2 desiertos de la caja en lugar de
+// casillas de mar. El oro lleva números poco probables (3, 4, 10 u 11) y, en "equilibrado", va en islas pequeñas.
 import { SEA_GEOMETRY, type Geometry } from './board';
 import { PORT_TYPES, RESOURCES, TERRAIN_RESOURCE, isRed } from './catan';
 import type { GenResult } from './generator';
-import { PRESET_INFO, type PresetId } from './options';
+import { dealNumbers } from './reparto';
 import { createRng, randomSeed, shuffle, type Rng } from './rng';
-import { countAdjacentPairs, resourceSpread, vertexPips } from './rules';
+import { countAdjacentPairs } from './rules';
 import type { Board, Port, PortType, Terrain } from './types';
 
 export type NuevoMundoStyle = 'equilibrado' | 'azar';
 
-/** Con qué se generó un tablero: un modo del Catan base, el personalizado o Navegantes · Nuevo mundo. */
-export type GenMode = PresetId | 'personalizado' | 'nuevo-mundo';
+/** Piezas opcionales de la caja para Nuevo mundo (variante de la casa). */
+export interface NuevoMundoExtras {
+  oro: boolean;
+  desierto: boolean;
+}
+export const NO_EXTRAS: NuevoMundoExtras = { oro: false, desierto: false };
+
+/** Fichas para los ríos de oro: números poco probables. */
+const GOLD_TOKENS = [3, 4, 10, 11];
 
 export const NM_INFO = {
   label: 'Nuevo mundo',
   description: 'Navegantes: islas al azar en un mar de 42 hexágonos. Barcos, pirata y 12 puntos para ganar.',
 };
-
-export function modeLabel(mode: GenMode): string {
-  if (mode === 'personalizado') return 'Personalizado';
-  if (mode === 'nuevo-mundo') return NM_INFO.label;
-  return PRESET_INFO[mode].label;
-}
 
 /** Hexágonos de Nuevo mundo (19 de mar + 23 de tierra = 42). */
 export const NM_TERRAIN_COUNTS: Partial<Record<Terrain, number>> = {
@@ -48,7 +52,7 @@ export const NM_NUMBER_TOKENS = [2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 8, 8, 9, 9,
 /** Puntos para ganar en Nuevo mundo. */
 export const NM_GOAL = 12;
 
-const MAX_LAYOUTS = 3000;
+const MAX_LAYOUTS = 12000;
 const NUMBER_TRIES = 200;
 
 const isLand = (t: Terrain | null | undefined) => t != null && t !== 'mar';
@@ -74,15 +78,26 @@ export function islandsOf(terrains: readonly Terrain[], geo: Geometry = SEA_GEOM
   return out.sort((a, b) => b.length - a.length);
 }
 
-function terrainBag(): Terrain[] {
-  return Object.entries(NM_TERRAIN_COUNTS).flatMap(([t, n]) => Array<Terrain>(n ?? 0).fill(t as Terrain));
+function terrainBag(extras: NuevoMundoExtras): Terrain[] {
+  const counts: Partial<Record<Terrain, number>> = { ...NM_TERRAIN_COUNTS };
+  if (extras.oro) {
+    counts.oro = 2;
+    counts.mar! -= 2;
+  }
+  if (extras.desierto) {
+    counts.desierto = 2;
+    counts.mar! -= 2;
+  }
+  return Object.entries(counts).flatMap(([t, n]) => Array<Terrain>(n ?? 0).fill(t as Terrain));
 }
 
 /** Islas razonables: ni todo un continente ni un archipiélago de migas, y recursos repartidos. */
 export function goodIslands(terrains: readonly Terrain[], geo: Geometry = SEA_GEOMETRY): boolean {
   const islands = islandsOf(terrains, geo);
   if (islands.length < 3 || islands.length > 6) return false;
-  if (islands[0].length < 6 || islands[0].length > 11) return false;
+  // Con oro o desiertos hay más tierra: la isla grande puede crecer lo mismo.
+  const extra = terrains.filter((t) => isLand(t)).length - 23;
+  if (islands[0].length < 6 || islands[0].length > 11 + extra) return false;
   if (islands.filter((i) => i.length === 1).length > 2) return false;
   // La isla grande (donde suele empezar todo el mundo) tiene al menos 4 de los 5 recursos...
   const big = new Set(islands[0].map((h) => TERRAIN_RESOURCE[terrains[h]]));
@@ -92,21 +107,14 @@ export function goodIslands(terrains: readonly Terrain[], geo: Geometry = SEA_GE
 }
 
 function placeNumbers(terrains: readonly Terrain[], style: NuevoMundoStyle, rng: Rng, geo: Geometry): (number | null)[] | null {
-  const land = terrains.flatMap((t, i) => (isLand(t) ? [i] : []));
-  for (let k = 0; k < NUMBER_TRIES; k++) {
-    const tokens = shuffle(NM_NUMBER_TOKENS, rng);
-    const numbers: (number | null)[] = terrains.map(() => null);
-    land.forEach((h, i) => (numbers[h] = tokens[i]));
-    if (countAdjacentPairs(numbers, (a, b) => isRed(a) && isRed(b), geo) > 0) continue;
-    if (style === 'equilibrado') {
-      if (countAdjacentPairs(numbers, (a, b) => a === b, geo) > 0) continue;
-      if (countAdjacentPairs(numbers, (a, b) => (a === 2 && b === 12) || (a === 12 && b === 2), geo) > 0) continue;
-      if (Math.max(...vertexPips(numbers, geo)) > 12) continue;
-      if (resourceSpread(terrains, numbers) > 1.0) continue;
-    }
-    return numbers;
-  }
-  return null;
+  const land = terrains.flatMap((t, i) => (isLand(t) && t !== 'desierto' ? [i] : []));
+  const gold = land.filter((h) => terrains[h] === 'oro');
+  // Los números de siempre van a las tierras normales; el oro lleva aparte sus números poco probables.
+  const goldTokens = shuffle(GOLD_TOKENS, rng).slice(0, gold.length);
+  const fixed: (number | null)[] = terrains.map(() => null);
+  gold.forEach((h, i) => (fixed[h] = goldTokens[i]));
+  const normal = land.filter((h) => terrains[h] !== 'oro');
+  return dealNumbers(terrains, fixed, normal, NM_NUMBER_TOKENS, geo, rng, { balanced: style === 'equilibrado' }, NUMBER_TRIES);
 }
 
 /** Lados donde puede ir un puerto: entre tierra y mar, o entre tierra y el marco. */
@@ -158,12 +166,19 @@ function placePorts(terrains: readonly Terrain[], style: NuevoMundoStyle, rng: R
   return null;
 }
 
-export function generateNuevoMundo(style: NuevoMundoStyle = 'equilibrado', seed: number = randomSeed()): GenResult {
+export function generateNuevoMundo(style: NuevoMundoStyle = 'equilibrado', seed: number = randomSeed(), extras: NuevoMundoExtras = NO_EXTRAS): GenResult {
   const geo = SEA_GEOMETRY;
   const rng = createRng(seed);
   for (let attempt = 1; attempt <= MAX_LAYOUTS; attempt++) {
-    const terrains = shuffle(terrainBag(), rng);
+    const terrains = shuffle(terrainBag(extras), rng);
     if (style === 'equilibrado' && !goodIslands(terrains, geo)) continue;
+    if (style === 'equilibrado' && extras.oro) {
+      // El oro, en islas pequeñas (para que merezca la pena navegar) y no los dos juntos.
+      const big = new Set(islandsOf(terrains, geo)[0]);
+      if (terrains.some((t, i) => t === 'oro' && big.has(i))) continue;
+      if (countAdjacentPairs(terrains, (a, b) => a === 'oro' && b === 'oro', geo) > 0) continue;
+    }
+    if (extras.desierto && countAdjacentPairs(terrains, (a, b) => a === 'desierto' && b === 'desierto', geo) > 0) continue;
     // Con el reparto tal cual, al menos que no salga todo pegado ni todo migas sueltas (casi nunca pasa).
     if (style === 'azar' && islandsOf(terrains, geo).length < 2) continue;
     const numbers = placeNumbers(terrains, style, rng, geo);
@@ -180,17 +195,22 @@ export function generateNuevoMundo(style: NuevoMundoStyle = 'equilibrado', seed:
 export function validateNuevoMundo(board: Board): string[] {
   const geo = SEA_GEOMETRY;
   const errors: string[] = [];
+  const extras = { oro: board.terrains.includes('oro'), desierto: board.terrains.includes('desierto') };
   if (board.map !== 'nuevo-mundo') errors.push('No es un mapa de Nuevo mundo');
   if (board.terrains.length !== geo.hexes.length) errors.push('No hay 42 hexágonos');
-  for (const [t, n] of Object.entries(NM_TERRAIN_COUNTS)) {
+  const expected = terrainBag(extras);
+  for (const t of new Set(expected)) {
     const count = board.terrains.filter((x) => x === t).length;
+    const n = expected.filter((x) => x === t).length;
     if (count !== n) errors.push(`Hay ${count} de ${t} (deberían ser ${n})`);
   }
   board.terrains.forEach((t, i) => {
-    if (isLand(t) !== (board.numbers[i] != null)) errors.push(`El hexágono ${i} ${isLand(t) ? 'no tiene' : 'tiene'} número`);
+    const needs = isLand(t) && t !== 'desierto';
+    if (needs !== (board.numbers[i] != null)) errors.push(`El hexágono ${i} ${needs ? 'no tiene' : 'tiene'} número`);
   });
-  const nums = board.numbers.filter((n): n is number => n != null).sort((a, b) => a - b);
+  const nums = board.terrains.flatMap((t, i) => (t === 'oro' || board.numbers[i] == null ? [] : [board.numbers[i]!])).sort((a, b) => a - b);
   if (nums.join() !== NM_NUMBER_TOKENS.join()) errors.push('Las fichas de número no son las correctas');
+  if (board.terrains.some((t, i) => t === 'oro' && !GOLD_TOKENS.includes(board.numbers[i] ?? 0))) errors.push('El oro tiene un número probable');
   if (countAdjacentPairs(board.numbers, (a, b) => isRed(a) && isRed(b), geo) > 0) errors.push('Hay un 6 o un 8 juntos');
   if (board.robber !== null) errors.push('El ladrón debe empezar fuera');
   const valid = new Set(portEdges(board.terrains, geo));

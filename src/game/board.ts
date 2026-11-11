@@ -1,5 +1,7 @@
 // Geometría de los tableros, en coordenadas axiales (q, r):
 // - Catan base: 19 hexágonos "de punta" (filas 3-4-5-4-3), 54 cruces y 72 caminos.
+// - Ampliación 5-6 jugadores: 30 hexágonos "de punta" (filas 3-4-5-6-5-4-3).
+// - Escenarios de Navegantes: su silueta, en columnas "de lado plano" (ver navegantes/escenarios.ts).
 // - Navegantes (Nuevo mundo): el marco de 42 hexágonos "de lado plano arriba", en columnas 5-6-7-6-7-6-5,
 //   como en el dibujo del libro de reglas.
 import type { Edge, Hex, MapId, Vertex } from './types';
@@ -34,8 +36,18 @@ function seaCoords(): [number, number][] {
   return coords;
 }
 
+/** Filas de hexágonos "de punta", centradas (las filas pares e impares se desplazan medio hexágono). */
+export function rowsCoords(rows: number[]): [number, number][] {
+  const coords: [number, number][] = [];
+  rows.forEach((n, r) => {
+    const start = Math.round(-r / 2 - (n - 1) / 2);
+    for (let j = 0; j < n; j++) coords.push([start + j, r]);
+  });
+  return coords;
+}
+
 /** `flat` = hexágonos con un lado plano arriba (si no, con una punta arriba). */
-function build(coords: [number, number][], flat: boolean) {
+function build(coords: [number, number][], flat: boolean, ringByDistance = flat) {
   const center = (q: number, r: number): [number, number] => (flat ? [1.5 * q, SQRT3 * (r + q / 2)] : [SQRT3 * (q + r / 2), 1.5 * r]);
   // Centra el tablero en (0, 0).
   const cs = coords.map(([q, r]) => center(q, r));
@@ -90,7 +102,7 @@ function build(coords: [number, number][], flat: boolean) {
       edges[e].hexes.push(id);
     }
 
-    const ring = flat ? Math.round(Math.hypot(x, y) / SQRT3) : Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r));
+    const ring = ringByDistance ? Math.round(Math.hypot(x, y) / SQRT3) : Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r));
     hexes.push({ id, q, r, x, y, ring, neighbors, vertices: vids });
   });
 
@@ -118,6 +130,10 @@ function build(coords: [number, number][], flat: boolean) {
 
 export interface Geometry {
   id: MapId;
+  /** `isla`: isla rodeada de un disco de mar (base y 5-6). `mar`: marco de Navegantes con casillas de mar. */
+  kind: 'isla' | 'mar';
+  /** Lados de costa (los que solo tocan un hexágono), en orden alrededor del tablero. */
+  coast: readonly number[];
   hexes: readonly Hex[];
   vertices: readonly Vertex[];
   edges: readonly Edge[];
@@ -130,23 +146,38 @@ export interface Geometry {
 }
 
 const built = build(baseCoords(), false);
-const sea = build(seaCoords(), true);
 
-export const BASE_GEOMETRY: Geometry = {
-  id: 'base', hexes: built.hexes, vertices: built.vertices, edges: built.edges, flat: false, radius: built.radius, revealIndex: built.revealIndex,
-};
-export const SEA_GEOMETRY: Geometry = {
-  id: 'nuevo-mundo', hexes: sea.hexes, vertices: sea.vertices, edges: sea.edges, flat: true, radius: sea.radius, revealIndex: sea.revealIndex,
-};
+/** Crea una geometría a partir de sus coordenadas axiales (y la apunta para `geometryOf`). */
+export function makeGeometry(id: MapId, coords: [number, number][], flat: boolean, kind: Geometry['kind']): Geometry {
+  const g = id === 'base' ? built : build(coords, flat, true);
+  const geo: Geometry = {
+    id, kind, coast: g.coast, hexes: g.hexes, vertices: g.vertices, edges: g.edges, flat, radius: g.radius, revealIndex: g.revealIndex,
+  };
+  GEOMETRIES.set(id, geo);
+  return geo;
+}
+
+const GEOMETRIES = new Map<MapId, Geometry>();
+
+export const BASE_GEOMETRY: Geometry = makeGeometry('base', baseCoords(), false, 'isla');
+export const SEA_GEOMETRY: Geometry = makeGeometry('nuevo-mundo', seaCoords(), true, 'mar');
+/** Ampliación para 5-6 jugadores: 30 hexágonos en filas 3-4-5-6-5-4-3. */
+export const CINCO_SEIS_GEOMETRY: Geometry = makeGeometry('cinco-seis', rowsCoords([3, 4, 5, 6, 5, 4, 3]), false, 'isla');
 
 /** Geometría de un tablero (los guardados antes de Navegantes no dicen nada: son del base). */
 export function geometryOf(board: { map?: MapId }): Geometry {
-  return board.map === 'nuevo-mundo' ? SEA_GEOMETRY : BASE_GEOMETRY;
+  return GEOMETRIES.get(board.map ?? 'base') ?? BASE_GEOMETRY;
 }
 
-/** Lado donde está un puerto: en el base, `coast` es la posición en la costa; en Navegantes, el id del lado. */
+/** Radio del disco de mar alrededor de una isla (base: 5,3 radios de hexágono). */
+export const islandSeaRadius = (geo: Geometry) => geo.radius + (5.3 - built.radius);
+
+/** ¿Existe esa forma de tablero? (para leer tableros guardados sin fiarse). */
+export const isMapId = (id: unknown): id is MapId => typeof id === 'string' && GEOMETRIES.has(id as MapId);
+
+/** Lado donde está un puerto: en una isla, `coast` es la posición en la costa; en Navegantes, el id del lado. */
 export function portEdge(geo: Geometry, coast: number): Edge {
-  return geo.id === 'base' ? built.edges[built.coast[coast]] : geo.edges[coast];
+  return geo.kind === 'isla' ? geo.edges[geo.coast[coast]] : geo.edges[coast];
 }
 
 export const HEXES: readonly Hex[] = built.hexes;

@@ -2,7 +2,7 @@
 import { motion } from 'motion/react';
 import { BackIcon, IconButton } from '../components/ui';
 import { Glyph } from '../components/icons';
-import { LOGROS, isDone } from '../lib/logros';
+import { LOGROS, isDone, partidasJugadas } from '../lib/logros';
 import { useLogros } from '../logrosStore';
 
 const fecha = (iso: string) => {
@@ -35,6 +35,9 @@ export function Logros() {
             <div className="logro-bar" aria-hidden>
               <span style={{ width: `${(done / LOGROS.length) * 100}%` }} />
             </div>
+            <p className="logros-games">
+              <b>{partidasJugadas(progress)}</b> partidas jugadas
+            </p>
           </div>
         </div>
 

@@ -12,6 +12,7 @@ export const TERRAIN_COUNTS: Record<Terrain, number> = {
   montanas: 3,
   desierto: 1,
   mar: 0,
+  oro: 0,
 };
 
 export const TERRAIN_RESOURCE: Record<Terrain, Resource | null> = {
@@ -22,6 +23,7 @@ export const TERRAIN_RESOURCE: Record<Terrain, Resource | null> = {
   montanas: 'mineral',
   desierto: null,
   mar: null,
+  oro: null,
 };
 
 export const RESOURCES: Resource[] = ['madera', 'lana', 'trigo', 'arcilla', 'mineral'];

@@ -12,6 +12,8 @@ export const GLYPHS = {
     'M12 21V4 M12 9c-2 0-3-1.2-3-3 2 0 3 1.2 3 3Z M12 9c2 0 3-1.2 3-3-2 0-3 1.2-3 3Z M12 13c-2 0-3-1.2-3-3 2 0 3 1.2 3 3Z M12 13c2 0 3-1.2 3-3-2 0-3 1.2-3 3Z M12 17c-2 0-3-1.2-3-3 2 0 3 1.2 3 3Z M12 17c2 0 3-1.2 3-3-2 0-3 1.2-3 3Z',
   arcilla: 'M4.5 6.5h15v11h-15Z M4.5 10.2h15 M4.5 13.8h15 M10 6.5v3.7 M14.5 10.2v3.6 M9 13.8v3.7',
   mineral: 'M2.5 19 9.5 7l3.6 6.2L15.5 10l6 9H2.5Z M7.6 10.3 9.5 7l1.9 3.3',
+  'cinco-seis': `${circle(8, 8, 2.6)} ${circle(16, 8, 2.6)} ${circle(12, 6, 2.2)} M2.5 19.5c.5-3.4 2.6-5.3 5.5-5.3s5 1.9 5.5 5.3 M10.5 19.5c.5-3.4 2.6-5.3 5.5-5.3s5 1.9 5.5 5.3`,
+  oro: 'M4 19h16l-2.5-5.5h-11L4 19Z M8.5 13.5 10 9.5h4l1.5 4 M12 3.5v2.5 M17.5 5.5l-1.6 1.6 M6.5 5.5l1.6 1.6',
   desierto: `M3 16.5c3-3 6-3 9 0s6 3 9 0 M3 20h18 ${circle(16, 8, 2.5)}`,
 
   // Modos
@@ -42,6 +44,9 @@ export const GLYPHS = {
 } as const;
 
 export type GlyphName = keyof typeof GLYPHS;
+
+/** Icono de un modo de generación (los escenarios de Navegantes llevan el barco). */
+export const modeGlyph = (mode: string): GlyphName => (mode in GLYPHS ? (mode as GlyphName) : 'nuevo-mundo');
 
 /** Dibuja un icono en un canvas: centrado en (x, y) y de `size` píxeles de lado. */
 export function strokeGlyph(ctx: CanvasRenderingContext2D, name: GlyphName, x: number, y: number, size: number, color: string, weight = 1.9) {

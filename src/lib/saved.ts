@@ -1,5 +1,5 @@
 // "Mis tableros": islas guardadas en el móvil.
-import { PRESET_IDS, geometryOf, type Board, type GenMode, type PresetId } from '../game';
+import { geometryOf, isMapId, isPreset, isSeaScenario, type Board, type GenMode } from '../game';
 
 export const MAX_SAVED = 60;
 
@@ -25,11 +25,11 @@ export function isSavedBoard(x: unknown): x is SavedBoard {
     typeof s.id === 'string' &&
     typeof s.name === 'string' &&
     typeof s.date === 'string' &&
-    (s.mode === 'personalizado' || s.mode === 'nuevo-mundo' || PRESET_IDS.includes(s.mode as PresetId)) &&
+    (s.mode === 'personalizado' || s.mode === 'cinco-seis' || isSeaScenario(s.mode) || isPreset(s.mode)) &&
     isNum(s.seed) &&
     isNum(s.score) &&
     !!b &&
-    (b.map === undefined || b.map === 'base' || b.map === 'nuevo-mundo') &&
+    (b.map === undefined || isMapId(b.map)) &&
     Array.isArray(b.terrains) &&
     b.terrains.length === geometryOf(b).hexes.length &&
     Array.isArray(b.numbers) &&

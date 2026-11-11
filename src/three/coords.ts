@@ -1,7 +1,7 @@
 // Medidas de la escena 3D. Una unidad = radio de un hexágono.
 // El plano del tablero es x/z (la "y" del 2D pasa a ser "z"); la altura es y.
 import { createContext, useContext } from 'react';
-import { BASE_GEOMETRY, portEdge, portLandHex, type Board, type Geometry, type Terrain } from '../game';
+import { BASE_GEOMETRY, islandSeaRadius, portEdge, portLandHex, type Board, type Geometry, type Terrain } from '../game';
 
 export const BASE_H = 0.1; // base de arena bajo cada hexágono
 export const BEVEL = 0.035;
@@ -17,11 +17,15 @@ export const GeoContext = createContext<Geometry>(BASE_GEOMETRY);
 export const useGeo = () => useContext(GeoContext);
 
 /** Radio del disco de mar: en Navegantes, lo justo para que quepa todo el marco. */
-export const seaRadius = (geo: Geometry) => (geo.id === 'base' ? SEA_R : geo.radius + 0.35);
+export const seaRadius = (geo: Geometry) => (geo.kind === 'isla' ? islandSeaRadius(geo) : geo.radius + 0.35);
 
 /** Medio ancho y medio alto del tablero (con margen), para encajarlo en pantalla. */
 export function boardHalf(geo: Geometry): { w: number; h: number } {
-  if (geo.id === 'base') return { w: SEA_R + 0.15, h: (SEA_R + 0.15) * 0.8 };
+  if (geo.kind === 'isla') {
+    // La de 5-6 es más alargada y gira un poco al presentarse: algo más de margen.
+    const r = islandSeaRadius(geo) + (geo.id === 'base' ? 0.15 : 0.7);
+    return { w: r, h: r * 0.8 };
+  }
   // Margen para los barcos de los puertos que quedan sobre el marco.
   const w = Math.max(...geo.vertices.map((v) => Math.abs(v.x))) + 1.1;
   const h = Math.max(...geo.vertices.map((v) => Math.abs(v.y))) + 0.8;
@@ -37,6 +41,7 @@ export const TERRAIN_COLOR: Record<Terrain, string> = {
   montanas: '#8a8d91',
   desierto: '#d9c49a',
   mar: '#3d8fbf',
+  oro: '#7a6650',
 };
 
 export type XZ = readonly [number, number];
@@ -55,7 +60,7 @@ export function portPlacement(geo: Geometry, board: Board, coast: number) {
   const mx = (a[0] + b[0]) / 2;
   const mz = (a[1] + b[1]) / 2;
   // Base: hacia fuera desde el centro de la isla. Navegantes: hacia fuera de su hexágono de tierra.
-  const [cx, cz] = geo.id === 'base' ? [0, 0] : hexWorld(geo, portLandHex(coast, board.terrains, geo));
+  const [cx, cz] = geo.kind === 'isla' ? [0, 0] : hexWorld(geo, portLandHex(coast, board.terrains, geo));
   const len = Math.hypot(mx - cx, mz - cz);
   const out: XZ = [(mx - cx) / len, (mz - cz) / len];
   const boat: XZ = [mx + out[0] * 0.72, mz + out[1] * 0.72];

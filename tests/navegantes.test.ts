@@ -78,3 +78,22 @@ describe('Nuevo mundo', () => {
     expect(NM_GOAL).toBe(12);
   });
 });
+
+describe('Nuevo mundo con oro y desierto (variante)', () => {
+  it.each([
+    { oro: true, desierto: false },
+    { oro: false, desierto: true },
+    { oro: true, desierto: true },
+  ])('genera mapas correctos con %o', (extras) => {
+    for (const style of ['equilibrado', 'azar'] as const) {
+      for (let seed = 1; seed <= 25; seed++) {
+        const r = generateNuevoMundo(style, seed, extras);
+        expect(r.ok).toBe(true);
+        if (!r.ok) continue;
+        expect(validateNuevoMundo(r.board)).toEqual([]);
+        expect(r.board.terrains.filter((t) => t === 'oro')).toHaveLength(extras.oro ? 2 : 0);
+        expect(r.board.terrains.filter((t) => t === 'desierto')).toHaveLength(extras.desierto ? 2 : 0);
+      }
+    }
+  });
+});

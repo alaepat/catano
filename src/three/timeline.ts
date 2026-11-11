@@ -96,7 +96,7 @@ export function soundTimeline(numbered: number[], ports: number, robber: boolean
   const events: SoundEvent[] = [{ at: 0, kind: 'swell' }];
   const order = geo.revealIndex;
   // En Navegantes solo suenan las tierras (el mar se posa en silencio).
-  const tocks = geo.id === 'base' ? order.map((_, id) => id) : numbered;
+  const tocks = geo.kind === 'isla' ? order.map((_, id) => id) : numbered;
   for (const id of tocks) {
     const w = hexWindow(id, geo);
     events.push({ at: w.start + w.dur, kind: 'tock', pitch: order[id] / (order.length - 1) });

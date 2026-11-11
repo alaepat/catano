@@ -3,8 +3,8 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import {
-  PRESETS, balanceScore, generateBoard, generateNuevoMundo, matchPreset, setOptionResolving, surprisePreset,
-  type GenMode, type GenOptions, type GenResult, type NuevoMundoStyle,
+  DEFAULT_SEA, PRESETS, SCENARIOS, balanceScore, generateBoard, generateCincoSeis, generateNavegantes, matchPreset, setOptionResolving,
+  surprisePreset, type CincoSeisStyle, type GenMode, type GenOptions, type GenResult, type SeaOptions,
 } from './game';
 import { islandName } from './lib/islandName';
 import type { NumberFont, NumberSize } from './lib/numberStyle';
@@ -15,8 +15,8 @@ import type { PresetId } from './game';
 
 export type Screen = 'inicio' | 'personalizar' | 'tablero' | 'ajustes' | 'tableros' | 'logros';
 export type ModeChoice = PresetId | 'personalizado' | 'sorpresa';
-/** Juego: el Catan base o la expansión Navegantes. */
-export type GameId = 'base' | 'navegantes';
+/** Juego: el Catan base, la ampliación 5-6 jugadores o la expansión Navegantes. */
+export type GameId = 'base' | 'cinco-seis' | 'navegantes';
 export type BackgroundId = 'espacio' | 'oceano' | 'playa' | 'canoa' | 'parque' | 'mesa' | 'flotante' | 'pergamino' | 'atardecer' | 'bosque' | 'minimal';
 const BACKGROUND_IDS: BackgroundId[] = ['espacio', 'oceano', 'playa', 'canoa', 'parque', 'mesa', 'flotante', 'pergamino', 'atardecer', 'bosque', 'minimal'];
 
@@ -62,8 +62,10 @@ interface State {
   screen: Screen;
   /** Juego elegido en "Tu isla". */
   game: GameId;
-  /** Navegantes: islas equilibradas o reparto tal cual. */
-  nmStyle: NuevoMundoStyle;
+  /** Navegantes: escenario, jugadores, reparto y piezas opcionales. */
+  sea: SeaOptions;
+  /** 5-6 jugadores: equilibrado o al azar. */
+  csStyle: CincoSeisStyle;
   choice: ModeChoice;
   options: GenOptions;
   generation: Generation | null;
@@ -80,7 +82,8 @@ interface State {
   /** Cambia de pantalla sin añadir entrada al historial (para el botón atrás del móvil). */
   setScreenFromHistory: (screen: Screen) => void;
   setGame: (game: GameId) => void;
-  setNmStyle: (style: NuevoMundoStyle) => void;
+  setSea: (patch: Partial<SeaOptions>) => void;
+  setCsStyle: (style: CincoSeisStyle) => void;
   selectMode: (choice: ModeChoice) => void;
   setOption: <K extends keyof GenOptions>(key: K, value: GenOptions[K]) => void;
   clearNotes: () => void;
@@ -114,7 +117,8 @@ export const useApp = create<State>()(
     (set, get) => ({
       screen: 'inicio',
       game: 'base',
-      nmStyle: 'equilibrado',
+      sea: DEFAULT_SEA,
+      csStyle: 'equilibrado',
       choice: 'equilibrado',
       options: PRESETS.equilibrado,
       generation: null,
@@ -138,7 +142,8 @@ export const useApp = create<State>()(
       setScreenFromHistory: (screen) => set({ screen }),
 
       setGame: (game) => set({ game }),
-      setNmStyle: (nmStyle) => set({ nmStyle }),
+      setSea: (patch) => set({ sea: { ...get().sea, ...patch } }),
+      setCsStyle: (csStyle) => set({ csStyle }),
 
       selectMode: (choice) => {
         if (choice === 'sorpresa' || choice === 'personalizado') set({ choice });
@@ -152,12 +157,15 @@ export const useApp = create<State>()(
       clearNotes: () => set({ notes: [] }),
 
       generate: () => {
-        const { game, nmStyle, choice, options, generation } = get();
+        const { game, sea, csStyle, choice, options, generation } = get();
         let mode: GenMode;
         let result: GenResult;
         if (game === 'navegantes') {
-          mode = 'nuevo-mundo';
-          result = generateNuevoMundo(nmStyle);
+          mode = sea.scenario;
+          result = generateNavegantes(sea);
+        } else if (game === 'cinco-seis') {
+          mode = 'cinco-seis';
+          result = generateCincoSeis(csStyle);
         } else {
           const preset = choice === 'sorpresa' ? surprisePreset() : choice;
           mode = preset;
@@ -175,7 +183,7 @@ export const useApp = create<State>()(
 
       resetAll: () => {
         safeStorage.removeItem('catan-app');
-        set({ game: 'base', nmStyle: 'equilibrado', choice: 'equilibrado', options: PRESETS.equilibrado, settings: DEFAULT_SETTINGS, generation: null, notes: [], saved: [] });
+        set({ game: 'base', sea: DEFAULT_SEA, csStyle: 'equilibrado', choice: 'equilibrado', options: PRESETS.equilibrado, settings: DEFAULT_SETTINGS, generation: null, notes: [], saved: [] });
       },
 
       toggleSaveCurrent: () => {
@@ -238,14 +246,22 @@ export const useApp = create<State>()(
       name: 'catan-app',
       version: 1,
       storage: createJSONStorage(() => safeStorage),
-      partialize: (s) => ({ game: s.game, nmStyle: s.nmStyle, choice: s.choice, options: s.options, settings: s.settings, saved: s.saved }),
+      partialize: (s) => ({ game: s.game, sea: s.sea, csStyle: s.csStyle, choice: s.choice, options: s.options, settings: s.settings, saved: s.saved }),
       // Si en el futuro se añaden opciones nuevas, las que falten toman su valor por defecto.
       merge: (saved, current) => {
-        const s = (saved ?? {}) as Partial<State>;
+        const s = (saved ?? {}) as Partial<State> & { nmStyle?: string };
+        const sea = (s.sea ?? {}) as Partial<SeaOptions>;
         return {
           ...current,
-          game: s.game === 'navegantes' ? 'navegantes' : 'base',
-          nmStyle: s.nmStyle === 'azar' ? 'azar' : 'equilibrado',
+          game: s.game === 'navegantes' || s.game === 'cinco-seis' ? s.game : 'base',
+          // Antes de los escenarios solo se guardaba el reparto de Nuevo mundo (nmStyle).
+          sea: {
+            scenario: SCENARIOS.some((x) => x.id === sea.scenario) ? sea.scenario! : DEFAULT_SEA.scenario,
+            players: sea.players === 3 ? 3 : 4,
+            style: (sea.style ?? s.nmStyle) === 'azar' ? 'azar' : 'equilibrado',
+            extras: { oro: sea.extras?.oro === true, desierto: sea.extras?.desierto === true },
+          },
+          csStyle: s.csStyle === 'azar' ? 'azar' : 'equilibrado',
           choice: s.choice ?? current.choice,
           options: { ...current.options, ...s.options },
           settings: { ...current.settings, ...s.settings, background: migrateBackground(s.settings?.background ?? current.settings.background) },

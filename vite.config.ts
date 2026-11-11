@@ -16,8 +16,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'icon.svg'],
       manifest: {
-        name: 'Catan · Generador de tableros',
-        short_name: 'Catan',
+        name: 'Cataniciño · Generador de tableros de Catan',
+        short_name: 'Cataniciño',
         description: 'Genera tableros de Catan al azar, con modos para cada tipo de partida.',
         lang: 'es',
         theme_color: '#0b0a14',
