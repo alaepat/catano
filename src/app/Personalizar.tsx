@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { Glyph } from '../components/icons';
 import { ModeWheel } from '../components/ModeWheel';
 import { BackIcon, Chips, Collapsible, IconButton, Switch, Toast } from '../components/ui';
-import { CS_INFO, PRESET_IDS, PRESET_INFO, SCENARIOS, scenarioInfo, type CincoSeisStyle, type GenOptions, type SeaOptions } from '../game';
+import { CS_INFO, FAVORITE_PRESETS, PRESET_IDS, PRESET_INFO, isPreset, SCENARIOS, scenarioInfo, type CincoSeisStyle, type GenOptions, type SeaOptions } from '../game';
 import type { GlyphName } from '../lib/glyphs';
 import { loadBoard3D } from '../lib/board3d';
 import { unlockAudio } from '../lib/sound';
@@ -74,7 +74,10 @@ export function Personalizar() {
             transition={{ duration: 0.18 }}
             aria-live="polite"
           >
-            <h3 className="mode-name">{info.label}</h3>
+            <h3 className="mode-name">
+              {info.label}
+              {isPreset(choice) && FAVORITE_PRESETS.includes(choice) && <span className="fav-chip">★ Favorito</span>}
+            </h3>
             <p className="mode-description">{info.description}</p>
           </motion.div>
         </AnimatePresence>

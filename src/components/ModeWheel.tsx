@@ -2,7 +2,7 @@
 // El que queda arriba, junto a la marca, es el elegido. En el centro, un minitablero de ejemplo de ese modo.
 import { AnimatePresence, animate, motion, useMotionValue, useTransform, type MotionValue } from 'motion/react';
 import { useEffect, useMemo, useRef, type KeyboardEvent } from 'react';
-import { PRESETS, generateBoard, type Board, type GenOptions } from '../game';
+import { FAVORITE_PRESETS, PRESETS, generateBoard, isPreset, type Board, type GenOptions } from '../game';
 import { haptic } from '../lib/haptics';
 import { playSound, unlockAudio } from '../lib/sound';
 import type { ModeChoice } from '../store';
@@ -181,13 +181,18 @@ function WheelItem({
         aria-checked={active}
         aria-label={label}
         tabIndex={active ? 0 : -1}
-        className={active ? 'wheel-item active' : 'wheel-item'}
+        className={['wheel-item', active && 'active', isPreset(mode) && FAVORITE_PRESETS.includes(mode) && 'fav'].filter(Boolean).join(' ')}
         style={{ rotate: upright }}
         animate={{ scale: active ? 1.18 : 1 }}
         transition={{ type: 'spring', stiffness: 400, damping: 22 }}
         onClick={onTap}
       >
         <Glyph name={mode} size={24} />
+        {isPreset(mode) && FAVORITE_PRESETS.includes(mode) && (
+          <span className="wheel-fav" aria-hidden>
+            ★
+          </span>
+        )}
       </motion.button>
     </motion.div>
   );

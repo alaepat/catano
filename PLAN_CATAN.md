@@ -555,13 +555,20 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 - [ ] Pendiente si se pide: mapas de 3 jugadores.
 
 **6.11 Letras, nombres a gusto y portada nueva** (v0.16, 2026-11-11)
-- [x] Ajustes → "Letras en vez de números": las fichas salen con su letra (Catan base: la letra de verdad de cada ficha,
+- [x] ~~Ajustes →~~ (desde v0.17, solo en Caos total) "Letras en vez de números": las fichas salen con su letra (Catan base: la letra de verdad de cada ficha,
   A=5, B=2...; en los demás mapas, letras seguidas que no dicen nada). Sin análisis ni 6/8 en rojo hasta tocar
   **Números** (el botón sustituye a Puntitos) para darles la vuelta. `game/letras.ts` (con tests).
 - [x] Título de la portada a gusto (Ajustes → Portada; vacío = Cataniciño) y nombre de cada isla tocándolo en el tablero.
 - [x] Portada: fuera el dato curioso del día. Arriba, una islita de 7 hexágonos flotando con un barquito; bajo el
   título, un adorno; saludo "QUE TALLL SEÑOORRR" y la predicción "hoy gana el [color] y el número que más va a caer es
   el [n]" (color de jugador al azar y dos dados de verdad, que se ven debajo).
+
+**6.12 Letras en Caos total y modos favoritos** (v0.17, 2026-11-11)
+- [x] Las letras ya no son un ajuste: van con el modo **Caos total** (`LETTER_PRESETS` en `game/options.ts`). Todo
+  tablero de Caos total sale con letras; el botón **Números** abre antes una ventanita "¿Seguro que ya pusieron todos los
+  pueblos, pillín!!??" (Todavía no / ¡Sí, dale la vuelta!) y solo entonces se ven los números.
+- [x] **Equilibrado** y **Caos total** resaltados como favoritos (`FAVORITE_PRESETS`): estrellita y borde dorado en la
+  rueda, y etiqueta "★ Favorito" junto al nombre del modo.
 
 **6.9 Ruleta "¿Quién empieza?"** (v0.12)
 - [x] Rueda con los jugadores de la partida (sus colores y nombres). Sale sola al empezar una partida en el marcador y

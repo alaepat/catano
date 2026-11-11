@@ -123,7 +123,10 @@ export const PRESET_INFO: Record<PresetId, PresetInfo> = {
   },
   centro: { label: 'Pelea por el centro', description: 'Todos los 6 y 8 en el interior. Quien domine el centro manda.' },
   mercaderes: { label: 'Mercaderes', description: 'Cada puerto 2:1 está junto a su recurso: los puertos valen oro.' },
-  caos: { label: 'Caos total', description: 'Sin ninguna regla. Puede salir cualquier cosa.' },
+  caos: {
+    label: 'Caos total',
+    description: 'Sin ninguna regla. Las fichas salen con letras: poned los pueblos a ciegas y luego dadles la vuelta.',
+  },
 };
 
 export const PRESET_IDS = Object.keys(PRESETS) as PresetId[];
@@ -218,3 +221,9 @@ export function setOptionResolving<K extends keyof GenOptions>(
   }
   return { options: o, notes };
 }
+
+/** Modos más usados: se resaltan en la rueda. */
+export const FAVORITE_PRESETS: readonly PresetId[] = ['equilibrado', 'caos'];
+
+/** En Caos total las fichas salen con su letra: se ponen los primeros poblados sin saber los números. */
+export const LETTER_PRESETS: readonly PresetId[] = ['caos'];

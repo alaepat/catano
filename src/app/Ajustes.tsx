@@ -1,5 +1,5 @@
-// Ajustes: título de la portada, fondo, velocidad de animación, calidad gráfica, sonido, números de las fichas
-// (o sus letras) y borrar datos.
+// Ajustes: título de la portada, fondo, velocidad de animación, calidad gráfica, sonido, números de las fichas y
+// borrar datos.
 import { motion } from 'motion/react';
 import { useId } from 'react';
 import { isRed, pips } from '../game';
@@ -109,12 +109,6 @@ export function Ajustes() {
           <NumberPreview style={style} showPips={settings.showPips} />
           <Chips label="Tamaño" value={settings.numberSize} options={SIZE_OPTIONS} onChange={(v) => updateSettings({ numberSize: v })} />
           <FontChips value={settings.numberFont} onChange={(v) => updateSettings({ numberFont: v })} />
-          <Switch
-            label="Letras en vez de números"
-            hint="Las fichas salen con su letra (A, B, C...) para poner los primeros poblados sin saber los números. Luego, el botón Números les da la vuelta."
-            checked={settings.letters}
-            onChange={(v) => updateSettings({ letters: v })}
-          />
           <Switch label="El 6 y el 8 en rojo" checked={settings.redNumbers} onChange={(v) => updateSettings({ redNumbers: v })} />
           <Switch label="Mostrar puntitos de probabilidad" checked={settings.showPips} onChange={(v) => updateSettings({ showPips: v })} />
         </div>

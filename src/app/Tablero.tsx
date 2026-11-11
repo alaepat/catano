@@ -9,7 +9,7 @@ import { Glyph } from '../components/icons';
 import { modeGlyph } from '../lib/glyphs';
 import { Marcador } from '../components/Marcador';
 import { BackIcon, IconButton, Toast } from '../components/ui';
-import { analyzeBoard, geometryOf, letterLabels, modeGoal, modeLabel as labelOf, type Resource, type Terrain } from '../game';
+import { LETTER_PRESETS, analyzeBoard, geometryOf, isPreset, letterLabels, modeGoal, modeLabel as labelOf, type Resource, type Terrain } from '../game';
 import { backgroundFor } from '../lib/background';
 import { loadBoard3D } from '../lib/board3d';
 import { comentario } from '../lib/comentario';
@@ -61,6 +61,7 @@ export function Tablero() {
   // Con la opción de letras: generación a la que ya se le ha dado la vuelta a las fichas.
   const [flippedId, setFlippedId] = useState<number | null>(null);
   const [editingName, setEditingName] = useState(false);
+  const [confirmFlip, setConfirmFlip] = useState(false);
   const cancelName = useRef(false);
   const capture3D = useRef<(() => HTMLCanvasElement) | null>(null);
   const wrap2D = useRef<HTMLDivElement>(null);
@@ -93,8 +94,10 @@ export function Tablero() {
     [settings.numberSize, settings.numberFont, settings.redNumbers],
   );
   const analysis = useMemo(() => (board ? analyzeBoard(board) : null), [board]);
-  // Letras: hasta darles la vuelta, ni números, ni análisis (que delataría los mejores sitios).
-  const lettersOn = settings.letters && Boolean(board) && flippedId !== genId;
+  // Caos total: las fichas salen con su letra. Hasta darles la vuelta, ni números ni análisis
+  // (que delataría los mejores sitios).
+  const lettersMode = Boolean(generation && isPreset(generation.mode) && LETTER_PRESETS.includes(generation.mode));
+  const lettersOn = lettersMode && Boolean(board) && flippedId !== genId;
   const labels = useMemo(() => (lettersOn && board ? letterLabels(board) : null), [lettersOn, board]);
   const analysisOn = showAnalysis && !lettersOn;
   const highlight = useMemo(
@@ -127,6 +130,7 @@ export function Tablero() {
   };
 
   const darLaVuelta = () => {
+    setConfirmFlip(false);
     setFlippedId(genId);
     if (settings.sound) {
       unlockAudio();
@@ -339,6 +343,45 @@ export function Tablero() {
 
       <Toast messages={toast} onDone={clearToast} />
 
+      {/* Antes de dar la vuelta a las fichas, una preguntita. */}
+      <AnimatePresence>
+        {confirmFlip && lettersOn && (
+          <motion.div
+            className="confirm-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setConfirmFlip(false)}
+          >
+            <motion.div
+              className="confirm-card"
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="confirm-flip-title"
+              initial={{ scale: 0.85, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 10, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 24 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span className="confirm-emoji" aria-hidden>
+                🤨
+              </span>
+              <h2 id="confirm-flip-title">¿Seguro que ya pusieron todos los pueblos, pillín!!??</h2>
+              <p className="muted">Al darles la vuelta se ven los números de todas las fichas.</p>
+              <div className="confirm-actions">
+                <button type="button" className="btn-secondary" onClick={() => setConfirmFlip(false)}>
+                  Todavía no
+                </button>
+                <motion.button type="button" className="btn-primary" whileTap={{ scale: 0.95 }} onClick={darLaVuelta} autoFocus>
+                  ¡Sí, dale la vuelta!
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <nav className={FEATURES.foto && FEATURES.guardar ? 'action-bar five' : 'action-bar'} aria-label="Acciones del tablero">
         <button type="button" className={analysisOn ? 'action active' : 'action'} aria-pressed={analysisOn} onClick={() => setShowAnalysis(!showAnalysis)} disabled={!board || lettersOn}>
           <Glyph name="analisis" size={20} />
@@ -360,7 +403,7 @@ export function Tablero() {
           </button>
         )}
         {lettersOn ? (
-          <motion.button type="button" className="action flip-action" onClick={darLaVuelta} disabled={!revealed} whileTap={{ scale: 0.92 }}>
+          <motion.button type="button" className="action flip-action" onClick={() => setConfirmFlip(true)} disabled={!revealed} whileTap={{ scale: 0.92 }}>
             <span aria-hidden className="flip-glyph">
               A<i>→</i>8
             </span>

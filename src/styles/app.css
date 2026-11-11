@@ -2539,3 +2539,105 @@
   font-size: 1.15rem;
   color: var(--crema);
 }
+
+/* Modos favoritos: estrellita en la rueda y etiqueta en la tarjeta */
+.wheel-item.fav {
+  border-color: rgba(224, 164, 88, 0.75);
+  box-shadow: 0 0 14px rgba(224, 164, 88, 0.35);
+}
+
+.wheel-item.fav.active {
+  border-color: var(--acento);
+  box-shadow: 0 0 24px rgba(243, 233, 210, 0.35), 0 0 0 3px rgba(224, 164, 88, 0.55);
+}
+
+.wheel-fav {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--acento);
+  color: #1b1822;
+  font-size: 0.72rem;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.fav-chip {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(224, 164, 88, 0.18);
+  border: 1px solid rgba(224, 164, 88, 0.5);
+  color: var(--acento);
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  vertical-align: middle;
+  letter-spacing: 0.02em;
+}
+
+/* Preguntita antes de dar la vuelta a las letras */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(5, 4, 10, 0.65);
+}
+
+.confirm-card {
+  width: min(100%, 340px);
+  display: grid;
+  gap: 10px;
+  padding: 22px 20px 18px;
+  border-radius: 24px;
+  background: #1b1822;
+  border: 1px solid rgba(224, 164, 88, 0.4);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  color: var(--crema);
+}
+
+.confirm-emoji {
+  font-size: 2.4rem;
+  line-height: 1;
+}
+
+.confirm-card h2 {
+  margin: 0;
+  font-family: var(--fuente-titulo);
+  font-size: 1.35rem;
+  text-wrap: balance;
+}
+
+.confirm-card p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.confirm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.confirm-actions .btn-primary,
+.confirm-actions .btn-secondary {
+  width: 100%;
+  font: inherit;
+  font-weight: 700;
+  padding-inline: 8px;
+}
+
+.confirm-actions .btn-secondary {
+  color: var(--crema);
+}

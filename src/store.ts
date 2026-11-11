@@ -44,8 +44,6 @@ export interface Settings {
   numberSize: NumberSize;
   numberFont: NumberFont;
   redNumbers: boolean;
-  /** Al generar, las fichas enseñan su letra (A, B, C...) hasta que se les da la vuelta. */
-  letters: boolean;
   /** Título de la portada ("" = el de la app). */
   title: string;
 }
@@ -114,7 +112,6 @@ const DEFAULT_SETTINGS: Settings = {
   numberSize: 'normal',
   numberFont: 'clasica',
   redNumbers: true,
-  letters: false,
   title: '',
 };
 
@@ -286,7 +283,6 @@ export const useApp = create<State>()(
             ...current.settings,
             ...s.settings,
             background: migrateBackground(s.settings?.background ?? current.settings.background),
-            letters: s.settings?.letters === true,
             title: typeof s.settings?.title === 'string' ? s.settings.title.slice(0, TITLE_MAX) : '',
           },
           saved: Array.isArray(s.saved) ? s.saved.filter(isSavedBoard) : [],
