@@ -577,8 +577,8 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
   tableros). La tarjeta del modo lo dice: "Tus propias reglas a partir de Caos total...".
 
 **6.13 Regalo por WhatsApp** (v0.18.2, 2026-11-11)
-- [x] Vista previa del enlace: `public/og.jpg` (1200×630: icono + "Cataniciño" en Fraunces + "Un regalo para nuestras
-  partidas de Catan") y etiquetas `og:*` en `index.html` (la imagen con la dirección completa).
+- [x] ~~Vista previa del enlace~~ (`og.jpg` + etiquetas `og:*`, v0.18.2): en WhatsApp se veía fatal, **no gustó**.
+  Quitada en v0.18.5: el enlace se manda tal cual, con las instrucciones en el mensaje.
 - Instalar en iPhone no se puede automatizar (Apple no deja): Safari → Compartir → Añadir a pantalla de inicio.
 
 **6.9 Ruleta "¿Quién empieza?"** (v0.12)
