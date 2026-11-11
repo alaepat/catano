@@ -157,13 +157,11 @@ export function BackIcon() {
 export function GearIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden>
-      <path
-        d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Zm7.4-2.2.1-1-.1-1 2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-1.7-1L15 3h-4l-.4 2.6c-.6.3-1.2.6-1.7 1l-2.4-1-2 3.4 2 1.6-.1 1 .1 1-2 1.6 2 3.4 2.4-1c.5.4 1.1.7 1.7 1L11 21h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.4 1 2-3.4-2.1-1.6Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinejoin="round"
-      />
+      {/* Engranaje de 8 dientes y círculo, los dos centrados en (12, 12). */}
+      <g fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round">
+        <path d="M9.96 4.89 L10.17 2.58 L13.83 2.58 L14.04 4.89 L15.59 5.53 L17.37 4.04 L19.96 6.63 L18.47 8.41 L19.11 9.96 L21.42 10.17 L21.42 13.83 L19.11 14.04 L18.47 15.59 L19.96 17.37 L17.37 19.96 L15.59 18.47 L14.04 19.11 L13.83 21.42 L10.17 21.42 L9.96 19.11 L8.41 18.47 L6.63 19.96 L4.04 17.37 L5.53 15.59 L4.89 14.04 L2.58 13.83 L2.58 10.17 L4.89 9.96 L5.53 8.41 L4.04 6.63 L6.63 4.04 L8.41 5.53 Z" />
+        <circle cx="12" cy="12" r="3.1" />
+      </g>
     </svg>
   );
 }
