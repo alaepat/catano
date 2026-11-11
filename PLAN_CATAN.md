@@ -576,6 +576,11 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
   recuerda el último modo de la rueda (`basePreset`) y cada tablero guarda si va con letras (`letters`, también en Mis
   tableros). La tarjeta del modo lo dice: "Tus propias reglas a partir de Caos total...".
 
+**6.13 Regalo por WhatsApp** (v0.18.2, 2026-11-11)
+- [x] Vista previa del enlace: `public/og.jpg` (1200×630: icono + "Cataniciño" en Fraunces + "Un regalo para nuestras
+  partidas de Catan") y etiquetas `og:*` en `index.html` (la imagen con la dirección completa).
+- Instalar en iPhone no se puede automatizar (Apple no deja): Safari → Compartir → Añadir a pantalla de inicio.
+
 **6.9 Ruleta "¿Quién empieza?"** (v0.12)
 - [x] Rueda con los jugadores de la partida (sus colores y nombres). Sale sola al empezar una partida en el marcador y
   desde el menú "···" → "¿Quién empieza? Girar la ruleta". Gira 5-6 vueltas, "tic" (o vibración) en cada separación,
