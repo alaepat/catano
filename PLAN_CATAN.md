@@ -585,18 +585,22 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 ### 10.2 Chequeos visuales y de uso (en cada fase)
 *Fase 2 (2026-11-02): probado a 375 y 390 px. Sin scroll horizontal, botones y chips de 44 px o más,
 sin errores en la consola, ajustes que sobreviven a recargar. Pendiente: contraste medido y prueba en el móvil real.*
-- [ ] Se ve bien en móvil de 360 px de ancho y en PC
-- [ ] Sin scroll horizontal
-- [ ] Botones de al menos 44 px de alto (fáciles de tocar)
+*Repaso final (2026-11-11, v0.12.1, web publicada a 360 px): inicio, Tu isla (Catan y Navegantes), tablero de Nuevo
+mundo, marcador, ruleta y ajustes. Sin scroll horizontal, sin errores en la consola. Los círculos de color del marcador
+(32 px) tienen ahora zona de toque de ~40x44 px.*
+- [x] Se ve bien en móvil de 360 px de ancho y en PC
+- [x] Sin scroll horizontal
+- [x] Botones de al menos 44 px de alto (fáciles de tocar) (los de icono, 36-40 px con zona de toque suficiente)
 - [ ] Texto crema legible sobre todos los fondos (buen contraste)
-- [ ] Sin errores en la consola
+- [x] Sin errores en la consola
 - [ ] La animación va fluida en el móvil del usuario
 
 ### 10.3 Chequeo final antes de publicar
-- [ ] Funciona sin conexión tras la primera visita
+- [x] Funciona sin conexión tras la primera visita (todo precacheado, fondos y 3D incluidos; tipografías de Google
+  guardadas la primera vez)
 - [ ] Se instala en Android e iPhone
 - [ ] Los ajustes y tableros guardados sobreviven al cerrar la app
-- [ ] Si localStorage falla (modo incógnito), la app sigue funcionando
+- [x] Si localStorage falla (modo incógnito), la app sigue funcionando (`lib/storage.ts` lo envuelve todo en try/catch)
 - [ ] Lighthouse: rendimiento y accesibilidad > 90
 
 ---

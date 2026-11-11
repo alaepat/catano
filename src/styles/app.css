@@ -1465,12 +1465,20 @@
 }
 
 .color-swatch {
+  position: relative;
   width: 32px;
   height: 32px;
   border-radius: 50%;
   border: 2px solid rgba(0, 0, 0, 0.35);
   box-shadow: 0 0 0 0 transparent;
   transition: box-shadow 0.2s, transform 0.2s;
+}
+
+/* Zona de toque más grande que el círculo (más fácil de acertar con el dedo). */
+.color-swatch::after {
+  content: '';
+  position: absolute;
+  inset: -6px -4px;
 }
 
 .color-swatch.on {
