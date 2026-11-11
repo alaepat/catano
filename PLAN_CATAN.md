@@ -601,7 +601,7 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 
 **6.8 Números de las fichas a gusto** (Ajustes → "Números de las fichas", v0.7)
 - [x] Tamaño (pequeños / normales / grandes: cambia la cifra y un poco la ficha), letra (Clásica, Redonda, Moderna, Romana
-  con Cinzel, A mano con Caveat) y "El 6 y el 8 en rojo". Muestra en vivo con tres fichas. `lib/numberStyle.ts`; vale para 3D y 2D.
+  con Cinzel, A mano con Caveat) y "El 6 y el 8 en rojo". Muestra en vivo con tres fichas. `lib/numberStyle.ts`; vale para 3D y 2D. Por defecto: **Redonda** (desde v0.18.4) y fondo Espacio.
 
 ### Fase 7+: Extras (ver Banco de ideas)
 

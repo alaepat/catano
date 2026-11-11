@@ -2,7 +2,7 @@ import type { AnimSpeed, BackgroundId, Quality } from '../store';
 
 /** Nombre de la app (elegido por el usuario el 2026-11-11). */
 export const APP_TITLE = 'Cataniciño';
-export const APP_VERSION = '0.18.3';
+export const APP_VERSION = '0.18.4';
 
 /**
  * Partes de la app escondidas (la app es para una sola persona). El código sigue ahí:

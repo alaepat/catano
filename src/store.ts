@@ -117,7 +117,7 @@ const DEFAULT_SETTINGS: Settings = {
   quality: 'alta',
   sound: false,
   numberSize: 'normal',
-  numberFont: 'clasica',
+  numberFont: 'redonda',
   redNumbers: true,
   title: '',
 };
