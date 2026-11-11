@@ -20,7 +20,7 @@ function gen(id: MappedScenario, style: 'equilibrado' | 'azar', seed: number): B
 
 describe('Escenarios de Navegantes', () => {
   it('están todos en la lista, en orden del libro tras Nuevo mundo', () => {
-    expect(SCENARIOS.map((s) => s.id)).toEqual(['nuevo-mundo', ...MAPPED]);
+    expect(SCENARIOS.map((s) => s.id)).toEqual(['nuevo-mundo', ...MAPPED, 'tribu', 'tela', 'piratas', 'maravillas']);
   });
 
   it('Rumbo a nuevas costas: isla de 19, 10 de mar alrededor y 13 lejanas', () => {

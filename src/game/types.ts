@@ -62,8 +62,26 @@ export interface Board {
   robber: number | null;
   /** Navegantes: hexágono de mar donde empieza el pirata (null o sin poner: empieza fuera). */
   pirate?: number | null;
-  /** Escenarios: hexágonos que empiezan boca abajo (niebla) o con algo encima (fichas del escenario). */
-  marks?: { hex: number; kind: 'niebla' | 'ficha' | 'fortaleza' | 'aldea' | 'maravilla' }[];
+  /** Escenarios: cosas en los cruces (aldeas con número, fortalezas, casas de salida, maravillas...). */
+  spots?: Spot[];
+  /** Escenarios: regalos en los lados (fichas de punto y cartas de desarrollo boca abajo). */
+  gifts?: Gift[];
   /** Forma del tablero (si falta, el Catan base: así se leen los tableros guardados antes de Navegantes). */
   map?: MapId;
+}
+
+/** Algo puesto en un cruce al empezar un escenario. */
+export interface Spot {
+  vertex: number;
+  /** aldea: número de la tribu · fortaleza: pirata con 3 fichas · objetivo: cruce a alcanzar · casa: poblado de salida ·
+   *  maravilla: cruce reservado · peligro: cruce prohibido al empezar. */
+  kind: 'aldea' | 'fortaleza' | 'objetivo' | 'casa' | 'maravilla' | 'peligro';
+  n?: number;
+  color?: string;
+}
+
+/** Regalo en un lado: se lo lleva quien ponga un barco ahí. */
+export interface Gift {
+  edge: number;
+  kind: 'punto' | 'carta';
 }

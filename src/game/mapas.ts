@@ -29,14 +29,14 @@ export function cellId(cols: readonly number[], [k, j]: Cell): number {
 }
 const ids = (cols: readonly number[], cells: readonly Cell[]) => cells.map((c) => cellId(cols, c));
 
-const bag = (counts: Partial<Record<Terrain, number>>): Terrain[] =>
+export const bag = (counts: Partial<Record<Terrain, number>>): Terrain[] =>
   Object.entries(counts).flatMap(([t, n]) => Array<Terrain>(n ?? 0).fill(t as Terrain));
 
 /** Tierra "de verdad" (ni mar ni niebla). */
 const isLand = (t: Terrain | undefined) => t != null && t !== 'mar' && t !== 'niebla';
 
 /** El grupo más grande de terrenos iguales entre estos hexágonos (sin desierto). */
-function maxGroup(terrains: readonly Terrain[], hexes: readonly number[], geo: Geometry): number {
+export function maxGroup(terrains: readonly Terrain[], hexes: readonly number[], geo: Geometry): number {
   return Math.max(...hexes.map((h) => (terrains[h] === 'desierto' ? 0 : groupSize(terrains, h, geo))));
 }
 
@@ -69,7 +69,7 @@ export function landSeaEdges(terrains: readonly Terrain[], land: readonly number
  * 9 puertos (5 de 2:1 y 4 de 3:1) en lados entre tierra de `land` y mar. Sin compartir cruce, ni
  * hexágono de tierra ni de mar. Equilibrado: cada isla de 3 o más hexágonos tiene alguno.
  */
-function placePorts(terrains: readonly Terrain[], land: readonly number[], geo: Geometry, rng: Rng, balanced: boolean): Port[] | null {
+export function placePorts(terrains: readonly Terrain[], land: readonly number[], geo: Geometry, rng: Rng, balanced: boolean): Port[] | null {
   const candidates = landSeaEdges(terrains, land, geo).map((id) => geo.edges[id]);
   const islands = islandsIn(terrains, land, geo);
   for (let k = 0; k < 60; k++) {
@@ -101,12 +101,12 @@ function placePirate(terrains: readonly Terrain[], start: readonly number[], geo
 }
 
 /** Para repartir los números de una zona sin que cuente la tierra de otra (que aún no tiene números). */
-const only = (terrains: readonly Terrain[], hexes: readonly number[]): Terrain[] => {
+export const only = (terrains: readonly Terrain[], hexes: readonly number[]): Terrain[] => {
   const keep = new Set(hexes);
   return terrains.map((t, i) => (keep.has(i) ? t : 'mar'));
 };
 
-const empty = (geo: Geometry): (number | null)[] => geo.hexes.map(() => null);
+export const empty = (geo: Geometry): (number | null)[] => geo.hexes.map(() => null);
 
 interface ScenarioMap {
   map: MapId;

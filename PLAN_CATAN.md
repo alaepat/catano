@@ -546,7 +546,13 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
   azar. Ladrón donde dice el libro (desierto o el 12) y pirata en una casilla de mar. `game/mapas.ts` (con tests).
 - [x] Barco pirata en 3D (negro, vela oscura, calavera y bandera roja): en su casilla o, en Nuevo mundo, dando vueltas
   alrededor del marco. En 2D, disco negro con el barco.
-- [ ] Pendiente si se pide: escenarios 5-8 (Tribu olvidada, Tela, Piratas, Maravillas) y mapas de 3 jugadores.
+- [x] Escenarios 5-8 (v0.15) en el marco grande de 49 hexágonos (`GRANDE_GEOMETRY`, columnas 6-7-8-7-8-7-6), copiados
+  del libro en `game/mapas2.ts` (con tests que cuadran piezas y fichas con la lista del libro): La tribu olvidada (13;
+  isla grande al azar, sin 5/6/8/9 abajo; regalos: 8 fichas de punto, 4 cartas y 6 puertos), Tela para Catan (14; dos
+  islas al azar y 8 aldeas con número en los cruces), Las islas piratas (10 + fortaleza; mapa fijo, sin ladrón, con
+  fortalezas, objetivos y casas de cada color) y Las maravillas de Catan (isla grande al azar, sin 6/8 junto a los
+  desiertos; cruces reservados y "!"). `Board.spots` (cruces) y `Board.gifts` (lados), en 2D y 3D.
+- [ ] Pendiente si se pide: mapas de 3 jugadores.
 
 **6.9 Ruleta "¿Quién empieza?"** (v0.12)
 - [x] Rueda con los jugadores de la partida (sus colores y nombres). Sale sola al empezar una partida en el marcador y

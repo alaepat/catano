@@ -296,6 +296,81 @@ export function BoardSvg({ board, showPips = true, numberStyle = DEFAULT_NUMBER_
         </g>
       )}
 
+      {/* Escenarios: regalos en los lados y piezas en los cruces. */}
+      {(board.gifts ?? []).map((g, i) => {
+        const e = geo.edges[g.edge];
+        const a = VERTICES[e.a];
+        const b = VERTICES[e.b];
+        const land = e.hexes.find((h) => board.terrains[h] !== 'mar') ?? e.hexes[0];
+        const mx = (a.x + b.x) / 2;
+        const my = (a.y + b.y) / 2;
+        const len = Math.hypot(mx - HEXES[land].x, my - HEXES[land].y) || 1;
+        const x = (mx + ((mx - HEXES[land].x) / len) * 0.3) * S;
+        const y = (my + ((my - HEXES[land].y) / len) * 0.3) * S;
+        return (
+          <motion.g key={`g${i}`} style={fromCenter} {...enter(T.robber, { scale: 0.3 })}>
+            {g.kind === 'punto' ? (
+              <>
+                <circle cx={x} cy={y} r={S * 0.24} fill="#e9b949" stroke="var(--tinta)" strokeWidth={1.5} />
+                <text x={x} y={y + 1} textAnchor="middle" dominantBaseline="middle" fontSize={11} fontWeight={800} fill="var(--tinta)">
+                  1
+                </text>
+              </>
+            ) : (
+              <>
+                <rect x={x - S * 0.17} y={y - S * 0.24} width={S * 0.34} height={S * 0.48} rx={3} fill="#f3ead6" stroke="var(--tinta)" strokeWidth={1.5} />
+                <text x={x} y={y + 1} textAnchor="middle" dominantBaseline="middle" fontSize={11} fontWeight={800} fill="#8a3b2a">
+                  ?
+                </text>
+              </>
+            )}
+          </motion.g>
+        );
+      })}
+      {(board.spots ?? []).map((sp, i) => {
+        const x = VERTICES[sp.vertex].x * S;
+        const y = VERTICES[sp.vertex].y * S;
+        return (
+          <motion.g key={`s${i}`} style={fromCenter} {...enter(T.robber, { y: -20, scale: 0.4 })}>
+            {sp.kind === 'aldea' && sp.n != null && (
+              <>
+                <circle cx={x} cy={y} r={S * 0.3} fill="var(--marfil)" stroke="#8a5a2b" strokeWidth={3} />
+                <text x={x} y={y - 1} textAnchor="middle" dominantBaseline="middle" fontSize={14} fontWeight={800} fill={isRed(sp.n) ? 'var(--rojo-numero)' : 'var(--tinta)'}>
+                  {sp.n}
+                </text>
+                <text x={x} y={y + 9} textAnchor="middle" fontSize={7} letterSpacing={-1} fill="var(--tinta)">
+                  {'•'.repeat(pips(sp.n))}
+                </text>
+              </>
+            )}
+            {(sp.kind === 'fortaleza' || sp.kind === 'casa') && (
+              <path
+                d={`M ${x - 9} ${y + 8} V ${y - 2} L ${x} ${y - 11} L ${x + 9} ${y - 2} V ${y + 8} Z`}
+                fill={sp.color ?? '#333'}
+                stroke={sp.kind === 'fortaleza' ? '#111' : 'var(--tinta)'}
+                strokeWidth={sp.kind === 'fortaleza' ? 4 : 2}
+                strokeLinejoin="round"
+              />
+            )}
+            {sp.kind === 'fortaleza' && (
+              <text x={x} y={y + 2} textAnchor="middle" dominantBaseline="middle" fontSize={9} fontWeight={900} fill="#111">
+                3
+              </text>
+            )}
+            {sp.kind === 'objetivo' && <circle cx={x} cy={y} r={9} fill={sp.color ?? '#333'} stroke="var(--tinta)" strokeWidth={2} />}
+            {sp.kind === 'maravilla' && <rect x={x - 8} y={y - 8} width={16} height={16} fill={sp.color ?? '#7a2a2a'} stroke="var(--tinta)" strokeWidth={1.5} />}
+            {sp.kind === 'peligro' && (
+              <>
+                <circle cx={x} cy={y} r={10} fill="#c62828" stroke="var(--marfil)" strokeWidth={2} />
+                <text x={x} y={y + 1} textAnchor="middle" dominantBaseline="middle" fontSize={14} fontWeight={900} fill="var(--marfil)">
+                  !
+                </text>
+              </>
+            )}
+          </motion.g>
+        );
+      })}
+
       {/* Cruces resaltados */}
       {highlight.map((v) => (
         <circle key={v} cx={VERTICES[v].x * S} cy={VERTICES[v].y * S} r={7} fill="var(--acento)" stroke="var(--tinta)" strokeWidth={2} />

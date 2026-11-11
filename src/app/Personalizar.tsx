@@ -157,6 +157,7 @@ function CincoSeisInfo({ style, onStyle }: { style: CincoSeisStyle; onStyle: (s:
 function NavegantesInfo({ sea, setSea }: { sea: SeaOptions; setSea: (p: Partial<SeaOptions>) => void }) {
   const info = scenarioInfo(sea.scenario);
   const nuevoMundo = sea.scenario === 'nuevo-mundo';
+  const fixedMap = sea.scenario === 'piratas';
   return (
     <motion.div className="nm-info" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
       {SCENARIOS.length > 1 && (
@@ -175,13 +176,21 @@ function NavegantesInfo({ sea, setSea }: { sea: SeaOptions; setSea: (p: Partial<
               <li key={f}>{f}</li>
             ))}
             <li>
-              Gana quien llegue a <b>{info.goal} puntos</b>
+              {info.goalText ?? (
+                <>
+                  Gana quien llegue a <b>{info.goal} puntos</b>
+                </>
+              )}
             </li>
             <li>Barco: 1 madera + 1 lana</li>
           </ul>
         </motion.div>
       </AnimatePresence>
       <h2 className="section-title">{nuevoMundo ? 'Islas' : 'Reparto'}</h2>
+      {fixedMap ? (
+        <p className="muted nm-hint">Mapa fijo, tal cual el libro: solo los puertos cambian de una vez a otra.</p>
+      ) : (
+      <>
       <Chips
         label={nuevoMundo ? 'Cómo se reparten' : 'Terrenos y números'}
         value={sea.style}
@@ -191,12 +200,14 @@ function NavegantesInfo({ sea, setSea }: { sea: SeaOptions; setSea: (p: Partial<
       <p className="muted nm-hint">
         {!nuevoMundo
           ? sea.style === 'equilibrado'
-            ? 'La silueta del libro, con terrenos y números al azar pero bien repartidos.'
-            : 'La silueta del libro, con terrenos y números al azar (6 y 8 separados), como permite el libro.'
+            ? 'Lo que el libro deja cambiar, al azar pero bien repartido. Lo demás, como en el libro.'
+            : 'Lo que el libro deja cambiar, al azar (solo con el 6 y el 8 separados).'
           : sea.style === 'equilibrado'
             ? 'De 3 a 6 islas, ninguna gigante, cada recurso en al menos dos islas y números bien repartidos.'
             : 'Tal cual dice el libro: todo al azar, solo con el 6 y el 8 separados.'}
       </p>
+      </>
+      )}
       {nuevoMundo && (
         <>
           <h2 className="section-title">Piezas extra (variante)</h2>

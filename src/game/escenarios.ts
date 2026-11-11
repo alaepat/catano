@@ -3,6 +3,7 @@
 // repartir al azar terrenos y números ("Variable Set-up"). Nuevo mundo es el único con el mapa entero al azar.
 import { CS_INFO } from './cincoSeis';
 import { generateScenarioMap } from './mapas';
+import { generateScenarioMap2 } from './mapas2';
 import { generateNuevoMundo, NM_GOAL, NM_INFO, NO_EXTRAS, type NuevoMundoExtras, type NuevoMundoStyle } from './navegantes';
 import { PRESET_INFO, PRESET_IDS, type PresetId } from './options';
 import type { GenResult } from './generator';
@@ -27,6 +28,8 @@ export interface ScenarioInfo {
   players: SeaPlayers[];
   /** Puntos para ganar. */
   goal: number;
+  /** Cómo se gana, si no basta con llegar a `goal` puntos. */
+  goalText?: string;
   /** Datos para la ficha de "Tu isla". */
   facts: string[];
 }
@@ -106,8 +109,69 @@ export const DESIERTO: ScenarioInfo = {
   ],
 };
 
+export const TRIBU: ScenarioInfo = {
+  id: 'tribu',
+  number: 5,
+  label: 'La tribu olvidada',
+  description: 'Una isla larga en el centro y, alrededor, las islitas de una tribu que os espera con regalos.',
+  players: [4],
+  goal: 13,
+  facts: [
+    'Marco grande de 49 hexágonos. Solo la isla del centro tiene números',
+    'Regalos de la tribu: 8 fichas de punto, 4 cartas de desarrollo y 6 puertos. Pon un barco al lado y son tuyos',
+    'Las casas, solo en la isla grande (en las islitas no se puede construir)',
+    'El ladrón empieza en un desierto y no puede ir a las islitas',
+  ],
+};
+
+export const TELA: ScenarioInfo = {
+  id: 'tela',
+  number: 6,
+  label: 'Tela para Catan',
+  description: 'Dos islas grandes y, entre ellas, cuatro islitas con aldeas que tejen tela.',
+  players: [4],
+  goal: 14,
+  facts: [
+    '8 aldeas de la tribu (los números en los cruces de las islitas), con 5 telas cada una',
+    'Llega con barcos a una aldea: te llevas 1 tela, y otra cada vez que sale su número',
+    '2 telas = 1 punto. Se ponen 3 casas al empezar (la tercera da recursos)',
+    'También se acaba si solo 3 aldeas o menos tienen telas. El ladrón empieza en un 12',
+  ],
+};
+
+export const PIRATAS: ScenarioInfo = {
+  id: 'piratas',
+  number: 7,
+  label: 'Las islas piratas',
+  description: 'Los piratas tienen fortalezas en el oeste. Construye barcos de guerra y recupera la tuya.',
+  players: [4],
+  goal: 10,
+  facts: [
+    'Mapa fijo (el libro pide no cambiarlo; solo los puertos van al azar)',
+    'Cada color tiene una casa ya puesta, un cruce objetivo (círculo) y su fortaleza pirata (3 fichas)',
+    'Sin ladrón: la flota pirata da vueltas a los desiertos y ataca las costas',
+  ],
+  goalText: 'Gana quien conquiste su fortaleza y tenga 10 puntos',
+};
+
+export const MARAVILLAS: ScenarioInfo = {
+  id: 'maravillas',
+  number: 8,
+  label: 'Las maravillas de Catan',
+  description: 'Paz en Catan: gana quien termine antes su maravilla.',
+  players: [4],
+  goal: 10,
+  facts: [
+    'Cada uno puede construir 1 de las 5 maravillas, de 4 niveles',
+    'Al empezar no se puede poner casa en las islitas ni en los cruces marcados (cuadrados y "!")',
+    '+1 punto por la primera casa en cada isla pequeña',
+    'Sin pirata; el ladrón empieza en un desierto',
+  ],
+  goalText: 'Gana quien acabe su maravilla, o quien tenga 10 puntos y la maravilla más alta',
+};
+
 /** Todos los escenarios, en el orden del libro (Nuevo mundo, el de mapa al azar, primero). */
-export const SCENARIOS: ScenarioInfo[] = [NUEVO_MUNDO, NUEVAS_COSTAS, CUATRO_ISLAS, NIEBLA, DESIERTO];
+export const SCENARIOS: ScenarioInfo[] = [NUEVO_MUNDO, NUEVAS_COSTAS, CUATRO_ISLAS, NIEBLA, DESIERTO, TRIBU, TELA, PIRATAS, MARAVILLAS];
 
 export const scenarioInfo = (id: SeaScenario): ScenarioInfo => SCENARIOS.find((s) => s.id === id) ?? NUEVO_MUNDO;
 
@@ -140,6 +204,11 @@ export function generateNavegantes(opts: SeaOptions, seed: number = randomSeed()
     case 'niebla':
     case 'desierto':
       return generateScenarioMap(opts.scenario, opts.style, seed);
+    case 'tribu':
+    case 'tela':
+    case 'piratas':
+    case 'maravillas':
+      return generateScenarioMap2(opts.scenario, opts.style, seed);
     default:
       return generateNuevoMundo(opts.style, seed, opts.extras);
   }

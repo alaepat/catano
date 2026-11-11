@@ -163,6 +163,22 @@ export const BASE_GEOMETRY: Geometry = makeGeometry('base', baseCoords(), false,
 export const SEA_GEOMETRY: Geometry = makeGeometry('nuevo-mundo', seaCoords(), true, 'mar');
 // Los escenarios de Navegantes con el marco grande comparten su forma.
 for (const id of ['nuevas-costas', 'niebla', 'desierto'] as const) makeGeometry(id, seaCoords(), true, 'mar');
+/**
+ * Marco grande de los escenarios 5-8: 49 hexágonos en columnas de 6-7-8-7-8-7-6 (el libro lo dibuja de pie).
+ * La casilla `i` de la columna `k` es el id (columnas anteriores) + i.
+ */
+export const GRANDE_COLUMNS = [6, 7, 8, 7, 8, 7, 6];
+function grandeCoords(): [number, number][] {
+  const top = [1, 0.5, 0, 0.5, 0, 0.5, 1];
+  const coords: [number, number][] = [];
+  GRANDE_COLUMNS.forEach((n, k) => {
+    const q = k - 3;
+    for (let i = 0; i < n; i++) coords.push([q, top[k] + i - q / 2 + 0.5]);
+  });
+  return coords;
+}
+export const GRANDE_GEOMETRY: Geometry = makeGeometry('tribu', grandeCoords(), true, 'mar');
+for (const id of ['tela', 'piratas', 'maravillas'] as const) makeGeometry(id, grandeCoords(), true, 'mar');
 /** Marco de Las cuatro islas: 35 hexágonos (columnas de 4-5-6-5-6-5-4). */
 export const CUATRO_ISLAS_GEOMETRY: Geometry = makeGeometry('cuatro-islas', seaCoords(1), true, 'mar');
 /** Ampliación para 5-6 jugadores: 30 hexágonos en filas 3-4-5-6-5-4-3. */
