@@ -319,9 +319,6 @@ function AdvancedOptions({ options: o, setOption }: { options: GenOptions; setOp
         />
       </Collapsible>
 
-      <Collapsible title="Ladrón" icon={<Glyph name="ladron" size={20} />}>
-        <Chips label="Empieza en" value={o.robberStart} onChange={(v) => setOption('robberStart', v)} options={[['desierto', 'El desierto'], ['fuera', 'Fuera del tablero']]} />
-      </Collapsible>
     </div>
   );
 }

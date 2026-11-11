@@ -26,7 +26,6 @@ export interface GenOptions {
   portPositions: 'fijas' | 'aleatorias';
   /** Puerto 2:1 junto a un hexágono de su mismo recurso. */
   portNearResource: 'da-igual' | 'evitar' | 'forzar';
-  robberStart: 'desierto' | 'fuera';
 }
 
 export type PresetId =
@@ -56,7 +55,6 @@ const BASE: GenOptions = {
   ports: true,
   portPositions: 'aleatorias',
   portNearResource: 'da-igual',
-  robberStart: 'desierto',
 };
 
 const EQUILIBRADO: GenOptions = {
@@ -80,7 +78,7 @@ export const PRESETS: Record<PresetId, GenOptions> = {
     portPositions: 'fijas',
     portNearResource: 'evitar',
   },
-  tranquila: { ...EQUILIBRADO, desert: 'costa', robberStart: 'fuera' },
+  tranquila: { ...EQUILIBRADO, desert: 'costa' },
   escasez: {
     ...BASE,
     maxTerrainGroup: 2,
@@ -114,7 +112,7 @@ export const PRESET_INFO: Record<PresetId, PresetInfo> = {
    
     description: 'Equilibrio máximo: ningún terreno repetido junto, cruces de 11 puntitos como mucho y puertos lejos de su recurso.',
   },
-  tranquila: { label: 'Tranquila', description: 'Equilibrado y sin ladrón al empezar. Para jugar relajados o con gente nueva.' },
+  tranquila: { label: 'Tranquila', description: 'Equilibrado y con el desierto en la costa, para que el ladrón moleste menos. Para jugar relajados o con gente nueva.' },
   escasez: { label: 'Escasez', description: 'Un recurso al azar solo tiene números malos. Tocará negociar… o pelearse.' },
   continentes: {
     label: 'Continentes',

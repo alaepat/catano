@@ -285,7 +285,7 @@ que elige un modo al azar y dice cuál ha tocado.
 | 📜 **Oficial** | Como el reglamento | Espiral A-R, puertos fijos, desierto al azar |
 | ⚖️ **Equilibrado** | Partida normal y justa | Desierto en el centro, máx. 2 terrenos iguales juntos, 6/8, iguales y 2-12 separados, reparto justo, tope 12 |
 | 🏆 **Competitivo** | Equilibrio máximo | Como Equilibrado + ningún terreno igual junto, tope 11, puertos fijos y lejos de su recurso |
-| ☕ **Tranquila** | Jugar relajados o con gente nueva | Como Equilibrado + ladrón fuera al empezar, desierto en la costa |
+| ☕ **Tranquila** | Jugar relajados o con gente nueva | Como Equilibrado + desierto (y ladrón) en la costa. (Hasta v0.18.2 el ladrón empezaba fuera) |
 | 📉 **Escasez** | Partidas de mucho comercio | Un recurso al azar solo tiene 2, 3, 11 o 12 |
 | 🗺️ **Continentes** | Expandirse o comerciar | Cada terreno forma una sola región, reparto justo |
 | 🔥 **Pelea por el centro** | Pelearse por el interior | Todos los 6 y 8 en el interior (pueden tocarse), desierto en la costa |
@@ -626,7 +626,7 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 - [x] Siempre hay exactamente 19 hexágonos con la cantidad correcta de cada terreno
 - [x] Siempre hay 18 números con la distribución correcta y el desierto sin número
 - [x] Siempre hay 9 puertos (4 de 3:1 y 5 de 2:1, uno por recurso)
-- [x] El ladrón empieza donde dice la opción
+- [x] El ladrón empieza siempre en el desierto (el ajuste "Ladrón" se quitó en v0.18.3: siempre lo ponemos ahí)
 - [x] **10.000 generaciones** con cada preset → ninguna incumple sus reglas activas
 - [x] Misma semilla + mismas opciones → **exactamente el mismo tablero**
 - [x] Cada modo especial cumple lo suyo (escasez, regiones, 6/8 en el interior o la costa, ladrón fuera)

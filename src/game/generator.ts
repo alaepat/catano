@@ -58,7 +58,7 @@ export function generateBoard(opts: GenOptions, seed: number = randomSeed()): Ge
       ports = placed;
     }
     const desert = terrains.indexOf('desierto');
-    const board: Board = { terrains, numbers, ports, robber: opts.robberStart === 'desierto' ? desert : null };
+    const board: Board = { terrains, numbers, ports, robber: desert };
     const broken = findViolations(board, opts);
     if (broken.length === 0) return { ok: true, board, seed, attempts: attempt };
     broken.forEach(fail);

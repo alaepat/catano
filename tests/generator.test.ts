@@ -98,9 +98,9 @@ describe.each(PRESET_IDS)('modo %s', (preset) => {
     expect(ms).toBeLessThan(50);
   }, 120_000);
 
-  it('el ladrón empieza donde dice el modo', () => {
+  it('el ladrón empieza en el desierto', () => {
     const board = mustGenerate(opts, 7);
-    expect(board.robber).toBe(opts.robberStart === 'desierto' ? board.terrains.indexOf('desierto') : null);
+    expect(board.robber).toBe(board.terrains.indexOf('desierto'));
   });
 
   it('no tiene opciones contradictorias y tiene descripción', () => {
@@ -110,11 +110,6 @@ describe.each(PRESET_IDS)('modo %s', (preset) => {
 });
 
 describe('opciones concretas', () => {
-  it('ladrón fuera del tablero', () => {
-    const board = mustGenerate({ ...PRESETS.equilibrado, robberStart: 'fuera' }, 3);
-    expect(board.robber).toBeNull();
-  });
-
   it('desierto en la costa', () => {
     for (let seed = 0; seed < 200; seed++) {
       const board = mustGenerate({ ...PRESETS.caos, desert: 'costa' }, seed);
@@ -188,8 +183,9 @@ describe('modos especiales', () => {
     }
   });
 
-  it('Tranquila: el ladrón empieza fuera del tablero', () => {
-    expect(mustGenerate(PRESETS.tranquila, 1).robber).toBeNull();
+  it('Tranquila: el desierto (con el ladrón) en la costa', () => {
+    const board = mustGenerate(PRESETS.tranquila, 1);
+    expect(board.robber).toBe(board.terrains.indexOf('desierto'));
   });
 });
 

@@ -23,7 +23,7 @@ export type RuleId =
 
 export const RULE_LABELS: Record<RuleId, string> = {
   desierto: 'El desierto no está donde se pidió',
-  ladron: 'El ladrón no empieza donde se pidió',
+  ladron: 'El ladrón no empieza en el desierto',
   'grupo-terreno': 'Demasiados terrenos iguales juntos',
   'rojos-juntos': 'Hay un 6 o un 8 tocando otro 6 u 8',
   'iguales-juntos': 'Hay dos números iguales juntos',
@@ -172,7 +172,8 @@ export function findViolations(board: Board, opts: GenOptions): RuleId[] {
   const desert = board.terrains.indexOf('desierto');
   if (opts.desert === 'centro' && desert !== CENTER_HEX) out.push('desierto');
   if (opts.desert === 'costa' && HEXES[desert]?.ring !== 2) out.push('desierto');
-  if (board.robber !== (opts.robberStart === 'desierto' ? desert : null)) out.push('ladron');
+  // El ladrón empieza siempre en el desierto.
+  if (board.robber !== desert) out.push('ladron');
   if (opts.maxTerrainGroup > 0 && largestTerrainGroup(board.terrains) > opts.maxTerrainGroup) out.push('grupo-terreno');
   if (opts.terrainLayout === 'regiones' && !allTerrainsInRegions(board.terrains)) out.push('regiones');
   out.push(...numberViolations(board.terrains, board.numbers, opts));

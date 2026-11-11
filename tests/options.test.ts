@@ -18,7 +18,6 @@ const VALUES: { [K in keyof GenOptions]: GenOptions[K][] } = {
   ports: [true, false],
   portPositions: ['fijas', 'aleatorias'],
   portNearResource: ['da-igual', 'evitar', 'forzar'],
-  robberStart: ['desierto', 'fuera'],
 };
 
 describe('cambiar opciones sin crear combinaciones imposibles', () => {
