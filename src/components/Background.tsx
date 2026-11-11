@@ -3,7 +3,6 @@ import { motion } from 'motion/react';
 import { useEffect, useRef } from 'react';
 import { useApp, type BackgroundId } from '../store';
 import { FloatingTable, NightTable, Park } from './PaintedScenes';
-import { Beach, Canoe } from './Scenes';
 
 export function Background({ id }: { id: BackgroundId }) {
   return (
@@ -18,8 +17,13 @@ export function Background({ id }: { id: BackgroundId }) {
     >
       {id === 'espacio' && <Stars flying />}
       {id === 'oceano' && <Waves />}
-      {id === 'playa' && <Beach />}
-      {id === 'canoa' && <Canoe />}
+      {(id === 'aurora' || id === 'lavanda') && <Glows />}
+      {id === 'bruma' && (
+        <>
+          <Glows />
+          <Motes />
+        </>
+      )}
       {id === 'parque' && <Park />}
       {id === 'mesa' && <NightTable />}
       {id === 'flotante' && <FloatingTable />}
@@ -31,6 +35,39 @@ export function Background({ id }: { id: BackgroundId }) {
         </>
       )}
     </motion.div>
+  );
+}
+
+/** Manchas de luz muy suaves que se mueven despacio (los colores los pone el CSS de cada fondo). */
+function Glows() {
+  return (
+    <>
+      {[0, 1, 2].map((i) => (
+        <div key={i} className={`glow glow-${i}`} />
+      ))}
+    </>
+  );
+}
+
+/** Motas de luz desenfocadas que suben poco a poco (posiciones fijas, sin azar). */
+const MOTES = Array.from({ length: 16 }, (_, i) => ({
+  x: (i * 61 + 7) % 100,
+  size: 10 + ((i * 37) % 34),
+  dur: 22 + ((i * 13) % 18),
+  delay: -((i * 29) % 40),
+}));
+
+function Motes() {
+  return (
+    <>
+      {MOTES.map((m, i) => (
+        <span
+          key={i}
+          className="mote"
+          style={{ left: `${m.x}%`, width: m.size, height: m.size, animationDuration: `${m.dur}s`, animationDelay: `${m.delay}s` }}
+        />
+      ))}
+    </>
   );
 }
 

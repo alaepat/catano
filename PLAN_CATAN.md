@@ -120,6 +120,8 @@ Tipografías sugeridas (Google Fonts):
 4. **Atardecer**: degradado naranja-violeta
 5. **Bosque nocturno**: siluetas de árboles y luciérnagas
 6. **Minimal**: color liso oscuro (consume menos batería)
+7. **Aurora**, **Bruma dorada** y **Lavanda** (v0.18): solo luz y color, manchas difuminadas que se mueven muy despacio
+   (y en Bruma, motas de luz que suben). Sin dibujos.
 
 Cada fondo es un componente intercambiable con la misma interfaz.
 
@@ -485,8 +487,9 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
   vibración corta. En el centro, un minitablero de ejemplo de ese modo (semilla fija). Debajo, nombre y descripción.
 
 **6.5 Fondos nuevos**
-- [x] Playa (arena, olas, palmeras al atardecer). `components/Scenes.tsx`.
-- [x] Canoa liderando los mares (canoa con remero que se mece sobre olas animadas, al amanecer).
+- [x] ~~Playa~~ y ~~Canoa~~ (dibujadas con código): **no gustaron** (2026-11-11, se notaba que árboles, canoa y remero
+  estaban hechos con código). Quitadas en v0.18; quien las tenía pasa a Lavanda / Aurora (`migrateBackground`).
+  Regla: fondos nuevos **suaves, sin personajes ni objetos dibujados con código** (solo luz, color y degradados).
 - [x] Espacio: con la isla ya generada, las estrellas pasan hacia abajo con estela, como si la isla volara hacia arriba
   (las estrellas 3D se apagan al terminar y toman el relevo las del fondo; `flying` en el store).
 - [x] ~~Camping~~ (v0.7, ilustración nocturna con el Polo por detrás): **no gustó** (2026-11-02). Sustituido por el Parque.

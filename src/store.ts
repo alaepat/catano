@@ -17,12 +17,15 @@ export type Screen = 'inicio' | 'personalizar' | 'tablero' | 'ajustes' | 'tabler
 export type ModeChoice = PresetId | 'personalizado' | 'sorpresa';
 /** Juego: el Catan base, la ampliación 5-6 jugadores o la expansión Navegantes. */
 export type GameId = 'base' | 'cinco-seis' | 'navegantes';
-export type BackgroundId = 'espacio' | 'oceano' | 'playa' | 'canoa' | 'parque' | 'mesa' | 'flotante' | 'pergamino' | 'atardecer' | 'bosque' | 'minimal';
-const BACKGROUND_IDS: BackgroundId[] = ['espacio', 'oceano', 'playa', 'canoa', 'parque', 'mesa', 'flotante', 'pergamino', 'atardecer', 'bosque', 'minimal'];
+export type BackgroundId = 'espacio' | 'oceano' | 'aurora' | 'bruma' | 'lavanda' | 'parque' | 'mesa' | 'flotante' | 'pergamino' | 'atardecer' | 'bosque' | 'minimal';
+const BACKGROUND_IDS: BackgroundId[] = ['espacio', 'oceano', 'aurora', 'bruma', 'lavanda', 'parque', 'mesa', 'flotante', 'pergamino', 'atardecer', 'bosque', 'minimal'];
 
 /** Fondo guardado de una versión anterior: el Camping pasó a ser el Parque; uno que ya no existe vuelve al Espacio. */
 function migrateBackground(id: unknown): BackgroundId {
   if (id === 'camping') return 'parque';
+  // Playa y Canoa se quitaron (v0.18): pasan a los fondos suaves más parecidos.
+  if (id === 'playa') return 'lavanda';
+  if (id === 'canoa') return 'aurora';
   return BACKGROUND_IDS.includes(id as BackgroundId) ? (id as BackgroundId) : 'espacio';
 }
 export type AnimSpeed = 'epica' | 'rapida' | 'sin';
