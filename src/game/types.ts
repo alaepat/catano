@@ -1,5 +1,5 @@
 /** `oro` = río de oro de Navegantes (da el recurso que quieras). `mar` solo en Navegantes. */
-export type Terrain = 'bosque' | 'pasto' | 'cereal' | 'colinas' | 'montanas' | 'desierto' | 'mar' | 'oro';
+export type Terrain = 'bosque' | 'pasto' | 'cereal' | 'colinas' | 'montanas' | 'desierto' | 'mar' | 'oro' | 'niebla';
 
 /** Escenarios de Navegantes con mapa fijo (su silueta) y reparto al azar dentro de ella. */
 export type ScenarioId = 'nuevas-costas' | 'cuatro-islas' | 'niebla' | 'desierto' | 'tribu' | 'tela' | 'piratas' | 'maravillas';

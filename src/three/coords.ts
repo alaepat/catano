@@ -42,6 +42,7 @@ export const TERRAIN_COLOR: Record<Terrain, string> = {
   desierto: '#d9c49a',
   mar: '#3d8fbf',
   oro: '#7a6650',
+  niebla: '#dfe5e9',
 };
 
 export type XZ = readonly [number, number];

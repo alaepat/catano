@@ -58,6 +58,7 @@ const M = {
   })(),
   goldRock: mat('#8a6a3c'),
   river: mat('#4aa3c9', { roughness: 0.2 }),
+  fog: mat('#ffffff', { roughness: 1, flatShading: false, transparent: true, opacity: 0.85 }),
 };
 
 const G = {
@@ -161,6 +162,16 @@ function Decor({ terrain, id, shadows }: { terrain: Terrain; id: number; shadows
       );
     case 'mar':
       return null;
+    case 'niebla':
+      // Niebla: nubecitas blancas que tapan la casilla.
+      return (
+        <group>
+          {[0, 72, 144, 216, 288].map((deg, i) => (
+            <mesh key={i} geometry={G.bush} material={M.fog} position={at(base + deg, 0.4 + j(i) * 0.15, 0.08 + j(i + 2) * 0.06)} scale={2.2 + j(i + 4)} />
+          ))}
+          <mesh geometry={G.bush} material={M.fog} position={[0, 0.14, 0]} scale={3} />
+        </group>
+      );
     case 'oro':
       // Río de oro: un arroyo, rocas y pepitas brillantes.
       return (

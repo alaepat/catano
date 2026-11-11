@@ -540,7 +540,13 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
 - [x] Oro y desierto opcionales en Nuevo mundo (v0.13, variante de la casa: el libro no los usa en este escenario).
   2 ríos de oro y/o 2 desiertos en lugar de casillas de mar. El oro lleva 3, 4, 10 u 11 y, en "Equilibradas", va en
   islas pequeñas y no juntos. Terreno nuevo `oro` (2D, 3D con arroyo y pepitas, tarjeta "Da el recurso que elijas").
-- [ ] Otros escenarios del libro con su silueta y reparto variable (`game/escenarios.ts`) y pirata en 3D (en curso).
+- [x] Escenarios 1-4 del libro (v0.14, montaje de 4 jugadores): Rumbo a nuevas costas (14 puntos), Las cuatro islas
+  (13, marco de 35), Islas de niebla (12, casillas `niebla` blancas con "?" en 2D y nubes en 3D) y A través del desierto
+  (14). Silueta fija del libro y, dentro, terrenos, números y 9 puertos al azar ("Variable Set-up"); Equilibrado o Al
+  azar. Ladrón donde dice el libro (desierto o el 12) y pirata en una casilla de mar. `game/mapas.ts` (con tests).
+- [x] Barco pirata en 3D (negro, vela oscura, calavera y bandera roja): en su casilla o, en Nuevo mundo, dando vueltas
+  alrededor del marco. En 2D, disco negro con el barco.
+- [ ] Pendiente si se pide: escenarios 5-8 (Tribu olvidada, Tela, Piratas, Maravillas) y mapas de 3 jugadores.
 
 **6.9 Ruleta "¿Quién empieza?"** (v0.12)
 - [x] Rueda con los jugadores de la partida (sus colores y nombres). Sale sola al empezar una partida en el marcador y

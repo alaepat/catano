@@ -10,7 +10,7 @@ import type { Quality } from '../store';
 import { ClockContext, useClock, type Clock } from './clock';
 import { GeoContext, TOP, boardHalf, seaRadius, useGeo } from './coords';
 import { Island } from './Island';
-import { Ports, Robber } from './Pieces';
+import { Pirate, Ports, Robber } from './Pieces';
 import { Aura, Burst, Sea, Stars } from './Space';
 import { SEQ, ease, lerp, progress, soundTimeline } from './timeline';
 
@@ -273,6 +273,7 @@ function Scene({ board, speed, skip, showPips, numberStyle, highlight, quality, 
         <Island board={board} showPips={showPips} numberStyle={numberStyle} highlight={highlight} decor={q.decor} shadows={q.shadows} fontsVersion={fontsVersion} />
         <Ports board={board} fontsVersion={fontsVersion} shadows={q.shadows} />
         {board.robber !== null && <Robber hex={board.robber} shadows={q.shadows} />}
+        {geo.kind === 'mar' && <Pirate hex={board.pirate ?? null} shadows={q.shadows} />}
       </Controls>
       </ViewContext.Provider>
       </GeoContext.Provider>

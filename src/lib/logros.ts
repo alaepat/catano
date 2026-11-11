@@ -99,7 +99,7 @@ export function applyEvent(p: Progress, e: LogroEvent): Progress {
       };
     case 'tocar':
       // El mar y el oro de Navegantes no cuentan para el Geólogo (son los 6 terrenos del Catan base).
-      return e.terrain === 'mar' || e.terrain === 'oro' ? p : { ...p, terrains: addOnce(p.terrains, e.terrain) };
+      return e.terrain === 'mar' || e.terrain === 'oro' || e.terrain === 'niebla' ? p : { ...p, terrains: addOnce(p.terrains, e.terrain) };
     case 'fondo':
       return { ...p, backgrounds: addOnce(p.backgrounds, e.id) };
     case 'partida':

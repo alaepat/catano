@@ -55,7 +55,7 @@ export const NM_GOAL = 12;
 const MAX_LAYOUTS = 12000;
 const NUMBER_TRIES = 200;
 
-const isLand = (t: Terrain | null | undefined) => t != null && t !== 'mar';
+const isLand = (t: Terrain | null | undefined) => t != null && t !== 'mar' && t !== 'niebla';
 
 /** Islas: grupos de hexágonos de tierra que se tocan (cada una, lista de ids). */
 export function islandsOf(terrains: readonly Terrain[], geo: Geometry = SEA_GEOMETRY): number[][] {

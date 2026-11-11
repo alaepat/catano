@@ -43,6 +43,7 @@ const TERRAIN_SOUND: Record<Terrain, SoundKind> = {
   desierto: 'viento',
   mar: 'whoosh',
   oro: 'clink',
+  niebla: 'whoosh',
 };
 
 export function Tablero() {

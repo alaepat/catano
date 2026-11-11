@@ -17,6 +17,7 @@ const TERRAIN_FILL: Record<Terrain, string> = {
   desierto: 'var(--desierto)',
   mar: '#2f76a0',
   oro: 'var(--oro)',
+  niebla: '#e9edf0',
 };
 
 const TERRAIN_ICON: Record<Terrain, GlyphName> = {
@@ -28,6 +29,7 @@ const TERRAIN_ICON: Record<Terrain, GlyphName> = {
   desierto: 'desierto',
   mar: 'ola',
   oro: 'oro',
+  niebla: 'niebla',
 };
 
 /** Color del icono sobre cada terreno: claro sobre los oscuros, oscuro sobre los claros. */
@@ -40,6 +42,7 @@ const TERRAIN_INK: Record<Terrain, string> = {
   desierto: 'var(--tinta)',
   mar: '#cfe6f2',
   oro: 'var(--tinta)',
+  niebla: '#7d8a93',
 };
 
 /** Icono (24 × 24) centrado en (x, y) con el tamaño dado. */
@@ -152,7 +155,7 @@ export function BoardSvg({ board, showPips = true, numberStyle = DEFAULT_NUMBER_
     <svg
       viewBox={viewBoxOf(geo)}
       role="img"
-      aria-label={sea ? 'Mapa de Navegantes: Nuevo mundo' : 'Tablero de Catan'}
+      aria-label={sea ? 'Mapa de Navegantes' : 'Tablero de Catan'}
       style={{ width: '100%', height: 'auto', display: 'block', overflow: focus === null ? 'visible' : 'hidden' }}
       onClick={(e) => {
         if (!onPickHex) return;
@@ -229,8 +232,8 @@ export function BoardSvg({ board, showPips = true, numberStyle = DEFAULT_NUMBER_
             <SvgGlyph
               name={TERRAIN_ICON[terrain]}
               x={hex.x * S}
-              y={terrain === 'mar' ? hex.y * S : hex.y * S - S * 0.58}
-              size={terrain === 'mar' ? 22 : 15}
+              y={terrain === 'mar' || terrain === 'niebla' ? hex.y * S : hex.y * S - S * 0.58}
+              size={terrain === 'mar' ? 22 : terrain === 'niebla' ? 30 : 15}
               color={TERRAIN_INK[terrain]}
               opacity={terrain === 'mar' ? 0.35 : 0.8}
             />
@@ -279,6 +282,16 @@ export function BoardSvg({ board, showPips = true, numberStyle = DEFAULT_NUMBER_
             <ellipse cx={0} cy={14} rx={9} ry={3} fill="rgba(0,0,0,0.3)" />
             <path d="M -7 13 Q -8 -2 0 -4 Q 8 -2 7 13 Z" fill="#3a3530" />
             <circle cx={0} cy={-8} r={6} fill="#3a3530" />
+          </motion.g>
+        </g>
+      )}
+
+      {/* Pirata (Navegantes): un barco negro sobre su casilla de mar. */}
+      {board.pirate != null && (
+        <g transform={`translate(${HEXES[board.pirate].x * S}, ${HEXES[board.pirate].y * S})`}>
+          <motion.g style={fromCenter} {...enter(T.robber, { y: -30, scale: 0.4 })}>
+            <circle r={S * 0.42} fill="#1d1a18" stroke="var(--marfil)" strokeWidth={2} />
+            <SvgGlyph name="nuevo-mundo" x={0} y={0} size={26} color="var(--marfil)" />
           </motion.g>
         </g>
       )}

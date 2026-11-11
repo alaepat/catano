@@ -10,3 +10,4 @@ export * from './navegantes';
 export * from './reparto';
 export * from './cincoSeis';
 export * from './escenarios';
+export * from './mapas';

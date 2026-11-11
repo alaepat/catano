@@ -46,8 +46,21 @@ export function dealNumbers(
     const numbers = fixed.slice();
     const redList = shuffle(reds, rng);
     [...chosen].forEach((h, i) => (numbers[h] = redList[i]));
-    const rest = shuffle(others, rng);
-    hexes.filter((h) => !chosen.has(h)).forEach((h, i) => (numbers[h] = rest[i]));
+    if (rules.forbid) {
+      const free = shuffle(hexes.filter((h) => !chosen.has(h)), rng);
+      // Con prohibiciones, primero las fichas que tienen sitios vetados, cada una en un hueco donde pueda ir.
+      const vetoed = (n: number) => free.some((h) => rules.forbid!(h, n));
+      const rest = shuffle(others, rng).sort((a, b) => Number(vetoed(b)) - Number(vetoed(a)));
+      const left = new Set(free);
+      for (const n of rest) {
+        const h = [...left].find((x) => !rules.forbid!(x, n)) ?? [...left][0];
+        numbers[h] = n;
+        left.delete(h);
+      }
+    } else {
+      const rest = shuffle(others, rng);
+      hexes.filter((h) => !chosen.has(h)).forEach((h, i) => (numbers[h] = rest[i]));
+    }
     if (rules.forbid && hexes.some((h) => rules.forbid!(h, numbers[h]!))) continue;
     if (rules.balanced) {
       if (countAdjacentPairs(numbers, (a, b) => a === b, geo) > 0) continue;

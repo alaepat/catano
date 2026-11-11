@@ -177,3 +177,65 @@ export function Robber({ hex, shadows }: { hex: number; shadows: boolean }) {
     </group>
   );
 }
+
+// ---------- Pirata (Navegantes) ----------
+
+const PIRATE_HULL = new MeshStandardMaterial({ color: '#211c19', roughness: 0.6, flatShading: true });
+const PIRATE_SAIL = new MeshStandardMaterial({ color: '#2b2b2e', roughness: 0.9, side: DoubleSide });
+const PIRATE_FLAG = new MeshStandardMaterial({ color: '#b3261e', roughness: 0.8, side: DoubleSide });
+const SKULL = new MeshStandardMaterial({ color: '#f1ece2', roughness: 0.7 });
+const FLAG_GEO = new BoxGeometry(0.11, 0.06, 0.004).translate(0.055, 0, 0);
+const SKULL_GEO = new SphereGeometry(0.035, 10, 8);
+
+/**
+ * El barco pirata: negro, con vela oscura y bandera roja. Si el escenario lo pone en una casilla de mar, se mece
+ * ahí; si empieza fuera del tablero (Nuevo mundo), da vueltas alrededor del marco.
+ */
+export function Pirate({ hex, shadows }: { hex: number | null; shadows: boolean }) {
+  const clock = useClock();
+  const geo = useGeo();
+  const ship = useRef<Group>(null);
+  const flag = useRef<Group>(null);
+  const orbit = useMemo(() => {
+    const w = Math.max(...geo.vertices.map((v) => Math.abs(v.x))) + 0.45;
+    const h = Math.max(...geo.vertices.map((v) => Math.abs(v.y))) + 0.4;
+    return { w, h };
+  }, [geo]);
+  const spot = hex === null ? null : hexWorld(geo, hex);
+
+  useFrame(({ clock: real }) => {
+    const g = ship.current;
+    if (!g) return;
+    const p = progress(clock.current.t, SEQ.robber);
+    const time = real.elapsedTime;
+    g.visible = p > 0;
+    if (!g.visible) return;
+    g.scale.setScalar(2.1 * Math.max(0.001, ease.outBack(p)));
+    if (spot) {
+      // Llega desde fuera navegando y se queda meciéndose en su casilla.
+      const slide = 2.5 * (1 - ease.outCubic(p));
+      g.position.set(spot[0] + slide, 0.03 + 0.02 * Math.sin(time * 1.8), spot[1] - slide * 0.4);
+      g.rotation.set(0.07 * Math.sin(time * 1.4), 0.6 + 0.08 * Math.sin(time * 0.7), 0.04 * Math.sin(time * 1.1));
+    } else {
+      // Vuelta lenta alrededor del marco, siempre mirando hacia donde va.
+      const a = time * 0.09;
+      const x = orbit.w * Math.cos(a);
+      const z = orbit.h * Math.sin(a);
+      g.position.set(x, 0.03 + 0.02 * Math.sin(time * 1.8), z);
+      g.rotation.set(0.07 * Math.sin(time * 1.4), yawTowards(-orbit.w * Math.sin(a), orbit.h * Math.cos(a)), 0);
+    }
+    if (flag.current) flag.current.rotation.y = 0.35 * Math.sin(time * 4);
+  });
+
+  return (
+    <group ref={ship} visible={false}>
+      <mesh geometry={HULL_GEO} material={PIRATE_HULL} castShadow={shadows} />
+      <mesh geometry={MAST_GEO} material={PIRATE_HULL} position={[0, 0.3, 0]} />
+      <mesh geometry={SAIL_GEO} material={PIRATE_SAIL} position={[0.015, 0, 0]} castShadow={shadows} />
+      <mesh geometry={SKULL_GEO} material={SKULL} position={[0.07, 0.3, 0.004]} scale={[1, 1, 0.3]} />
+      <group ref={flag} position={[0, 0.52, 0]}>
+        <mesh geometry={FLAG_GEO} material={PIRATE_FLAG} />
+      </group>
+    </group>
+  );
+}
