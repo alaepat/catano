@@ -44,6 +44,10 @@ export interface Settings {
   numberSize: NumberSize;
   numberFont: NumberFont;
   redNumbers: boolean;
+  /** Al generar, las fichas enseñan su letra (A, B, C...) hasta que se les da la vuelta. */
+  letters: boolean;
+  /** Título de la portada ("" = el de la app). */
+  title: string;
 }
 
 export interface Generation {
@@ -93,6 +97,8 @@ interface State {
   /** Guarda el tablero actual en Mis tableros, o lo quita si ya estaba. */
   toggleSaveCurrent: () => void;
   renameSaved: (id: string, name: string) => void;
+  /** Cambia el nombre de la isla que se está viendo (y el guardado, si lo está). */
+  renameCurrent: (name: string) => void;
   deleteSaved: (id: string) => void;
   /** Abre una isla guardada en la pantalla del tablero. */
   openSaved: (id: string) => void;
@@ -108,7 +114,12 @@ const DEFAULT_SETTINGS: Settings = {
   numberSize: 'normal',
   numberFont: 'clasica',
   redNumbers: true,
+  letters: false,
+  title: '',
 };
+
+/** Largo máximo del título de la portada. */
+export const TITLE_MAX = 24;
 
 export const ANIM_FACTOR: Record<AnimSpeed, number> = { epica: 1, rapida: 0.45, sin: 0 };
 
@@ -218,6 +229,13 @@ export const useApp = create<State>()(
         });
       },
 
+      renameCurrent: (name) => {
+        const { generation, renameSaved } = get();
+        if (!generation) return;
+        if (generation.savedId) return renameSaved(generation.savedId, name);
+        set({ generation: { ...generation, name: cleanName(name, generation.name) } });
+      },
+
       deleteSaved: (id) => {
         const { saved, generation } = get();
         set({
@@ -264,7 +282,13 @@ export const useApp = create<State>()(
           csStyle: s.csStyle === 'azar' ? 'azar' : 'equilibrado',
           choice: s.choice ?? current.choice,
           options: { ...current.options, ...s.options },
-          settings: { ...current.settings, ...s.settings, background: migrateBackground(s.settings?.background ?? current.settings.background) },
+          settings: {
+            ...current.settings,
+            ...s.settings,
+            background: migrateBackground(s.settings?.background ?? current.settings.background),
+            letters: s.settings?.letters === true,
+            title: typeof s.settings?.title === 'string' ? s.settings.title.slice(0, TITLE_MAX) : '',
+          },
           saved: Array.isArray(s.saved) ? s.saved.filter(isSavedBoard) : [],
         };
       },

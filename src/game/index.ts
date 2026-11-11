@@ -12,3 +12,4 @@ export * from './cincoSeis';
 export * from './escenarios';
 export * from './mapas';
 export * from './mapas2';
+export * from './letras';

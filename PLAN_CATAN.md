@@ -554,6 +554,15 @@ Sonido (si está activado): zumbido espacial suave, un "tock" de madera por hex�
   desiertos; cruces reservados y "!"). `Board.spots` (cruces) y `Board.gifts` (lados), en 2D y 3D.
 - [ ] Pendiente si se pide: mapas de 3 jugadores.
 
+**6.11 Letras, nombres a gusto y portada nueva** (v0.16, 2026-11-11)
+- [x] Ajustes → "Letras en vez de números": las fichas salen con su letra (Catan base: la letra de verdad de cada ficha,
+  A=5, B=2...; en los demás mapas, letras seguidas que no dicen nada). Sin análisis ni 6/8 en rojo hasta tocar
+  **Números** (el botón sustituye a Puntitos) para darles la vuelta. `game/letras.ts` (con tests).
+- [x] Título de la portada a gusto (Ajustes → Portada; vacío = Cataniciño) y nombre de cada isla tocándolo en el tablero.
+- [x] Portada: fuera el dato curioso del día. Arriba, una islita de 7 hexágonos flotando con un barquito; bajo el
+  título, un adorno; saludo "QUE TALLL SEÑOORRR" y la predicción "hoy gana el [color] y el número que más va a caer es
+  el [n]" (color de jugador al azar y dos dados de verdad, que se ven debajo).
+
 **6.9 Ruleta "¿Quién empieza?"** (v0.12)
 - [x] Rueda con los jugadores de la partida (sus colores y nombres). Sale sola al empezar una partida en el marcador y
   desde el menú "···" → "¿Quién empieza? Girar la ruleta". Gira 5-6 vueltas, "tic" (o vibración) en cada separación,

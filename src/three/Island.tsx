@@ -299,14 +299,15 @@ const FACE_GEO = new CircleGeometry(TOKEN_R * 0.98, 40).rotateX(-Math.PI / 2);
 const RIM_MAT = new MeshStandardMaterial({ color: '#eadcbc', roughness: 0.55 });
 const GLOW_GEO = new PlaneGeometry(1.8, 1.8).rotateX(-Math.PI / 2);
 
-function Token({ id, n, showPips, numberStyle, fontsVersion, shadows }: { id: number; n: number; showPips: boolean; numberStyle: NumberStyle; fontsVersion: number; shadows: boolean }) {
+function Token({ id, n, label, showPips, numberStyle, fontsVersion, shadows }: { id: number; n: number; label?: string | null; showPips: boolean; numberStyle: NumberStyle; fontsVersion: number; shadows: boolean }) {
   const clock = useClock();
   const group = useRef<Group>(null);
   const glow = useRef<Mesh>(null);
-  const red = isRed(n);
+  // Con letras, nada delata al 6 y al 8 (ni el color ni el brillo).
+  const red = !label && isRed(n);
   const face = useMemo(
-    () => new MeshStandardMaterial({ map: tokenTexture(n, showPips, numberStyle, fontsVersion), roughness: 0.6 }),
-    [n, showPips, numberStyle, fontsVersion],
+    () => new MeshStandardMaterial({ map: tokenTexture(label ?? n, showPips, numberStyle, fontsVersion), roughness: 0.6 }),
+    [n, label, showPips, numberStyle, fontsVersion],
   );
   const glowMat = useMemo(
     () => new MeshBasicMaterial({ map: glowTexture(), color: '#ff5a3c', transparent: true, opacity: 0, blending: AdditiveBlending, depthWrite: false }),
@@ -371,8 +372,8 @@ function Highlight({ vertex, index }: { vertex: number; index: number }) {
 // ---------- Todo junto ----------
 
 export function Island({
-  board, showPips, numberStyle, highlight, decor, shadows, fontsVersion,
-}: { board: Board; showPips: boolean; numberStyle: NumberStyle; highlight: number[]; decor: boolean; shadows: boolean; fontsVersion: number }) {
+  board, labels, showPips, numberStyle, highlight, decor, shadows, fontsVersion,
+}: { board: Board; labels?: (string | null)[] | null; showPips: boolean; numberStyle: NumberStyle; highlight: number[]; decor: boolean; shadows: boolean; fontsVersion: number }) {
   const geo = useGeo();
   return (
     <group>
@@ -385,7 +386,7 @@ export function Island({
       )}
       {geo.hexes.map((h) => {
         const n = board.numbers[h.id];
-        return n == null ? null : <Token key={h.id} id={h.id} n={n} showPips={showPips} numberStyle={numberStyle} fontsVersion={fontsVersion} shadows={shadows} />;
+        return n == null ? null : <Token key={h.id} id={h.id} n={n} label={labels?.[h.id]} showPips={showPips} numberStyle={numberStyle} fontsVersion={fontsVersion} shadows={shadows} />;
       })}
       {highlight.map((v, i) => (
         <Highlight key={v} vertex={v} index={i} />

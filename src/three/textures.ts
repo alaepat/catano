@@ -24,8 +24,12 @@ function draw(key: string, size: number, paint: (ctx: CanvasRenderingContext2D, 
 const TINTA = '#1e1b18';
 const ROJO = '#c8402f';
 
-/** Cara de una ficha de número. `fontsVersion` cambia cuando terminan de cargar las tipografías. */
-export function tokenTexture(n: number, showPips: boolean, style: NumberStyle, fontsVersion: number): CanvasTexture {
+/**
+ * Cara de una ficha de número (o de su letra, si `n` es texto). `fontsVersion` cambia cuando terminan de cargar
+ * las tipografías.
+ */
+export function tokenTexture(n: number | string, showPips: boolean, style: NumberStyle, fontsVersion: number): CanvasTexture {
+  if (typeof n === 'string') showPips = false;
   return draw(`token-${n}-${showPips}-${style.key}-${fontsVersion}`, 256, (ctx, s) => {
     const c = s / 2;
     const face = ctx.createRadialGradient(c, c * 0.8, 10, c, c, c);
@@ -41,7 +45,7 @@ export function tokenTexture(n: number, showPips: boolean, style: NumberStyle, f
     ctx.arc(c, c, c * 0.86, 0, Math.PI * 2);
     ctx.stroke();
 
-    const red = isRed(n);
+    const red = typeof n === 'number' && isRed(n);
     ctx.fillStyle = red && style.red ? ROJO : TINTA;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
@@ -53,7 +57,7 @@ export function tokenTexture(n: number, showPips: boolean, style: NumberStyle, f
     const down = m.actualBoundingBoxDescent || 0;
     ctx.fillText(String(n), c, middle + (up - down) / 2);
     if (showPips) {
-      const count = pips(n);
+      const count = typeof n === 'number' ? pips(n) : 0;
       const gap = 23;
       for (let i = 0; i < count; i++) {
         ctx.beginPath();

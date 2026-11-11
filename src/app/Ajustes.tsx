@@ -1,14 +1,15 @@
-// Ajustes: fondo, velocidad de animación, calidad gráfica, sonido, números de las fichas y borrar datos.
+// Ajustes: título de la portada, fondo, velocidad de animación, calidad gráfica, sonido, números de las fichas
+// (o sus letras) y borrar datos.
 import { motion } from 'motion/react';
 import { useId } from 'react';
 import { isRed, pips } from '../game';
 import { BackIcon, Chips, IconButton, Switch } from '../components/ui';
 import { BOARD_BACKGROUNDS } from '../lib/background';
-import { ANIM_SPEEDS, APP_VERSION, BACKGROUNDS, QUALITIES } from '../lib/config';
+import { ANIM_SPEEDS, APP_TITLE, APP_VERSION, BACKGROUNDS, QUALITIES } from '../lib/config';
 import { NUMBER_FONTS, NUMBER_SIZES, numberStyle, type NumberFont, type NumberSize, type NumberStyle } from '../lib/numberStyle';
 import { playSound, unlockAudio } from '../lib/sound';
 import { hasWebGL } from '../lib/webgl';
-import { useApp } from '../store';
+import { TITLE_MAX, useApp } from '../store';
 
 export function Ajustes() {
   const { settings, updateSettings, resetAll } = useApp();
@@ -30,6 +31,23 @@ export function Ajustes() {
       </header>
 
       <div className="scroll">
+        <h2 className="section-title">Portada</h2>
+        <div className="card settings-card">
+          <label className="field">
+            <span className="field-label">Título</span>
+            <input
+              className="title-input"
+              value={settings.title}
+              placeholder={APP_TITLE}
+              maxLength={TITLE_MAX}
+              enterKeyHint="done"
+              onChange={(e) => updateSettings({ title: e.target.value })}
+              onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+            />
+          </label>
+          <p className="field-hint">El que quieras. Si lo dejas vacío, vuelve a ser {APP_TITLE}. El nombre de cada isla se cambia tocándolo en el tablero.</p>
+        </div>
+
         <h2 className="section-title">Fondo</h2>
         <div className="bg-grid" role="radiogroup" aria-label="Fondo">
           {BACKGROUNDS.map((bg) => {
@@ -91,6 +109,12 @@ export function Ajustes() {
           <NumberPreview style={style} showPips={settings.showPips} />
           <Chips label="Tamaño" value={settings.numberSize} options={SIZE_OPTIONS} onChange={(v) => updateSettings({ numberSize: v })} />
           <FontChips value={settings.numberFont} onChange={(v) => updateSettings({ numberFont: v })} />
+          <Switch
+            label="Letras en vez de números"
+            hint="Las fichas salen con su letra (A, B, C...) para poner los primeros poblados sin saber los números. Luego, el botón Números les da la vuelta."
+            checked={settings.letters}
+            onChange={(v) => updateSettings({ letters: v })}
+          />
           <Switch label="El 6 y el 8 en rojo" checked={settings.redNumbers} onChange={(v) => updateSettings({ redNumbers: v })} />
           <Switch label="Mostrar puntitos de probabilidad" checked={settings.showPips} onChange={(v) => updateSettings({ showPips: v })} />
         </div>

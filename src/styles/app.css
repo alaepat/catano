@@ -298,42 +298,74 @@
   padding-top: 8px;
 }
 
-.dato {
-  max-width: 420px;
-  width: 100%;
+/* Islita decorativa del inicio */
+.mini-isla {
+  width: min(46vw, 190px);
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.35));
+}
+
+/* Adorno bajo el título: dos líneas y un hexágono */
+.ornamento {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 12px 18px;
-  border-radius: var(--radio-m);
-  border: 1px solid var(--tarjeta-borde);
-  background: var(--tarjeta);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  text-align: left;
-  cursor: pointer;
-  overflow: hidden;
+  align-items: center;
+  gap: 10px;
+  margin-top: -6px;
 }
 
-.dato-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+.ornamento span {
+  width: 54px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--acento));
+}
+
+.ornamento span:last-child {
+  background: linear-gradient(270deg, transparent, var(--acento));
+}
+
+.ornamento svg {
+  width: 18px;
+  height: 18px;
+}
+
+.saludo {
+  font-family: var(--fuente-titulo);
+  font-size: clamp(1.35rem, 6.4vw, 1.8rem);
+  letter-spacing: 0.02em;
   color: var(--acento);
+  text-shadow: 0 2px 22px rgba(0, 0, 0, 0.4);
 }
 
-.dato-text {
-  font-size: 0.95rem;
-  line-height: 1.4;
-  color: var(--crema);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.bienvenida span b {
+  font-weight: 800;
 }
 
-.dato.open .dato-text {
-  white-space: normal;
+.pred-color {
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
+}
+
+.pred-num {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.7em;
+  height: 1.7em;
+  margin-left: 2px;
+  border-radius: 50%;
+  background: #f6efe0;
+  color: var(--tinta);
+}
+
+.dados {
+  display: flex;
+  gap: 10px;
+  margin: -14px 0 6px;
+}
+
+.dado {
+  width: 30px;
+  height: 30px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
 }
 
 .inicio-center {
@@ -345,6 +377,8 @@
 
 .titulo {
   margin: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   font-family: var(--fuente-titulo);
   font-weight: 700;
   font-size: clamp(2.6rem, 13vw, 4.6rem);
@@ -654,12 +688,6 @@
 
 .title-glyph {
   color: var(--acento);
-}
-
-.dato-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
 }
 
 .tablero-title small {
@@ -2445,4 +2473,69 @@
 .logros-games b {
   color: var(--crema);
   font-size: 1.05rem;
+}
+
+/* Nombre de la isla: se toca para cambiarlo */
+.tablero-main > .island-name {
+  pointer-events: auto;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  cursor: pointer;
+}
+
+.island-name-input {
+  display: block;
+  width: min(100%, 340px);
+  padding: 2px 10px;
+  border: 1px solid var(--acento);
+  border-radius: var(--radio-m);
+  background: rgba(20, 16, 12, 0.55);
+  font: inherit;
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: clamp(1.3rem, 6vw, 1.7rem);
+  color: var(--crema);
+  text-align: center;
+  outline: none;
+}
+
+/* Letras en vez de números */
+.letters-hint {
+  margin: -4px auto 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--crema-suave);
+}
+
+.letters-hint b {
+  color: var(--acento);
+}
+
+.flip-action {
+  color: var(--acento);
+}
+
+.flip-glyph {
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
+.flip-glyph i {
+  font-style: normal;
+  opacity: 0.6;
+  margin: 0 1px;
+}
+
+.title-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--tarjeta-borde);
+  border-radius: var(--radio-s, 10px);
+  background: rgba(243, 233, 210, 0.06);
+  font: inherit;
+  font-family: var(--fuente-titulo);
+  font-size: 1.15rem;
+  color: var(--crema);
 }

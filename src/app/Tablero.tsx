@@ -9,7 +9,7 @@ import { Glyph } from '../components/icons';
 import { modeGlyph } from '../lib/glyphs';
 import { Marcador } from '../components/Marcador';
 import { BackIcon, IconButton, Toast } from '../components/ui';
-import { analyzeBoard, geometryOf, modeGoal, modeLabel as labelOf, type Resource, type Terrain } from '../game';
+import { analyzeBoard, geometryOf, letterLabels, modeGoal, modeLabel as labelOf, type Resource, type Terrain } from '../game';
 import { backgroundFor } from '../lib/background';
 import { loadBoard3D } from '../lib/board3d';
 import { comentario } from '../lib/comentario';
@@ -47,7 +47,7 @@ const TERRAIN_SOUND: Record<Terrain, SoundKind> = {
 };
 
 export function Tablero() {
-  const { generation, choice, settings, generate, updateSettings, toggleSaveCurrent, setFlying } = useApp();
+  const { generation, choice, settings, generate, updateSettings, toggleSaveCurrent, setFlying, renameCurrent } = useApp();
   const sound = settings.sound;
   const trackLogro = useLogros((s) => s.track);
   const [showAnalysis, setShowAnalysis] = useState(false);
@@ -58,6 +58,10 @@ export function Tablero() {
   const [revealedId, setRevealedId] = useState<number | null>(null);
   // Hexágono tocado (zoom), recordando de qué generación es para que se olvide al crear otra isla.
   const [picked, setPicked] = useState<{ gen: number; hex: number } | null>(null);
+  // Con la opción de letras: generación a la que ya se le ha dado la vuelta a las fichas.
+  const [flippedId, setFlippedId] = useState<number | null>(null);
+  const [editingName, setEditingName] = useState(false);
+  const cancelName = useRef(false);
   const capture3D = useRef<(() => HTMLCanvasElement) | null>(null);
   const wrap2D = useRef<HTMLDivElement>(null);
   const slot3D = useRef<HTMLDivElement>(null);
@@ -89,9 +93,13 @@ export function Tablero() {
     [settings.numberSize, settings.numberFont, settings.redNumbers],
   );
   const analysis = useMemo(() => (board ? analyzeBoard(board) : null), [board]);
+  // Letras: hasta darles la vuelta, ni números, ni análisis (que delataría los mejores sitios).
+  const lettersOn = settings.letters && Boolean(board) && flippedId !== genId;
+  const labels = useMemo(() => (lettersOn && board ? letterLabels(board) : null), [lettersOn, board]);
+  const analysisOn = showAnalysis && !lettersOn;
   const highlight = useMemo(
-    () => (revealed && showAnalysis && analysis ? analysis.bestVertices.map((b) => b.vertex) : []),
-    [revealed, showAnalysis, analysis],
+    () => (revealed && analysisOn && analysis ? analysis.bestVertices.map((b) => b.vertex) : []),
+    [revealed, analysisOn, analysis],
   );
 
   // Con la isla a la vista, el fondo Espacio empieza a "volar"; al salir, se para.
@@ -116,6 +124,15 @@ export function Tablero() {
   const otraVez = () => {
     if (settings.sound) unlockAudio();
     generate();
+  };
+
+  const darLaVuelta = () => {
+    setFlippedId(genId);
+    if (settings.sound) {
+      unlockAudio();
+      playSound('chord');
+    } else haptic(20);
+    setToast(['¡Fichas a la vista!']);
   };
 
   const guardar = () => {
@@ -173,17 +190,48 @@ export function Tablero() {
       </header>
 
       <div className="tablero-main">
-        {board && (
+        {board && editingName ? (
+          <input
+            className="island-name island-name-input"
+            aria-label="Nombre de la isla"
+            defaultValue={generation.name}
+            maxLength={40}
+            autoFocus
+            enterKeyHint="done"
+            onFocus={(e) => e.currentTarget.select()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') e.currentTarget.blur();
+              if (e.key === 'Escape') {
+                cancelName.current = true;
+                e.currentTarget.blur();
+              }
+            }}
+            onBlur={(e) => {
+              if (!cancelName.current) renameCurrent(e.currentTarget.value);
+              cancelName.current = false;
+              setEditingName(false);
+            }}
+          />
+        ) : board ? (
           // El nombre de la isla aparece al terminar la animación (su hueco está reservado para que nada salte).
+          // Tocándolo se le puede poner el nombre que se quiera.
           <motion.h2
             key={generation.id}
             className="island-name"
             initial={{ opacity: 0, y: 8, filter: 'blur(6px)' }}
             animate={revealed ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 8, filter: 'blur(6px)' }}
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            onClick={() => revealed && setEditingName(true)}
+            title="Toca para cambiar el nombre"
           >
             {generation.name}
           </motion.h2>
+        ) : null}
+
+        {board && lettersOn && revealed && (
+          <motion.p className="letters-hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            Poned los primeros poblados y luego tocad <b>Números</b>
+          </motion.p>
         )}
 
         {/* Marcador de puntos: aparece con el nombre de la isla. */}
@@ -197,6 +245,7 @@ export function Tablero() {
               <Suspense fallback={<div className="board-loading" />}>
                 <Board3D
                   board={board}
+                  labels={labels}
                   animKey={generation.id}
                   speed={speed}
                   skip={revealed}
@@ -234,6 +283,7 @@ export function Tablero() {
             <BoardSvg
               key={generation.id}
               board={board}
+              labels={labels}
               speed={speed}
               showPips={settings.showPips}
               numberStyle={numbers}
@@ -252,7 +302,7 @@ export function Tablero() {
         )}
 
         <AnimatePresence>
-          {showAnalysis && analysis && (
+          {analysisOn && analysis && (
             <motion.section
               className="card analysis"
               initial={{ opacity: 0, y: 16, height: 0 }}
@@ -283,12 +333,14 @@ export function Tablero() {
         </AnimatePresence>
       </div>
 
-      <AnimatePresence>{board && focus !== null && <HexCard key={focus} board={board} hex={focus} onClose={() => pick(null)} />}</AnimatePresence>
+      <AnimatePresence>
+        {board && focus !== null && <HexCard key={focus} board={board} hex={focus} label={labels?.[focus]} onClose={() => pick(null)} />}
+      </AnimatePresence>
 
       <Toast messages={toast} onDone={clearToast} />
 
       <nav className={FEATURES.foto && FEATURES.guardar ? 'action-bar five' : 'action-bar'} aria-label="Acciones del tablero">
-        <button type="button" className={showAnalysis ? 'action active' : 'action'} aria-pressed={showAnalysis} onClick={() => setShowAnalysis(!showAnalysis)} disabled={!board}>
+        <button type="button" className={analysisOn ? 'action active' : 'action'} aria-pressed={analysisOn} onClick={() => setShowAnalysis(!showAnalysis)} disabled={!board || lettersOn}>
           <Glyph name="analisis" size={20} />
           Análisis
         </button>
@@ -307,6 +359,14 @@ export function Tablero() {
             Foto
           </button>
         )}
+        {lettersOn ? (
+          <motion.button type="button" className="action flip-action" onClick={darLaVuelta} disabled={!revealed} whileTap={{ scale: 0.92 }}>
+            <span aria-hidden className="flip-glyph">
+              A<i>→</i>8
+            </span>
+            Números
+          </motion.button>
+        ) : (
         <button
           type="button"
           className={settings.showPips ? 'action active' : 'action'}
@@ -317,6 +377,7 @@ export function Tablero() {
           <span aria-hidden>••</span>
           Puntitos
         </button>
+        )}
       </nav>
     </div>
   );

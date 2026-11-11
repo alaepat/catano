@@ -98,6 +98,8 @@ const fromCenter = { transformBox: 'fill-box' as const, transformOrigin: 'center
 
 interface Props {
   board: Board;
+  /** Letras de las fichas en lugar de los números (null = números). */
+  labels?: (string | null)[] | null;
   showPips?: boolean;
   /** Cómo se ven los números de las fichas. */
   numberStyle?: NumberStyle;
@@ -113,7 +115,7 @@ interface Props {
 
 const ZOOM = 2.4;
 
-export function BoardSvg({ board, showPips = true, numberStyle = DEFAULT_NUMBER_STYLE, highlight = [], speed = 0, focus = null, onPickHex }: Props) {
+export function BoardSvg({ board, labels = null, showPips = true, numberStyle = DEFAULT_NUMBER_STYLE, highlight = [], speed = 0, focus = null, onPickHex }: Props) {
   const geo = geometryOf(board);
   const HEXES = geo.hexes;
   const VERTICES = geo.vertices;
@@ -250,7 +252,8 @@ export function BoardSvg({ board, showPips = true, numberStyle = DEFAULT_NUMBER_
         if (n == null) return null;
         const cx = hex.x * S;
         const cy = hex.y * S;
-        const red = isRed(n) && numberStyle.red;
+        const label = labels?.[hex.id];
+        const red = !label && isRed(n) && numberStyle.red;
         return (
           <motion.g key={hex.id} style={fromCenter} {...enter(T.numbersStart + REVEAL_INDEX[hex.id] * numberStep, { y: -40, scale: 1.4 })}>
             <circle cx={cx} cy={cy + 2} r={S * 0.36 * numberStyle.disc} fill="var(--marfil)" stroke="rgba(0,0,0,0.15)" />
@@ -261,12 +264,12 @@ export function BoardSvg({ board, showPips = true, numberStyle = DEFAULT_NUMBER_
               dominantBaseline="middle"
               fontFamily={numberStyle.family}
               fontWeight={numberStyle.weight}
-              fontSize={(isRed(n) ? 19 : 16) * numberStyle.size}
+              fontSize={(!label && isRed(n) ? 19 : 16) * numberStyle.size}
               fill={red ? 'var(--rojo-numero)' : 'var(--tinta)'}
             >
-              {n}
+              {label ?? n}
             </text>
-            {showPips && (
+            {showPips && !label && (
               <text x={cx} y={cy + 11} textAnchor="middle" fontSize={8} letterSpacing={-1} fill={red ? 'var(--rojo-numero)' : 'var(--tinta)'}>
                 {'•'.repeat(pips(n))}
               </text>

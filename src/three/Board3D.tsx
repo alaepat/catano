@@ -82,6 +82,8 @@ export interface Board3DProps {
   /** true = acelerar hasta el final (al tocar la pantalla). */
   skip: boolean;
   showPips: boolean;
+  /** Letras de las fichas en lugar de los números (null = números). */
+  labels?: (string | null)[] | null;
   /** Cómo se ven los números de las fichas. */
   numberStyle: NumberStyle;
   highlight: number[];
@@ -152,7 +154,7 @@ export default function Board3D(props: Board3DProps) {
   );
 }
 
-function Scene({ board, speed, skip, showPips, numberStyle, highlight, quality, stars, sound, captureRef, onDone, focus, onPick, slotRef, fontsVersion }: Board3DProps & { fontsVersion: number }) {
+function Scene({ board, labels, speed, skip, showPips, numberStyle, highlight, quality, stars, sound, captureRef, onDone, focus, onPick, slotRef, fontsVersion }: Board3DProps & { fontsVersion: number }) {
   const q = QUALITY[quality];
   const clock = useRef<Clock>({ t: speed > 0 ? 0 : SEQ.end, doneAt: null });
   const done = useRef(speed <= 0);
@@ -270,7 +272,7 @@ function Scene({ board, speed, skip, showPips, numberStyle, highlight, quality, 
       <Controls onPick={(hex) => onPickRef.current(hex)}>
         <Aura radius={seaRadius(geo)} />
         <Sea shadows={q.shadows} radius={seaRadius(geo)} />
-        <Island board={board} showPips={showPips} numberStyle={numberStyle} highlight={highlight} decor={q.decor} shadows={q.shadows} fontsVersion={fontsVersion} />
+        <Island board={board} labels={labels} showPips={showPips} numberStyle={numberStyle} highlight={highlight} decor={q.decor} shadows={q.shadows} fontsVersion={fontsVersion} />
         <Ports board={board} fontsVersion={fontsVersion} shadows={q.shadows} />
         {board.robber !== null && <Robber hex={board.robber} shadows={q.shadows} />}
         {geo.kind === 'mar' && board.pirate !== null && <Pirate hex={board.pirate ?? null} shadows={q.shadows} />}

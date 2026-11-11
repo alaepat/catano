@@ -16,7 +16,8 @@ const TERRAIN_NAME: Record<Terrain, string> = {
 
 const pct = (n: number) => n.toLocaleString('es-ES', { maximumFractionDigits: 1 });
 
-export function HexCard({ board, hex, onClose }: { board: Board; hex: number; onClose: () => void }) {
+/** `label`: con las fichas boca abajo, su letra (y no se dice nada del número). */
+export function HexCard({ board, hex, label, onClose }: { board: Board; hex: number; label?: string | null; onClose: () => void }) {
   const terrain = board.terrains[hex];
   const n = board.numbers[hex];
   const resource = TERRAIN_RESOURCE[terrain];
@@ -39,13 +40,14 @@ export function HexCard({ board, hex, onClose }: { board: Board; hex: number; on
           {resource ? `Da ${resource}` : terrain === 'mar' ? 'Aquí solo navegan los barcos' : terrain === 'oro' ? 'Da el recurso que elijas' : terrain === 'niebla' ? 'Por descubrir: al llegar, roba una casilla del montón' : 'No da nada'}
           {robber && ' · aquí empieza el ladrón'}
         </small>
-        {n != null && (
+        {n != null && label && <small>Ficha {label}: el número se ve al darles la vuelta</small>}
+        {n != null && !label && (
           <small>
             {p} {p === 1 ? 'puntito' : 'puntitos'} · sale {pct((p / 36) * 100)} % de las tiradas
           </small>
         )}
       </div>
-      {n != null && <span className={isRed(n) ? 'hex-number red' : 'hex-number'}>{n}</span>}
+      {n != null && <span className={!label && isRed(n) ? 'hex-number red' : 'hex-number'}>{label ?? n}</span>}
       <button type="button" className="hex-close" onClick={onClose}>
         Ver todo
       </button>
